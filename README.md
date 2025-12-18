@@ -66,6 +66,17 @@ cd /home/mintys/Desktop/HIVEMIND
 ./install.sh
 ```
 
+What the installer does:
+- Makes scripts executable and initializes memory files
+- Creates user-level commands in `~/.local/bin` (`hivemind` and `hm`)
+- Ensures `~/.local/bin` is on your PATH (updates `~/.bashrc`/`~/.profile` if needed)
+- If you’re in a GUI session, it will try to open terminals for available engines (Codex/Claude) and will skip ones it detects already running
+
+Disable terminal auto-launch:
+```bash
+./install.sh --no-launch
+```
+
 ### 3. Verify
 
 ```bash
