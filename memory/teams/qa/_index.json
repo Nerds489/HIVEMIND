@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-12-18T00:00:00Z",
+  "scope": "team",
+  "scope_id": "qa",
+  "entry_count": 4,
+  "entries": [
+    {
+      "id": "mem_qa_patterns",
+      "type": "procedural",
+      "subtype": "test-patterns",
+      "tags": ["testing", "patterns", "best-practices", "qa"],
+      "summary": "Testing patterns and best practices",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "test-patterns.json"
+    },
+    {
+      "id": "mem_qa_bugs",
+      "type": "episodic",
+      "subtype": "known-bugs",
+      "tags": ["bugs", "issues", "defects", "tracking"],
+      "summary": "Known bugs and issues tracking",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "known-bugs.json"
+    },
+    {
+      "id": "mem_qa_regression",
+      "type": "episodic",
+      "subtype": "regression-history",
+      "tags": ["regression", "history", "testing", "results"],
+      "summary": "Regression testing history and results",
+      "priority": "medium",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "regression-history.json"
+    },
+    {
+      "id": "mem_qa_envconfig",
+      "type": "factual",
+      "subtype": "environment-configs",
+      "tags": ["environment", "config", "testing", "setup"],
+      "summary": "Test environment configurations",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "environment-configs.json"
+    }
+  ],
+  "tag_index": {
+    "testing": ["mem_qa_patterns", "mem_qa_regression"],
+    "patterns": ["mem_qa_patterns"],
+    "best-practices": ["mem_qa_patterns"],
+    "qa": ["mem_qa_patterns"],
+    "bugs": ["mem_qa_bugs"],
+    "issues": ["mem_qa_bugs"],
+    "defects": ["mem_qa_bugs"],
+    "tracking": ["mem_qa_bugs"],
+    "regression": ["mem_qa_regression"],
+    "history": ["mem_qa_regression"],
+    "results": ["mem_qa_regression"],
+    "environment": ["mem_qa_envconfig"],
+    "config": ["mem_qa_envconfig"],
+    "setup": ["mem_qa_envconfig"]
+  },
+  "type_index": {
+    "procedural": ["mem_qa_patterns"],
+    "episodic": ["mem_qa_bugs", "mem_qa_regression"],
+    "factual": ["mem_qa_envconfig"]
+  }
+}

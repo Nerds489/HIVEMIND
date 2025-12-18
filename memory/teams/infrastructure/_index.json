@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-12-18T00:00:00Z",
+  "scope": "team",
+  "scope_id": "infrastructure",
+  "entry_count": 4,
+  "entries": [
+    {
+      "id": "mem_inf_inventory",
+      "type": "factual",
+      "subtype": "system-inventory",
+      "tags": ["inventory", "systems", "infrastructure", "assets"],
+      "summary": "System and infrastructure inventory",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "system-inventory.json"
+    },
+    {
+      "id": "mem_inf_network",
+      "type": "factual",
+      "subtype": "network-topology",
+      "tags": ["network", "topology", "infrastructure", "connectivity"],
+      "summary": "Network topology and connectivity information",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "network-topology.json"
+    },
+    {
+      "id": "mem_inf_runbooks",
+      "type": "procedural",
+      "subtype": "runbooks",
+      "tags": ["runbooks", "procedures", "operations", "sre"],
+      "summary": "Operational runbooks and procedures",
+      "priority": "critical",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "runbooks.json"
+    },
+    {
+      "id": "mem_inf_capacity",
+      "type": "factual",
+      "subtype": "capacity-baselines",
+      "tags": ["capacity", "baselines", "performance", "metrics"],
+      "summary": "Capacity baselines and performance metrics",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "capacity-baselines.json"
+    }
+  ],
+  "tag_index": {
+    "inventory": ["mem_inf_inventory"],
+    "systems": ["mem_inf_inventory"],
+    "infrastructure": ["mem_inf_inventory", "mem_inf_network"],
+    "assets": ["mem_inf_inventory"],
+    "network": ["mem_inf_network"],
+    "topology": ["mem_inf_network"],
+    "connectivity": ["mem_inf_network"],
+    "runbooks": ["mem_inf_runbooks"],
+    "procedures": ["mem_inf_runbooks"],
+    "operations": ["mem_inf_runbooks"],
+    "sre": ["mem_inf_runbooks"],
+    "capacity": ["mem_inf_capacity"],
+    "baselines": ["mem_inf_capacity"],
+    "performance": ["mem_inf_capacity"],
+    "metrics": ["mem_inf_capacity"]
+  },
+  "type_index": {
+    "factual": ["mem_inf_inventory", "mem_inf_network", "mem_inf_capacity"],
+    "procedural": ["mem_inf_runbooks"]
+  }
+}

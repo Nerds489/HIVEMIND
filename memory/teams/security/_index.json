@@ -1,0 +1,71 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-12-18T00:00:00Z",
+  "scope": "team",
+  "scope_id": "security",
+  "entry_count": 4,
+  "entries": [
+    {
+      "id": "mem_sec_threats",
+      "type": "factual",
+      "subtype": "threat-intelligence",
+      "tags": ["threats", "intelligence", "security", "monitoring"],
+      "summary": "Threat intelligence and security monitoring data",
+      "priority": "critical",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "threat-intelligence.json"
+    },
+    {
+      "id": "mem_sec_vulns",
+      "type": "episodic",
+      "subtype": "vulnerability-history",
+      "tags": ["vulnerabilities", "history", "security", "findings"],
+      "summary": "History of discovered vulnerabilities and their remediation",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "vulnerability-history.json"
+    },
+    {
+      "id": "mem_sec_incidents",
+      "type": "procedural",
+      "subtype": "incident-learnings",
+      "tags": ["incidents", "learnings", "response", "procedures"],
+      "summary": "Learnings from past security incidents",
+      "priority": "critical",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "incident-learnings.json"
+    },
+    {
+      "id": "mem_sec_compliance",
+      "type": "factual",
+      "subtype": "compliance-requirements",
+      "tags": ["compliance", "requirements", "regulations", "audit"],
+      "summary": "Compliance requirements and regulatory frameworks",
+      "priority": "critical",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "compliance-requirements.json"
+    }
+  ],
+  "tag_index": {
+    "threats": ["mem_sec_threats"],
+    "intelligence": ["mem_sec_threats"],
+    "security": ["mem_sec_threats", "mem_sec_vulns"],
+    "monitoring": ["mem_sec_threats"],
+    "vulnerabilities": ["mem_sec_vulns"],
+    "history": ["mem_sec_vulns"],
+    "findings": ["mem_sec_vulns"],
+    "incidents": ["mem_sec_incidents"],
+    "learnings": ["mem_sec_incidents"],
+    "response": ["mem_sec_incidents"],
+    "procedures": ["mem_sec_incidents"],
+    "compliance": ["mem_sec_compliance"],
+    "requirements": ["mem_sec_compliance"],
+    "regulations": ["mem_sec_compliance"],
+    "audit": ["mem_sec_compliance"]
+  },
+  "type_index": {
+    "factual": ["mem_sec_threats", "mem_sec_compliance"],
+    "episodic": ["mem_sec_vulns"],
+    "procedural": ["mem_sec_incidents"]
+  }
+}

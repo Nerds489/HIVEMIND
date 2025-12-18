@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hivemind.local/schemas/semantic.json",
+  "title": "Semantic Memory Content",
+  "description": "Schema for semantic memory content - concepts, definitions, relationships",
+  "type": "object",
+  "required": ["concept", "definition"],
+  "properties": {
+    "concept": {
+      "type": "string",
+      "description": "The concept name"
+    },
+    "definition": {
+      "type": "string",
+      "description": "What it means in this context"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "domain",
+        "technical",
+        "process",
+        "entity",
+        "pattern",
+        "terminology",
+        "relationship"
+      ],
+      "description": "Category of concept"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain this concept belongs to"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Alternative names for this concept"
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["is_a", "has_a", "part_of", "related_to", "depends_on", "implements", "extends"]
+          },
+          "target": {"type": "string"},
+          "description": {"type": "string"}
+        },
+        "required": ["type", "target"]
+      },
+      "description": "Related concepts"
+    },
+    "attributes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string"},
+          "description": {"type": "string"},
+          "required": {"type": "boolean"}
+        }
+      },
+      "description": "Attributes of this concept"
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "example": {"type": "string"},
+          "explanation": {"type": "string"}
+        }
+      },
+      "description": "Concrete examples"
+    },
+    "anti_examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "example": {"type": "string"},
+          "why_not": {"type": "string"}
+        }
+      },
+      "description": "What this concept is NOT"
+    },
+    "context_notes": {
+      "type": "string",
+      "description": "Context-specific understanding"
+    },
+    "usage_guidelines": {
+      "type": "string",
+      "description": "How to use this concept correctly"
+    },
+    "common_mistakes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Common misunderstandings"
+    }
+  }
+}

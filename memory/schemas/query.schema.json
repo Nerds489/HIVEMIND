@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hivemind.local/schemas/query.schema.json",
+  "title": "Memory Query",
+  "description": "Schema for memory query requests",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Free-text search query"
+        },
+        "type": {
+          "oneOf": [
+            {"type": "string", "enum": ["factual", "procedural", "episodic", "semantic", "working"]},
+            {"type": "array", "items": {"type": "string", "enum": ["factual", "procedural", "episodic", "semantic", "working"]}}
+          ],
+          "description": "Filter by memory type(s)"
+        },
+        "subtype": {
+          "type": "string",
+          "description": "Filter by subtype"
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["global", "team", "agent", "project", "session"],
+          "description": "Filter by scope"
+        },
+        "scope_id": {
+          "type": "string",
+          "description": "Specific scope identifier"
+        },
+        "tags": {
+          "oneOf": [
+            {"type": "array", "items": {"type": "string"}},
+            {
+              "type": "object",
+              "properties": {
+                "include": {"type": "array", "items": {"type": "string"}},
+                "exclude": {"type": "array", "items": {"type": "string"}},
+                "match": {"type": "string", "enum": ["all", "any"], "default": "any"}
+              }
+            }
+          ],
+          "description": "Tag filters"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "Filter by creator"
+        },
+        "created_after": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created after this date"
+        },
+        "created_before": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created before this date"
+        },
+        "updated_after": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "priority": {
+          "oneOf": [
+            {"type": "string", "enum": ["critical", "high", "medium", "low"]},
+            {"type": "array", "items": {"type": "string", "enum": ["critical", "high", "medium", "low"]}}
+          ],
+          "description": "Filter by priority"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 10,
+          "description": "Maximum results to return"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Results to skip (pagination)"
+        },
+        "sort": {
+          "type": "string",
+          "enum": ["relevance", "recency", "priority", "access_count", "created_at", "updated_at"],
+          "default": "relevance",
+          "description": "Sort order"
+        },
+        "sort_direction": {
+          "type": "string",
+          "enum": ["asc", "desc"],
+          "default": "desc"
+        }
+      }
+    }
+  }
+}

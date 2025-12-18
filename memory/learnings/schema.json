@@ -1,0 +1,19 @@
+{
+  "type": "learning",
+  "schema": {
+    "id": "string (uuid)",
+    "created": "ISO timestamp",
+    "updated": "ISO timestamp",
+    "category": "pattern|antipattern|preference|fact|decision",
+    "content": "string",
+    "context": "string (when this applies)",
+    "confidence": "number 0-1",
+    "source": "observation|user_stated|user_confirmed|inferred",
+    "times_applied": "number",
+    "times_succeeded": "number",
+    "times_failed": "number",
+    "related": ["array of learning IDs"],
+    "tags": ["array of strings"]
+  }
+}
+

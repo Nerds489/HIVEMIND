@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "user_preferences": {
+    "communication_style": null,
+    "detail_level": "standard",
+    "code_style": {
+      "language": null,
+      "indentation": "spaces",
+      "indent_size": 2
+    },
+    "rules": []
+  }
+}

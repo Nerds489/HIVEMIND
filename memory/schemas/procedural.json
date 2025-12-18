@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hivemind.local/schemas/procedural.json",
+  "title": "Procedural Memory Content",
+  "description": "Schema for procedural memory content - how-to knowledge, patterns, approaches",
+  "type": "object",
+  "required": ["procedure_type", "task_category", "title"],
+  "properties": {
+    "procedure_type": {
+      "type": "string",
+      "enum": ["success", "failure", "optimization", "pattern", "workaround", "best_practice"],
+      "description": "Type of procedural knowledge"
+    },
+    "task_category": {
+      "type": "string",
+      "description": "Category of task this applies to"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Descriptive title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the procedure"
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "system": {"type": "string"},
+        "environment": {"type": "string"},
+        "language": {"type": "string"},
+        "framework": {"type": "string"},
+        "scale": {"type": "string"},
+        "constraints": {"type": "array", "items": {"type": "string"}}
+      },
+      "description": "When this procedure applies"
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Required conditions before using"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"type": "string"},
+          {
+            "type": "object",
+            "properties": {
+              "step": {"type": "integer"},
+              "action": {"type": "string"},
+              "details": {"type": "string"},
+              "warning": {"type": "string"},
+              "example": {"type": "string"}
+            },
+            "required": ["action"]
+          }
+        ]
+      },
+      "description": "Steps to follow"
+    },
+    "code_example": {
+      "type": "object",
+      "properties": {
+        "language": {"type": "string"},
+        "code": {"type": "string"},
+        "explanation": {"type": "string"}
+      },
+      "description": "Code example if applicable"
+    },
+    "outcome": {
+      "type": "string",
+      "description": "Expected or actual outcome"
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "duration_minutes": {"type": "number"},
+        "success_rate": {"type": "number"},
+        "error_rate": {"type": "number"},
+        "performance_gain": {"type": "string"},
+        "times_used": {"type": "integer"}
+      },
+      "description": "Performance metrics"
+    },
+    "applicability": {
+      "type": "object",
+      "properties": {
+        "use_when": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Conditions when to use"
+        },
+        "avoid_when": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Conditions when NOT to use"
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Alternative approaches"
+        }
+      }
+    },
+    "failure_info": {
+      "type": "object",
+      "properties": {
+        "what_went_wrong": {"type": "string"},
+        "root_cause": {"type": "string"},
+        "symptoms": {"type": "array", "items": {"type": "string"}},
+        "lesson_learned": {"type": "string"}
+      },
+      "description": "For failure-type procedures"
+    },
+    "related_procedures": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Related memory IDs"
+    }
+  }
+}

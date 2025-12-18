@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hivemind.local/schemas/index.schema.json",
+  "title": "Memory Index",
+  "description": "Schema for memory index files (_index.json)",
+  "type": "object",
+  "required": ["version", "last_updated", "entry_count", "entries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Index schema version"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last index update timestamp"
+    },
+    "entry_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total entries in this index"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "created_at"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Memory ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["factual", "procedural", "episodic", "semantic", "working"]
+          },
+          "subtype": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Brief summary for quick scanning"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "file_path": {
+            "type": "string",
+            "description": "Relative path to memory file"
+          }
+        }
+      },
+      "description": "Index entries"
+    },
+    "tag_index": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      },
+      "description": "Tag to memory ID mapping for fast lookup"
+    },
+    "type_index": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      },
+      "description": "Type to memory ID mapping for fast lookup"
+    }
+  }
+}

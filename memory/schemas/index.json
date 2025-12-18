@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hivemind.local/schemas/index.json",
+  "title": "Memory Index",
+  "description": "Schema for memory index files (_index.json)",
+  "type": "object",
+  "required": ["index_version", "last_updated", "memories"],
+  "properties": {
+    "index_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Index schema version"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last index update timestamp"
+    },
+    "last_rebuilt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last full index rebuild"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Scope this index covers (global, team:name, agent:id, project:id)"
+    },
+    "memory_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total memories in this index"
+    },
+    "memories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "title", "created_at"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Memory ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["factual", "procedural", "episodic", "semantic", "working"],
+            "description": "Memory type"
+          },
+          "title": {
+            "type": "string",
+            "description": "Memory title"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Brief summary"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Memory tags"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string",
+            "description": "Filename containing this memory"
+          },
+          "path": {
+            "type": "string",
+            "description": "JSON path within file (if in array)"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["critical", "high", "normal", "low"]
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": ["active", "aging", "archived"]
+          },
+          "access_count": {
+            "type": "integer"
+          },
+          "last_accessed": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "relevance_hints": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Keywords for relevance matching"
+          }
+        }
+      },
+      "description": "Index entries"
+    },
+    "tag_counts": {
+      "type": "object",
+      "additionalProperties": {"type": "integer"},
+      "description": "Count of memories per tag"
+    },
+    "type_counts": {
+      "type": "object",
+      "additionalProperties": {"type": "integer"},
+      "description": "Count of memories per type"
+    },
+    "lifecycle_counts": {
+      "type": "object",
+      "properties": {
+        "active": {"type": "integer"},
+        "aging": {"type": "integer"},
+        "archived": {"type": "integer"}
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "properties": {
+        "oldest_memory": {"type": "string", "format": "date-time"},
+        "newest_memory": {"type": "string", "format": "date-time"},
+        "avg_access_count": {"type": "number"},
+        "most_accessed_id": {"type": "string"},
+        "total_size_bytes": {"type": "integer"}
+      }
+    }
+  }
+}

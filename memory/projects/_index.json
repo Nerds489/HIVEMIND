@@ -1,0 +1,14 @@
+{
+  "index_version": "1.0",
+  "last_updated": "2025-12-18T00:00:00Z",
+  "last_rebuilt": "2025-12-18T00:00:00Z",
+  "scope": "projects",
+  "description": "Index of all project memory spaces",
+  "project_count": 0,
+  "projects": [],
+  "statistics": {
+    "total_memories": 0,
+    "active_projects": 0,
+    "archived_projects": 0
+  }
+}

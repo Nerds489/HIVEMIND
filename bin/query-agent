@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# Query a spawned agent workspace
+#
+# Usage:
+#   query-agent <agent-type> <task-id>
+
+set -euo pipefail
+
+HIVEMIND_ROOT="${HIVEMIND_ROOT:-$(dirname "$(dirname "$(realpath "$0")")")}"
+
+agent="${1:-}"
+task_id="${2:-}"
+
+if [[ -z "$agent" || -z "$task_id" ]]; then
+  echo "Usage: query-agent <agent-type> <task-id>" >&2
+  exit 1
+fi
+
+ws="$HIVEMIND_ROOT/workspace/$agent/$task_id"
+
+if [[ ! -d "$ws" ]]; then
+  echo "Workspace not found: $ws" >&2
+  exit 1
+fi
+
+echo "workspace=$ws"
+if [[ -f "$ws/status.txt" ]]; then
+  echo "status=$(cat "$ws/status.txt")"
+else
+  echo "status=unknown"
+fi
+
+if [[ -f "$ws/result.md" ]]; then
+  echo "--- result.md"
+  cat "$ws/result.md"
+else
+  echo "(no result.md yet)"
+fi
+

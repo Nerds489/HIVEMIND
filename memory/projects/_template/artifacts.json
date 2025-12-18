@@ -1,0 +1,22 @@
+{
+  "id": null,
+  "type": "factual",
+  "subtype": "project-artifacts",
+  "created_by": null,
+  "created_at": null,
+  "updated_at": null,
+  "scope": "project",
+  "scope_id": null,
+  "tags": ["project", "artifacts", "outputs"],
+  "priority": "medium",
+  "ttl": "permanent",
+  "content": {
+    "description": "Artifacts and outputs from project work",
+    "documents": [],
+    "diagrams": [],
+    "reports": [],
+    "other": []
+  },
+  "access_count": 0,
+  "last_accessed": null
+}

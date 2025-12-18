@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-12-18T00:00:00Z",
+  "entry_count": 4,
+  "entries": [
+    {
+      "id": "mem_userprofile0",
+      "type": "factual",
+      "subtype": "user-profile",
+      "tags": ["user", "profile", "preferences", "permanent"],
+      "summary": "User preferences and profile information",
+      "priority": "critical",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "user-profile.json"
+    },
+    {
+      "id": "mem_systemconfig",
+      "type": "factual",
+      "subtype": "system-config",
+      "tags": ["system", "config", "hivemind", "permanent"],
+      "summary": "HIVEMIND system configuration",
+      "priority": "critical",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "system-config.json"
+    },
+    {
+      "id": "mem_learnpattern",
+      "type": "procedural",
+      "subtype": "learned-patterns",
+      "tags": ["patterns", "learnings", "cross-agent", "procedures"],
+      "summary": "Cross-agent learned patterns and best practices",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "learned-patterns.json"
+    },
+    {
+      "id": "mem_terminology",
+      "type": "semantic",
+      "subtype": "terminology",
+      "tags": ["terminology", "glossary", "definitions", "semantic"],
+      "summary": "Domain-specific terminology and definitions",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "terminology.json"
+    }
+  ],
+  "tag_index": {
+    "user": ["mem_userprofile0"],
+    "profile": ["mem_userprofile0"],
+    "preferences": ["mem_userprofile0"],
+    "permanent": ["mem_userprofile0", "mem_systemconfig"],
+    "system": ["mem_systemconfig"],
+    "config": ["mem_systemconfig"],
+    "hivemind": ["mem_systemconfig"],
+    "patterns": ["mem_learnpattern"],
+    "learnings": ["mem_learnpattern"],
+    "cross-agent": ["mem_learnpattern"],
+    "procedures": ["mem_learnpattern"],
+    "terminology": ["mem_terminology"],
+    "glossary": ["mem_terminology"],
+    "definitions": ["mem_terminology"],
+    "semantic": ["mem_terminology"]
+  },
+  "type_index": {
+    "factual": ["mem_userprofile0", "mem_systemconfig"],
+    "procedural": ["mem_learnpattern"],
+    "semantic": ["mem_terminology"]
+  }
+}

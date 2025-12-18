@@ -1,0 +1,338 @@
+#!/bin/bash
+#
+# ██╗  ██╗██╗██╗   ██╗███████╗███╗   ███╗██╗███╗   ██╗██████╗ 
+# ██║  ██║██║██║   ██║██╔════╝████╗ ████║██║████╗  ██║██╔══██╗
+# ███████║██║██║   ██║█████╗  ██╔████╔██║██║██╔██╗ ██║██║  ██║
+# ██╔══██║██║╚██╗ ██╔╝██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║  ██║
+# ██║  ██║██║ ╚████╔╝ ███████╗██║ ╚═╝ ██║██║██║ ╚████║██████╔╝
+# ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝ 
+#
+# Neural Multi-Agent Orchestration System
+# Engine-Agnostic Architecture
+#
+# Usage:
+#   hivemind                           Interactive mode
+#   hivemind "task"                    Direct task
+#   hivemind --engine codex "task"     Use specific engine for HIVEMIND
+#   hivemind --agents claude "task"    Use specific engine for agents
+#   hivemind --preset full-codex       Use preset configuration
+#   hivemind --config                  Show current configuration
+#   hivemind --set-hivemind codex      Set HIVEMIND engine permanently
+#   hivemind --set-agents claude       Set agent engine permanently
+
+set -e
+
+HIVEMIND_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export HIVEMIND_ROOT
+
+source "$HIVEMIND_ROOT/engines/engine.sh"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+PURPLE='\033[0;35m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+HIVEMIND_ENGINE="${HIVEMIND_ENGINE:-}"
+AGENT_ENGINE="${AGENT_ENGINE:-}"
+HIVEMIND_MODEL="${HIVEMIND_MODEL:-claude-sonnet-4-20250514}"
+
+load_defaults() {
+    if [[ -z "$HIVEMIND_ENGINE" ]]; then
+        HIVEMIND_ENGINE=$(load_engine_config "hivemind")
+    fi
+    if [[ -z "$AGENT_ENGINE" ]]; then
+        AGENT_ENGINE=$(load_engine_config "agents")
+    fi
+}
+
+show_banner() {
+    echo -e "${CYAN}"
+    cat << 'EOF'
+    ██╗  ██╗██╗██╗   ██╗███████╗███╗   ███╗██╗███╗   ██╗██████╗ 
+    ██║  ██║██║██║   ██║██╔════╝████╗ ████║██║████╗  ██║██╔══██╗
+    ███████║██║██║   ██║█████╗  ██╔████╔██║██║██╔██╗ ██║██║  ██║
+    ██╔══██║██║╚██╗ ██╔╝██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║  ██║
+    ██║  ██║██║ ╚████╔╝ ███████╗██║ ╚═╝ ██║██║██║ ╚████║██████╔╝
+    ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝ 
+EOF
+    echo -e "${NC}"
+    echo -e "${PURPLE}         Neural Multi-Agent Orchestration System${NC}"
+    echo -e "${BLUE}            24 Agents • 4 Teams • Any Engine${NC}"
+    echo ""
+}
+
+show_config() {
+    echo -e "${CYAN}═══════════════════════════════════════════${NC}"
+    echo -e "${CYAN}         HIVEMIND CONFIGURATION            ${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${YELLOW}Engines:${NC}"
+    echo -e "  HIVEMIND runs on:  ${GREEN}$HIVEMIND_ENGINE${NC}"
+    echo -e "  Agents run on:     ${GREEN}$AGENT_ENGINE${NC}"
+    echo -e "  Model:             ${BLUE}$HIVEMIND_MODEL${NC}"
+    echo ""
+    echo -e "${YELLOW}Available Presets:${NC}"
+    echo -e "  ${BOLD}recommended${NC}   - codex + claude-code (default)"
+    echo -e "  ${BOLD}full-codex${NC}    - codex + codex"
+    echo -e "  ${BOLD}full-claude${NC}   - claude-code + claude-code"
+    echo -e "  ${BOLD}inverse${NC}       - claude-code + codex"
+    echo ""
+    echo -e "${YELLOW}Switch with:${NC}"
+    echo -e "  hivemind --preset full-codex"
+    echo -e "  hivemind --set-hivemind codex --set-agents claude-code"
+}
+
+apply_preset() {
+    local preset="$1"
+
+    case "$preset" in
+        recommended)
+            HIVEMIND_ENGINE="codex"
+            AGENT_ENGINE="claude-code"
+            ;;
+        full-codex)
+            HIVEMIND_ENGINE="codex"
+            AGENT_ENGINE="codex"
+            ;;
+        full-claude)
+            HIVEMIND_ENGINE="claude-code"
+            AGENT_ENGINE="claude-code"
+            ;;
+        inverse)
+            HIVEMIND_ENGINE="claude-code"
+            AGENT_ENGINE="codex"
+            ;;
+        *)
+            echo -e "${RED}Unknown preset: $preset${NC}"
+            echo "Available: recommended, full-codex, full-claude, inverse"
+            exit 1
+            ;;
+    esac
+
+    echo -e "${GREEN}Applied preset: $preset${NC}"
+    echo -e "  HIVEMIND: $HIVEMIND_ENGINE"
+    echo -e "  Agents:   $AGENT_ENGINE"
+}
+
+save_config() {
+    local key="$1"
+    local value="$2"
+
+    if command -v yq &> /dev/null; then
+        yq -i ".active.$key = \"$value\"" "$HIVEMIND_ROOT/config/engines.yaml"
+    else
+        sed -i "s/^  $key:.*$/  $key: $value/" "$HIVEMIND_ROOT/config/engines.yaml"
+    fi
+
+    echo -e "${GREEN}Saved: $key = $value${NC}"
+}
+
+init_session() {
+    export HIVEMIND_SESSION="$(date +%Y%m%d_%H%M%S)_$$"
+    mkdir -p "$HIVEMIND_ROOT/memory/sessions/$HIVEMIND_SESSION"
+    mkdir -p "$HIVEMIND_ROOT/workspace"
+    mkdir -p "$HIVEMIND_ROOT/logs"
+}
+
+build_hivemind_prompt() {
+    cat << EOF
+$(cat "$HIVEMIND_ROOT/IDENTITY.md")
+
+## ENGINE CONFIGURATION
+
+You are running on: $HIVEMIND_ENGINE
+Sub-agents run on: $AGENT_ENGINE
+
+To spawn a sub-agent, use:
+\$HIVEMIND_ROOT/bin/spawn-agent <agent-type> "<task>"
+
+The spawn-agent script will use the configured agent engine ($AGENT_ENGINE).
+
+## AGENT TYPES AVAILABLE
+
+Development: architect, backend, frontend, reviewer, writer, devops
+Security: security-architect, pentester, malware, wireless, compliance, incident
+Infrastructure: infra-architect, sysadmin, network, dba, sre, automation
+QA: qa-architect, test-auto, performance, security-test, manual-qa, test-data
+
+## WORKSPACE
+
+Agent outputs go to: \$HIVEMIND_ROOT/workspace/<agent>/<task-id>/
+Read results from: workspace/<agent>/<task-id>/result.md
+
+## SESSION
+
+Current session: $HIVEMIND_SESSION
+Session memory: \$HIVEMIND_ROOT/memory/sessions/$HIVEMIND_SESSION/
+
+EOF
+}
+
+run_hivemind() {
+    local task="$1"
+    local prompt
+    prompt="$(build_hivemind_prompt)"
+
+    export AGENT_ENGINE
+
+    run_engine "$HIVEMIND_ENGINE" "$prompt" "$task" "interactive"
+}
+
+show_status() {
+    echo -e "${CYAN}═══════════════════════════════════════════${NC}"
+    echo -e "${CYAN}           HIVEMIND SYSTEM STATUS          ${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${YELLOW}Engines:${NC}"
+    echo -e "  HIVEMIND: ${GREEN}$HIVEMIND_ENGINE${NC}"
+    echo -e "  Agents:   ${GREEN}$AGENT_ENGINE${NC}"
+    echo ""
+
+    local active
+    active=$(pgrep -f "hivemind-agent" 2>/dev/null | wc -l)
+    echo -e "${YELLOW}Active Agents:${NC} ${GREEN}$active${NC}"
+
+    echo ""
+    echo -e "${YELLOW}Teams Ready:${NC}"
+    echo -e "  ${GREEN}●${NC} Development    (6 agents)"
+    echo -e "  ${GREEN}●${NC} Security       (6 agents)"
+    echo -e "  ${GREEN}●${NC} Infrastructure (6 agents)"
+    echo -e "  ${GREEN}●${NC} QA             (6 agents)"
+}
+
+show_help() {
+    echo -e "${BOLD}HIVEMIND${NC} - Neural Multi-Agent Orchestration System"
+    echo ""
+    echo -e "${YELLOW}USAGE:${NC}"
+    echo "  hivemind                              Interactive mode"
+    echo "  hivemind \"task\"                       Direct task execution"
+    echo ""
+    echo -e "${YELLOW}ENGINE OPTIONS:${NC}"
+    echo "  --engine <engine>                     Set HIVEMIND engine (codex|claude-code)"
+    echo "  --agents <engine>                     Set agent engine (codex|claude-code)"
+    echo "  --preset <name>                       Apply preset configuration"
+    echo "  --set-hivemind <engine>               Save HIVEMIND engine to config"
+    echo "  --set-agents <engine>                 Save agent engine to config"
+    echo ""
+    echo -e "${YELLOW}PRESETS:${NC}"
+    echo "  recommended                           codex + claude-code (default)"
+    echo "  full-codex                            codex + codex"
+    echo "  full-claude                           claude-code + claude-code"
+    echo "  inverse                               claude-code + codex"
+    echo ""
+    echo -e "${YELLOW}OTHER OPTIONS:${NC}"
+    echo "  --config                              Show current configuration"
+    echo "  --status                              Show system status"
+    echo "  --help                                Show this help"
+    echo ""
+    echo -e "${YELLOW}EXAMPLES:${NC}"
+    echo "  hivemind --preset full-claude"
+    echo "  hivemind --engine codex --agents codex \"Build an API\""
+    echo "  hivemind \"Design a secure authentication system\""
+}
+
+interactive_mode() {
+    show_banner
+    load_defaults
+    init_session
+
+    echo -e "${BLUE}Engine: HIVEMIND=${GREEN}$HIVEMIND_ENGINE${BLUE} | Agents=${GREEN}$AGENT_ENGINE${NC}"
+    echo ""
+    echo -e "${GREEN}HIVEMIND ready. All teams standing by.${NC}"
+    echo -e "${BLUE}Type your request, 'config' to see settings, or 'exit' to quit.${NC}"
+    echo ""
+
+    while true; do
+        echo -ne "${PURPLE}HIVEMIND>${NC} "
+        read -r input
+
+        case "$input" in
+            exit|quit|q)
+                echo -e "${CYAN}HIVEMIND shutting down.${NC}"
+                "$HIVEMIND_ROOT/bin/kill-agents" 2>/dev/null || true
+                exit 0
+                ;;
+            config)
+                show_config
+                ;;
+            status)
+                show_status
+                ;;
+            help)
+                show_help
+                ;;
+            "")
+                continue
+                ;;
+            *)
+                echo ""
+                run_hivemind "$input"
+                echo ""
+                ;;
+        esac
+    done
+}
+
+TASK=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --engine|-e)
+            HIVEMIND_ENGINE="$2"
+            shift 2
+            ;;
+        --agents|-a)
+            AGENT_ENGINE="$2"
+            shift 2
+            ;;
+        --preset|-p)
+            load_defaults
+            apply_preset "$2"
+            shift 2
+            ;;
+        --set-hivemind)
+            save_config "hivemind" "$2"
+            shift 2
+            ;;
+        --set-agents)
+            save_config "agents" "$2"
+            shift 2
+            ;;
+        --config|-c)
+            load_defaults
+            show_config
+            exit 0
+            ;;
+        --status|-s)
+            load_defaults
+            show_status
+            exit 0
+            ;;
+        --help|-h)
+            show_help
+            exit 0
+            ;;
+        *)
+            TASK="$TASK $1"
+            shift
+            ;;
+    esac
+done
+
+load_defaults
+
+TASK=$(echo "$TASK" | xargs)
+
+if [[ -z "$TASK" ]]; then
+    interactive_mode
+else
+    show_banner
+    init_session
+    echo -e "${BLUE}Engine: HIVEMIND=${GREEN}$HIVEMIND_ENGINE${BLUE} | Agents=${GREEN}$AGENT_ENGINE${NC}"
+    echo ""
+    run_hivemind "$TASK"
+fi
+

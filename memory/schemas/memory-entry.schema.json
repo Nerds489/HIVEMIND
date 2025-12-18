@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hivemind.local/schemas/memory-entry.schema.json",
+  "title": "Memory Entry",
+  "description": "Base schema for all HIVEMIND memory entries",
+  "type": "object",
+  "required": ["id", "type", "created_by", "created_at", "content"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^mem_[a-z0-9]{12}$|^mem_[a-z_]+$",
+      "description": "Unique memory identifier (mem_ + 12 alphanumeric or reserved name)"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["factual", "procedural", "episodic", "semantic", "working"],
+      "description": "Memory classification"
+    },
+    "subtype": {
+      "type": "string",
+      "description": "Specific memory category within type"
+    },
+    "created_by": {
+      "type": "string",
+      "pattern": "^(DEV|SEC|INF|QA)-[0-9]{3}$|^COORDINATOR$|^SYSTEM$|^USER$",
+      "description": "Agent ID or system identifier"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp (ISO 8601)"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp (ISO 8601)"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "ID of agent/user who last updated"
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["global", "team", "agent", "project", "session"],
+      "description": "Memory visibility scope"
+    },
+    "scope_id": {
+      "type": ["string", "null"],
+      "description": "Specific scope identifier (team name, agent ID, project ID)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Searchable tags for indexing and retrieval"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "default": "medium",
+      "description": "Memory importance level"
+    },
+    "ttl": {
+      "type": "string",
+      "description": "Time-to-live (ISO 8601 duration or 'permanent')",
+      "examples": ["permanent", "P30D", "P7D", "PT4H"]
+    },
+    "content": {
+      "type": "object",
+      "description": "Memory payload (structure varies by type)"
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["memory", "file", "url", "agent", "project"]
+          },
+          "id": {"type": "string"},
+          "relationship": {
+            "type": "string",
+            "enum": ["related_to", "derived_from", "supersedes", "part_of", "references"]
+          }
+        },
+        "required": ["type", "id"]
+      },
+      "description": "References to related entities"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Confidence score for learned memories (0-1)"
+    },
+    "access_count": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of times this memory has been accessed"
+    },
+    "last_accessed": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Last access timestamp"
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "description": "ID of memory this replaces"
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "description": "ID of memory that replaced this"
+    }
+  }
+}

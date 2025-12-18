@@ -1,0 +1,494 @@
+{
+  "version": "1.0",
+  "last_updated": "2024-01-15",
+  "agents": {
+    "development": [
+      {
+        "id": "DEV-001",
+        "name": "Architect",
+        "role": "System Architect",
+        "team": "Development",
+        "seniority": "lead",
+        "definition": "/agents/development/architect.md",
+        "command": "/architect",
+        "keywords": ["architecture", "design", "system", "patterns", "api", "microservices", "scalability"],
+        "capabilities": [
+          "system_design",
+          "architecture_patterns",
+          "api_design",
+          "technical_decisions",
+          "documentation"
+        ],
+        "handoff_targets": ["DEV-002", "DEV-003", "INFRA-001"],
+        "escalation_path": ["COORDINATOR"],
+        "consults": ["SEC-001", "QA-001", "INFRA-001"]
+      },
+      {
+        "id": "DEV-002",
+        "name": "Backend Developer",
+        "role": "Backend Developer",
+        "team": "Development",
+        "seniority": "senior",
+        "definition": "/agents/development/backend-developer.md",
+        "command": null,
+        "keywords": ["backend", "api", "server", "database", "python", "node", "java", "rest", "graphql"],
+        "capabilities": [
+          "backend_development",
+          "api_implementation",
+          "database_integration",
+          "testing",
+          "debugging"
+        ],
+        "handoff_targets": ["DEV-004", "QA-002"],
+        "escalation_path": ["DEV-001", "COORDINATOR"],
+        "consults": ["INFRA-004", "SEC-002"]
+      },
+      {
+        "id": "DEV-003",
+        "name": "Frontend Developer",
+        "role": "Frontend Developer",
+        "team": "Development",
+        "seniority": "senior",
+        "definition": "/agents/development/frontend-developer.md",
+        "command": null,
+        "keywords": ["frontend", "ui", "ux", "react", "vue", "angular", "css", "javascript", "typescript"],
+        "capabilities": [
+          "frontend_development",
+          "ui_implementation",
+          "responsive_design",
+          "accessibility",
+          "testing"
+        ],
+        "handoff_targets": ["DEV-004", "QA-005"],
+        "escalation_path": ["DEV-001", "COORDINATOR"],
+        "consults": ["DEV-002", "QA-002"]
+      },
+      {
+        "id": "DEV-004",
+        "name": "Code Reviewer",
+        "role": "Code Reviewer",
+        "team": "Development",
+        "seniority": "senior",
+        "definition": "/agents/development/code-reviewer.md",
+        "command": "/reviewer",
+        "keywords": ["review", "code quality", "pr", "pull request", "best practices", "standards"],
+        "capabilities": [
+          "code_review",
+          "quality_assessment",
+          "security_review",
+          "performance_review",
+          "feedback"
+        ],
+        "handoff_targets": ["QA-004", "QA-002"],
+        "escalation_path": ["DEV-001", "COORDINATOR"],
+        "consults": ["SEC-002", "QA-001"]
+      },
+      {
+        "id": "DEV-005",
+        "name": "Technical Writer",
+        "role": "Technical Writer",
+        "team": "Development",
+        "seniority": "mid",
+        "definition": "/agents/development/technical-writer.md",
+        "command": null,
+        "keywords": ["documentation", "docs", "readme", "api docs", "guide", "tutorial", "manual"],
+        "capabilities": [
+          "technical_writing",
+          "api_documentation",
+          "user_guides",
+          "tutorials",
+          "diagrams"
+        ],
+        "handoff_targets": ["DEV-001"],
+        "escalation_path": ["DEV-001", "COORDINATOR"],
+        "consults": ["DEV-002", "DEV-003"]
+      },
+      {
+        "id": "DEV-006",
+        "name": "DevOps Liaison",
+        "role": "DevOps Liaison",
+        "team": "Development",
+        "seniority": "senior",
+        "definition": "/agents/development/devops-liaison.md",
+        "command": null,
+        "keywords": ["ci", "cd", "pipeline", "jenkins", "github actions", "deployment", "build"],
+        "capabilities": [
+          "ci_cd_setup",
+          "pipeline_management",
+          "deployment_automation",
+          "developer_experience",
+          "tooling"
+        ],
+        "handoff_targets": ["INFRA-005", "INFRA-006"],
+        "escalation_path": ["DEV-001", "INFRA-001", "COORDINATOR"],
+        "consults": ["INFRA-005", "QA-002"]
+      }
+    ],
+    "security": [
+      {
+        "id": "SEC-001",
+        "name": "Security Architect",
+        "role": "Security Architect",
+        "team": "Security",
+        "seniority": "lead",
+        "definition": "/agents/security/security-architect.md",
+        "command": null,
+        "keywords": ["security architecture", "threat model", "security design", "compliance", "risk"],
+        "capabilities": [
+          "security_design",
+          "threat_modeling",
+          "security_requirements",
+          "compliance_architecture",
+          "risk_assessment"
+        ],
+        "handoff_targets": ["SEC-002", "SEC-005"],
+        "escalation_path": ["COORDINATOR"],
+        "consults": ["DEV-001", "INFRA-001", "QA-001"]
+      },
+      {
+        "id": "SEC-002",
+        "name": "Penetration Tester",
+        "role": "Penetration Tester",
+        "team": "Security",
+        "seniority": "senior",
+        "definition": "/agents/security/penetration-tester.md",
+        "command": "/pentest",
+        "keywords": ["pentest", "penetration", "exploit", "vulnerability", "attack", "hacking", "security testing"],
+        "capabilities": [
+          "penetration_testing",
+          "vulnerability_assessment",
+          "exploitation",
+          "security_scanning",
+          "reporting"
+        ],
+        "handoff_targets": ["SEC-001", "QA-004"],
+        "escalation_path": ["SEC-001", "COORDINATOR"],
+        "consults": ["SEC-003", "SEC-004", "DEV-002"]
+      },
+      {
+        "id": "SEC-003",
+        "name": "Malware Analyst",
+        "role": "Malware Analyst",
+        "team": "Security",
+        "seniority": "senior",
+        "definition": "/agents/security/malware-analyst.md",
+        "command": null,
+        "keywords": ["malware", "reverse engineering", "binary", "analysis", "threat", "ioc"],
+        "capabilities": [
+          "malware_analysis",
+          "reverse_engineering",
+          "threat_intelligence",
+          "indicator_extraction",
+          "behavioral_analysis"
+        ],
+        "handoff_targets": ["SEC-006", "SEC-001"],
+        "escalation_path": ["SEC-001", "COORDINATOR"],
+        "consults": ["SEC-002", "SEC-006"]
+      },
+      {
+        "id": "SEC-004",
+        "name": "Wireless Security Expert",
+        "role": "Wireless Security Expert",
+        "team": "Security",
+        "seniority": "senior",
+        "definition": "/agents/security/wireless-security-expert.md",
+        "command": null,
+        "keywords": ["wireless", "wifi", "bluetooth", "rf", "iot", "wpa", "network security"],
+        "capabilities": [
+          "wireless_testing",
+          "wifi_security",
+          "bluetooth_security",
+          "rf_analysis",
+          "iot_security"
+        ],
+        "handoff_targets": ["SEC-002", "INFRA-003"],
+        "escalation_path": ["SEC-001", "COORDINATOR"],
+        "consults": ["SEC-002", "INFRA-003"]
+      },
+      {
+        "id": "SEC-005",
+        "name": "Compliance Auditor",
+        "role": "Compliance Auditor",
+        "team": "Security",
+        "seniority": "senior",
+        "definition": "/agents/security/compliance-auditor.md",
+        "command": null,
+        "keywords": ["compliance", "audit", "gdpr", "soc2", "pci", "hipaa", "iso", "regulatory"],
+        "capabilities": [
+          "compliance_assessment",
+          "audit_execution",
+          "gap_analysis",
+          "evidence_collection",
+          "remediation_guidance"
+        ],
+        "handoff_targets": ["SEC-001"],
+        "escalation_path": ["SEC-001", "COORDINATOR"],
+        "consults": ["DEV-001", "INFRA-001", "QA-001"]
+      },
+      {
+        "id": "SEC-006",
+        "name": "Incident Responder",
+        "role": "Incident Responder",
+        "team": "Security",
+        "seniority": "senior",
+        "definition": "/agents/security/incident-responder.md",
+        "command": "/incident",
+        "keywords": ["incident", "breach", "forensics", "response", "containment", "recovery"],
+        "capabilities": [
+          "incident_handling",
+          "forensic_analysis",
+          "containment",
+          "eradication",
+          "recovery"
+        ],
+        "handoff_targets": ["INFRA-005", "SEC-001"],
+        "escalation_path": ["SEC-001", "COORDINATOR"],
+        "consults": ["SEC-003", "INFRA-002", "INFRA-005"]
+      }
+    ],
+    "infrastructure": [
+      {
+        "id": "INFRA-001",
+        "name": "Infrastructure Architect",
+        "role": "Infrastructure Architect",
+        "team": "Infrastructure",
+        "seniority": "lead",
+        "definition": "/agents/infrastructure/infrastructure-architect.md",
+        "command": null,
+        "keywords": ["infrastructure", "cloud", "aws", "azure", "gcp", "architecture", "capacity"],
+        "capabilities": [
+          "infrastructure_design",
+          "cloud_architecture",
+          "capacity_planning",
+          "cost_optimization",
+          "disaster_recovery"
+        ],
+        "handoff_targets": ["INFRA-002", "INFRA-006"],
+        "escalation_path": ["COORDINATOR"],
+        "consults": ["DEV-001", "SEC-001", "INFRA-005"]
+      },
+      {
+        "id": "INFRA-002",
+        "name": "Systems Administrator",
+        "role": "Systems Administrator",
+        "team": "Infrastructure",
+        "seniority": "senior",
+        "definition": "/agents/infrastructure/systems-administrator.md",
+        "command": null,
+        "keywords": ["sysadmin", "linux", "windows", "server", "configuration", "administration"],
+        "capabilities": [
+          "system_administration",
+          "server_management",
+          "configuration",
+          "troubleshooting",
+          "security_hardening"
+        ],
+        "handoff_targets": ["INFRA-005"],
+        "escalation_path": ["INFRA-001", "COORDINATOR"],
+        "consults": ["INFRA-003", "SEC-002"]
+      },
+      {
+        "id": "INFRA-003",
+        "name": "Network Engineer",
+        "role": "Network Engineer",
+        "team": "Infrastructure",
+        "seniority": "senior",
+        "definition": "/agents/infrastructure/network-engineer.md",
+        "command": null,
+        "keywords": ["network", "firewall", "dns", "routing", "vpn", "load balancer", "tcp", "ip"],
+        "capabilities": [
+          "network_design",
+          "firewall_management",
+          "routing_configuration",
+          "vpn_setup",
+          "troubleshooting"
+        ],
+        "handoff_targets": ["INFRA-001", "SEC-001"],
+        "escalation_path": ["INFRA-001", "COORDINATOR"],
+        "consults": ["SEC-004", "INFRA-002"]
+      },
+      {
+        "id": "INFRA-004",
+        "name": "Database Administrator",
+        "role": "Database Administrator",
+        "team": "Infrastructure",
+        "seniority": "senior",
+        "definition": "/agents/infrastructure/database-administrator.md",
+        "command": null,
+        "keywords": ["database", "sql", "postgresql", "mysql", "mongodb", "optimization", "backup", "replication"],
+        "capabilities": [
+          "database_management",
+          "query_optimization",
+          "backup_recovery",
+          "replication_setup",
+          "performance_tuning"
+        ],
+        "handoff_targets": ["DEV-002"],
+        "escalation_path": ["INFRA-001", "COORDINATOR"],
+        "consults": ["DEV-002", "QA-003"]
+      },
+      {
+        "id": "INFRA-005",
+        "name": "Site Reliability Engineer",
+        "role": "Site Reliability Engineer",
+        "team": "Infrastructure",
+        "seniority": "senior",
+        "definition": "/agents/infrastructure/site-reliability-engineer.md",
+        "command": "/sre",
+        "keywords": ["sre", "reliability", "monitoring", "alerting", "slo", "sli", "oncall", "incident"],
+        "capabilities": [
+          "reliability_engineering",
+          "monitoring_setup",
+          "incident_response",
+          "capacity_planning",
+          "automation"
+        ],
+        "handoff_targets": ["INFRA-002", "DEV-006"],
+        "escalation_path": ["INFRA-001", "COORDINATOR"],
+        "consults": ["SEC-006", "QA-003"]
+      },
+      {
+        "id": "INFRA-006",
+        "name": "Automation Engineer",
+        "role": "Automation Engineer",
+        "team": "Infrastructure",
+        "seniority": "senior",
+        "definition": "/agents/infrastructure/automation-engineer.md",
+        "command": null,
+        "keywords": ["automation", "terraform", "ansible", "puppet", "iac", "infrastructure as code"],
+        "capabilities": [
+          "infrastructure_automation",
+          "configuration_management",
+          "iac_development",
+          "pipeline_automation",
+          "scripting"
+        ],
+        "handoff_targets": ["INFRA-001", "DEV-006"],
+        "escalation_path": ["INFRA-001", "COORDINATOR"],
+        "consults": ["INFRA-002", "INFRA-005"]
+      }
+    ],
+    "qa": [
+      {
+        "id": "QA-001",
+        "name": "QA Architect",
+        "role": "QA Architect",
+        "team": "QA",
+        "seniority": "lead",
+        "definition": "/agents/qa/qa-architect.md",
+        "command": null,
+        "keywords": ["test strategy", "qa process", "quality", "test architecture", "testing framework"],
+        "capabilities": [
+          "test_strategy",
+          "qa_process_design",
+          "quality_gates",
+          "framework_selection",
+          "metrics_definition"
+        ],
+        "handoff_targets": ["QA-002", "QA-003"],
+        "escalation_path": ["COORDINATOR"],
+        "consults": ["DEV-001", "SEC-001", "INFRA-001"]
+      },
+      {
+        "id": "QA-002",
+        "name": "Test Automation Engineer",
+        "role": "Test Automation Engineer",
+        "team": "QA",
+        "seniority": "senior",
+        "definition": "/agents/qa/test-automation-engineer.md",
+        "command": null,
+        "keywords": ["automation", "selenium", "playwright", "cypress", "test framework", "ci integration"],
+        "capabilities": [
+          "test_automation",
+          "framework_development",
+          "ci_integration",
+          "test_maintenance",
+          "reporting"
+        ],
+        "handoff_targets": ["QA-001", "DEV-006"],
+        "escalation_path": ["QA-001", "COORDINATOR"],
+        "consults": ["DEV-002", "DEV-003"]
+      },
+      {
+        "id": "QA-003",
+        "name": "Performance Tester",
+        "role": "Performance Tester",
+        "team": "QA",
+        "seniority": "senior",
+        "definition": "/agents/qa/performance-tester.md",
+        "command": null,
+        "keywords": ["performance", "load test", "stress test", "jmeter", "k6", "benchmark", "scalability"],
+        "capabilities": [
+          "performance_testing",
+          "load_testing",
+          "stress_testing",
+          "bottleneck_analysis",
+          "optimization_recommendations"
+        ],
+        "handoff_targets": ["INFRA-005", "DEV-002"],
+        "escalation_path": ["QA-001", "COORDINATOR"],
+        "consults": ["INFRA-004", "INFRA-005"]
+      },
+      {
+        "id": "QA-004",
+        "name": "Security Tester",
+        "role": "Security Tester",
+        "team": "QA",
+        "seniority": "senior",
+        "definition": "/agents/qa/security-tester.md",
+        "command": null,
+        "keywords": ["security testing", "sast", "dast", "vulnerability scan", "owasp", "security scan"],
+        "capabilities": [
+          "security_testing",
+          "sast_analysis",
+          "dast_scanning",
+          "vulnerability_validation",
+          "compliance_testing"
+        ],
+        "handoff_targets": ["SEC-002", "DEV-004"],
+        "escalation_path": ["QA-001", "SEC-001", "COORDINATOR"],
+        "consults": ["SEC-002", "SEC-001"]
+      },
+      {
+        "id": "QA-005",
+        "name": "Manual QA Tester",
+        "role": "Manual QA Tester",
+        "team": "QA",
+        "seniority": "mid",
+        "definition": "/agents/qa/manual-qa-tester.md",
+        "command": null,
+        "keywords": ["manual testing", "exploratory", "uat", "user acceptance", "regression", "bug"],
+        "capabilities": [
+          "manual_testing",
+          "exploratory_testing",
+          "user_acceptance",
+          "regression_testing",
+          "bug_reporting"
+        ],
+        "handoff_targets": ["QA-002", "DEV-002", "DEV-003"],
+        "escalation_path": ["QA-001", "COORDINATOR"],
+        "consults": ["DEV-003", "DEV-005"]
+      },
+      {
+        "id": "QA-006",
+        "name": "Test Data Manager",
+        "role": "Test Data Manager",
+        "team": "QA",
+        "seniority": "mid",
+        "definition": "/agents/qa/test-data-manager.md",
+        "command": null,
+        "keywords": ["test data", "fixtures", "mock", "environment", "data generation", "masking"],
+        "capabilities": [
+          "test_data_management",
+          "data_generation",
+          "environment_setup",
+          "data_masking",
+          "fixtures_management"
+        ],
+        "handoff_targets": ["QA-002", "INFRA-004"],
+        "escalation_path": ["QA-001", "COORDINATOR"],
+        "consults": ["INFRA-004", "SEC-005"]
+      }
+    ]
+  }
+}

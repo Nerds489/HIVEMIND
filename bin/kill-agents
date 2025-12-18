@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# Kill spawned agent processes (best-effort)
+
+set -euo pipefail
+
+HIVEMIND_ROOT="${HIVEMIND_ROOT:-$(dirname "$(dirname "$(realpath "$0")")")}"
+
+shopt -s nullglob
+
+pids=()
+for pidfile in "$HIVEMIND_ROOT"/workspace/*/*/pid.txt; do
+  pid="$(cat "$pidfile" 2>/dev/null || true)"
+  if [[ -n "$pid" ]]; then
+    pids+=("$pid")
+  fi
+done
+
+if [[ ${#pids[@]} -eq 0 ]]; then
+  exit 0
+fi
+
+for pid in "${pids[@]}"; do
+  kill "$pid" 2>/dev/null || true
+done
+

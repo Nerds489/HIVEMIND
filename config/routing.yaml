@@ -1,0 +1,28 @@
+# Task routing rules (minimal engine-agnostic defaults)
+
+routing:
+  rules:
+    - match: ["architecture", "design", "system", "blueprint"]
+      agent: "architect"
+    - match: ["api", "backend", "server", "endpoint"]
+      agent: "backend"
+    - match: ["ui", "frontend", "react", "vue", "css"]
+      agent: "frontend"
+    - match: ["review", "pr", "code review"]
+      agent: "reviewer"
+    - match: ["docs", "documentation", "readme"]
+      agent: "writer"
+    - match: ["deploy", "ci", "cd", "pipeline"]
+      agent: "devops"
+    - match: ["security", "vulnerability", "threat model"]
+      agent: "security-architect"
+    - match: ["pentest", "exploit", "attack"]
+      agent: "pentester"
+    - match: ["incident", "breach", "forensics"]
+      agent: "incident"
+    - match: ["database", "sql", "postgres"]
+      agent: "dba"
+    - match: ["test", "testing", "qa"]
+      agent: "qa-architect"
+  default_agent: "architect"
+

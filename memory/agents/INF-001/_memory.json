@@ -1,0 +1,54 @@
+{
+  "agent_id": "INF-001",
+  "agent_name": "Infrastructure Architect",
+  "team": "infrastructure",
+  "memory_profile": {
+    "version": "1.0",
+    "created_at": "2025-12-18T00:00:00Z",
+    "last_updated": "2025-12-18T00:00:00Z"
+  },
+  "memory_access": {
+    "can_read": ["global", "team:infrastructure", "team:development", "agent:INF-001", "project:*"],
+    "can_write": ["global", "team:infrastructure", "agent:INF-001", "project:*"],
+    "primary_memory_types": ["factual", "procedural", "episodic"],
+    "auto_load_tags": ["infrastructure", "cloud", "deployment", "architecture", "capacity"]
+  },
+  "context_loading": {
+    "priority_memories": [],
+    "always_load": [
+      {"scope": "global", "tags": ["infrastructure", "critical"]},
+      {"scope": "team:infrastructure", "tags": ["standards", "topology"]}
+    ],
+    "load_on_trigger": {
+      "deploy": ["environments", "runbooks", "configurations"],
+      "scale": ["capacity", "metrics", "limits"],
+      "outage": ["incidents", "dependencies", "contacts"]
+    },
+    "max_context_entries": 20,
+    "prefer_recent": true
+  },
+  "memory_creation": {
+    "auto_capture": {
+      "infrastructure_decisions": true,
+      "topology_changes": true,
+      "capacity_findings": true,
+      "incident_learnings": true
+    },
+    "default_tags": ["infrastructure", "INF-001"],
+    "suggest_to_global": ["infrastructure-decisions", "environment-info"],
+    "requires_validation": ["global"]
+  },
+  "learned_context": {
+    "project_expertise": {},
+    "known_environments": [],
+    "provider_preferences": [],
+    "interaction_notes": []
+  },
+  "statistics": {
+    "memories_created": 0,
+    "memories_accessed": 0,
+    "memories_updated": 0,
+    "most_used_tags": [],
+    "most_accessed_memories": []
+  }
+}

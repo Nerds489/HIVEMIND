@@ -1,0 +1,58 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-12-18T00:00:00Z",
+  "scope": "team",
+  "scope_id": "development",
+  "entry_count": 3,
+  "entries": [
+    {
+      "id": "mem_dev_codebase",
+      "type": "factual",
+      "subtype": "codebase-knowledge",
+      "tags": ["codebase", "knowledge", "development", "structure"],
+      "summary": "Knowledge about codebase structure, patterns, and conventions",
+      "priority": "high",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "codebase-knowledge.json"
+    },
+    {
+      "id": "mem_dev_archdec",
+      "type": "semantic",
+      "subtype": "architecture-decisions",
+      "tags": ["architecture", "decisions", "adr", "design", "permanent"],
+      "summary": "Architecture Decision Records (ADRs) for the codebase",
+      "priority": "critical",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "architecture-decisions.json"
+    },
+    {
+      "id": "mem_dev_techdebt",
+      "type": "factual",
+      "subtype": "tech-debt",
+      "tags": ["tech-debt", "refactoring", "improvement", "backlog"],
+      "summary": "Technical debt tracking and improvement opportunities",
+      "priority": "medium",
+      "created_at": "2025-12-18T00:00:00Z",
+      "file_path": "tech-debt.json"
+    }
+  ],
+  "tag_index": {
+    "codebase": ["mem_dev_codebase"],
+    "knowledge": ["mem_dev_codebase"],
+    "development": ["mem_dev_codebase"],
+    "structure": ["mem_dev_codebase"],
+    "architecture": ["mem_dev_archdec"],
+    "decisions": ["mem_dev_archdec"],
+    "adr": ["mem_dev_archdec"],
+    "design": ["mem_dev_archdec"],
+    "permanent": ["mem_dev_archdec"],
+    "tech-debt": ["mem_dev_techdebt"],
+    "refactoring": ["mem_dev_techdebt"],
+    "improvement": ["mem_dev_techdebt"],
+    "backlog": ["mem_dev_techdebt"]
+  },
+  "type_index": {
+    "factual": ["mem_dev_codebase", "mem_dev_techdebt"],
+    "semantic": ["mem_dev_archdec"]
+  }
+}

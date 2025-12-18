@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-12-18T00:00:00Z",
+  "active_session": null,
+  "total_sessions": 0,
+  "sessions": [],
+  "statistics": {
+    "avg_duration_minutes": 0,
+    "avg_tasks_per_session": 0,
+    "total_tasks_completed": 0
+  }
+}

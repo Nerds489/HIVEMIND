@@ -1,0 +1,32 @@
+# Agent registry (engine-agnostic)
+
+agents:
+  dev:
+    - architect
+    - backend
+    - frontend
+    - reviewer
+    - writer
+    - devops
+  security:
+    - architect
+    - pentester
+    - malware
+    - wireless
+    - compliance
+    - incident
+  infrastructure:
+    - architect
+    - sysadmin
+    - network
+    - dba
+    - sre
+    - automation
+  qa:
+    - architect
+    - automation
+    - performance
+    - security
+    - manual
+    - data
+

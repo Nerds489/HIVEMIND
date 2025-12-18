@@ -1,0 +1,21 @@
+{
+  "id": null,
+  "type": "procedural",
+  "subtype": "project-learnings",
+  "created_by": null,
+  "created_at": null,
+  "updated_at": null,
+  "scope": "project",
+  "scope_id": null,
+  "tags": ["project", "learnings", "procedures"],
+  "priority": "high",
+  "ttl": "permanent",
+  "content": {
+    "description": "Learnings and procedures specific to this project",
+    "learnings": [],
+    "what_works": [],
+    "what_doesnt": []
+  },
+  "access_count": 0,
+  "last_accessed": null
+}

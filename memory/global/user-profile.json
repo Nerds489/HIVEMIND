@@ -1,0 +1,43 @@
+{
+  "id": "mem_userprofile0",
+  "type": "factual",
+  "subtype": "user-profile",
+  "created_by": "SYSTEM",
+  "created_at": "2025-12-18T00:00:00Z",
+  "updated_at": "2025-12-18T00:00:00Z",
+  "scope": "global",
+  "scope_id": null,
+  "tags": ["user", "profile", "preferences", "permanent"],
+  "priority": "critical",
+  "ttl": "permanent",
+  "content": {
+    "name": null,
+    "preferences": {
+      "communication_style": null,
+      "detail_level": "standard",
+      "output_format": "markdown",
+      "confirmation_level": "minimal",
+      "code_style": {
+        "indentation": "spaces",
+        "indent_size": 2,
+        "quotes": "single",
+        "semicolons": false
+      }
+    },
+    "known_projects": [],
+    "expertise_areas": [],
+    "tools_used": [],
+    "languages": [],
+    "frameworks": [],
+    "timezone": null,
+    "notes": [],
+    "history": {
+      "first_session": null,
+      "total_sessions": 0,
+      "total_tasks": 0,
+      "favorite_agents": []
+    }
+  },
+  "access_count": 0,
+  "last_accessed": null
+}

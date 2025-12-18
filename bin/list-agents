@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# List available agent types (static list)
+
+set -euo pipefail
+
+cat <<'EOF'
+Development: architect, backend, frontend, reviewer, writer, devops
+Security: security-architect, pentester, malware, wireless, compliance, incident
+Infrastructure: infra-architect, sysadmin, network, dba, sre, automation
+QA: qa-architect, test-auto, performance, security-test, manual-qa, test-data
+EOF
+

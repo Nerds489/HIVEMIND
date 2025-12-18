@@ -1,0 +1,26 @@
+{
+  "id": null,
+  "type": "factual",
+  "subtype": "project-context",
+  "created_by": null,
+  "created_at": null,
+  "updated_at": null,
+  "scope": "project",
+  "scope_id": null,
+  "tags": ["project", "context", "overview"],
+  "priority": "high",
+  "ttl": "permanent",
+  "content": {
+    "name": null,
+    "description": null,
+    "repository": null,
+    "tech_stack": [],
+    "team_members": [],
+    "key_files": [],
+    "conventions": {},
+    "constraints": [],
+    "goals": []
+  },
+  "access_count": 0,
+  "last_accessed": null
+}

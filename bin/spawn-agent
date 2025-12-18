@@ -1,0 +1,117 @@
+#!/bin/bash
+#
+# Spawn a sub-agent using configured engine
+#
+# Usage: spawn-agent <agent-type> "<task>"
+
+set -euo pipefail
+
+HIVEMIND_ROOT="${HIVEMIND_ROOT:-$(dirname "$(dirname "$(realpath "$0")")")}"
+source "$HIVEMIND_ROOT/engines/engine.sh"
+
+AGENT_TYPE="${1:-}"
+TASK="${2:-}"
+TASK_ID="$(date +%s)_$$"
+
+AGENT_ENGINE="${AGENT_ENGINE:-$(load_engine_config "agents")}"
+
+if [[ -z "$AGENT_TYPE" ]] || [[ -z "$TASK" ]]; then
+    echo "Usage: spawn-agent <agent-type> \"<task>\"" >&2
+    "$HIVEMIND_ROOT/bin/list-agents" >&2 || true
+    exit 1
+fi
+
+get_agent_prompt_file() {
+    local type="$1"
+    case "$type" in
+        architect)          echo "dev/architect.md" ;;
+        backend)            echo "dev/backend.md" ;;
+        frontend)           echo "dev/frontend.md" ;;
+        reviewer)           echo "dev/reviewer.md" ;;
+        writer)             echo "dev/writer.md" ;;
+        devops)             echo "dev/devops.md" ;;
+        security-architect) echo "security/architect.md" ;;
+        pentester)          echo "security/pentester.md" ;;
+        malware)            echo "security/malware.md" ;;
+        wireless)           echo "security/wireless.md" ;;
+        compliance)         echo "security/compliance.md" ;;
+        incident)           echo "security/incident.md" ;;
+        infra-architect)    echo "infrastructure/architect.md" ;;
+        sysadmin)           echo "infrastructure/sysadmin.md" ;;
+        network)            echo "infrastructure/network.md" ;;
+        dba)                echo "infrastructure/dba.md" ;;
+        sre)                echo "infrastructure/sre.md" ;;
+        automation)         echo "infrastructure/automation.md" ;;
+        qa-architect)       echo "qa/architect.md" ;;
+        test-auto)          echo "qa/automation.md" ;;
+        performance)        echo "qa/performance.md" ;;
+        security-test)      echo "qa/security.md" ;;
+        manual-qa)          echo "qa/manual.md" ;;
+        test-data)          echo "qa/data.md" ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
+PROMPT_FILE="$(get_agent_prompt_file "$AGENT_TYPE")"
+if [[ -z "$PROMPT_FILE" ]]; then
+    echo "Unknown agent type: $AGENT_TYPE" >&2
+    "$HIVEMIND_ROOT/bin/list-agents" >&2 || true
+    exit 1
+fi
+
+FULL_PROMPT_PATH="$HIVEMIND_ROOT/agents/$PROMPT_FILE"
+if [[ ! -f "$FULL_PROMPT_PATH" ]]; then
+    echo "Agent prompt not found: $FULL_PROMPT_PATH" >&2
+    exit 1
+fi
+
+WORKSPACE="$HIVEMIND_ROOT/workspace/$AGENT_TYPE/$TASK_ID"
+mkdir -p "$WORKSPACE/code" "$WORKSPACE/artifacts"
+
+FULL_PROMPT=$(cat << EOF
+$(cat "$HIVEMIND_ROOT/agents/base-prompt.md")
+
+---
+
+$(cat "$FULL_PROMPT_PATH")
+
+---
+
+TASK: $TASK
+
+WORKSPACE: $WORKSPACE
+- Write main result to: $WORKSPACE/result.md
+- Write code to: $WORKSPACE/code/
+- Write other files to: $WORKSPACE/artifacts/
+- When done, write DONE to: $WORKSPACE/status.txt
+
+Execute now.
+EOF
+)
+
+ENGINE_CMD="$(get_engine_command "$AGENT_ENGINE")"
+ENGINE_PRINT_FLAG="$(get_engine_flags "$AGENT_ENGINE" "print")"
+ENGINE_SYSTEM_FLAG="$(get_engine_flags "$AGENT_ENGINE" "system")"
+
+$ENGINE_CMD $ENGINE_PRINT_FLAG \
+    $ENGINE_SYSTEM_FLAG "$FULL_PROMPT" \
+    "Execute the assigned task" \
+    > "$WORKSPACE/stdout.log" 2>&1 &
+
+AGENT_PID=$!
+echo "$AGENT_PID" > "$WORKSPACE/pid.txt"
+echo "$AGENT_ENGINE" > "$WORKSPACE/engine.txt"
+
+cat << EOF
+{
+  "agent": "$AGENT_TYPE",
+  "task_id": "$TASK_ID",
+  "pid": $AGENT_PID,
+  "engine": "$AGENT_ENGINE",
+  "workspace": "$WORKSPACE",
+  "status": "spawned"
+}
+EOF
+

@@ -1,0 +1,19 @@
+{
+  "id": null,
+  "type": "semantic",
+  "subtype": "project-decisions",
+  "created_by": null,
+  "created_at": null,
+  "updated_at": null,
+  "scope": "project",
+  "scope_id": null,
+  "tags": ["project", "decisions", "adr", "permanent"],
+  "priority": "critical",
+  "ttl": "permanent",
+  "content": {
+    "description": "Architecture and design decisions for this project",
+    "decisions": []
+  },
+  "access_count": 0,
+  "last_accessed": null
+}

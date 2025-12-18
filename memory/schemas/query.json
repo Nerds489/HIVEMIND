@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hivemind.local/schemas/query.json",
+  "title": "Memory Query",
+  "description": "Schema for memory query requests",
+  "type": "object",
+  "properties": {
+    "query_id": {
+      "type": "string",
+      "description": "Unique query identifier"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Query timestamp"
+    },
+    "requester": {
+      "type": "string",
+      "description": "Agent or user making the query"
+    },
+    "text": {
+      "type": "string",
+      "description": "Free-text search query"
+    },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["factual", "procedural", "episodic", "semantic", "working"]
+          },
+          "description": "Filter by memory type"
+        },
+        "scope": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Filter by scope (global, team:name, agent:id, project:id)"
+        },
+        "tags": {
+          "type": "object",
+          "properties": {
+            "include": {"type": "array", "items": {"type": "string"}},
+            "exclude": {"type": "array", "items": {"type": "string"}},
+            "match": {
+              "type": "string",
+              "enum": ["all", "any"],
+              "default": "any"
+            }
+          },
+          "description": "Tag filters"
+        },
+        "created_by": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Filter by creator"
+        },
+        "created_after": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created after this date"
+        },
+        "created_before": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Created before this date"
+        },
+        "updated_after": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "priority": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["critical", "high", "normal", "low"]
+          }
+        },
+        "lifecycle": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["active", "aging", "archived"]
+          },
+          "default": ["active"]
+        },
+        "project": {
+          "type": "string",
+          "description": "Filter to specific project"
+        },
+        "references": {
+          "type": "string",
+          "description": "Memories that reference this ID"
+        },
+        "referenced_by": {
+          "type": "string",
+          "description": "Memories referenced by this ID"
+        }
+      }
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 10,
+          "description": "Maximum results to return"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Results to skip (pagination)"
+        },
+        "sort": {
+          "type": "string",
+          "enum": ["relevance", "created_at", "updated_at", "access_count", "priority"],
+          "default": "relevance",
+          "description": "Sort order"
+        },
+        "sort_direction": {
+          "type": "string",
+          "enum": ["asc", "desc"],
+          "default": "desc"
+        },
+        "include_archived": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include archived memories"
+        },
+        "include_content": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include full content or just metadata"
+        },
+        "summarize": {
+          "type": "boolean",
+          "default": false,
+          "description": "Summarize long content"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["full", "summary", "ids_only", "count"],
+          "default": "full",
+          "description": "Response format"
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "current_task": {"type": "string"},
+        "current_project": {"type": "string"},
+        "related_memories": {"type": "array", "items": {"type": "string"}},
+        "purpose": {"type": "string"}
+      },
+      "description": "Context to improve relevance scoring"
+    }
+  }
+}

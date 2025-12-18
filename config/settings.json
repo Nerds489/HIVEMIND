@@ -1,0 +1,157 @@
+{
+  "version": "1.0",
+  "system": {
+    "name": "HIVEMIND",
+    "description": "Multi-Agent Orchestration System",
+    "total_agents": 24,
+    "total_teams": 4
+  },
+  "paths": {
+    "agents": "/agents",
+    "teams": "/teams",
+    "protocols": "/protocols",
+    "workflows": "/workflows",
+    "orchestration": "/orchestration",
+    "config": "/config",
+    "commands": "/.claude/commands",
+    "artifacts": "/artifacts"
+  },
+  "defaults": {
+    "message_priority": "P3",
+    "escalation_timeout_minutes": 60,
+    "handoff_acknowledgment_timeout_minutes": 30,
+    "status_update_interval_minutes": {
+      "P0": 15,
+      "P1": 30,
+      "P2": 60,
+      "P3": 240,
+      "P4": 480
+    }
+  },
+  "quality_gates": {
+    "code_coverage_threshold": 80,
+    "test_pass_rate_threshold": 100,
+    "security_scan_threshold": "no_critical_high",
+    "review_approvals_required": {
+      "standard": 1,
+      "security_sensitive": 2,
+      "architecture": 2,
+      "critical_system": 3
+    }
+  },
+  "security": {
+    "classification_levels": [
+      "restricted",
+      "confidential",
+      "internal",
+      "public"
+    ],
+    "default_classification": "internal",
+    "audit_retention_years": 7,
+    "bypass_requires_approval": true,
+    "bypass_followup_hours": 24
+  },
+  "incident_response": {
+    "severity_levels": ["SEV1", "SEV2", "SEV3", "SEV4"],
+    "response_time_targets_minutes": {
+      "SEV1": 5,
+      "SEV2": 15,
+      "SEV3": 60,
+      "SEV4": 480
+    },
+    "escalation_targets_minutes": {
+      "SEV1": 15,
+      "SEV2": 30,
+      "SEV3": 120,
+      "SEV4": 1440
+    }
+  },
+  "change_management": {
+    "change_windows": {
+      "production": {
+        "allowed_days": ["Tuesday", "Wednesday", "Thursday"],
+        "allowed_hours_utc": "02:00-06:00",
+        "emergency_allowed": true
+      },
+      "staging": {
+        "allowed_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "allowed_hours_utc": "08:00-18:00",
+        "emergency_allowed": true
+      },
+      "development": {
+        "allowed_days": "any",
+        "allowed_hours_utc": "any",
+        "emergency_allowed": false
+      }
+    },
+    "approval_requirements": {
+      "standard": ["INFRA-001"],
+      "normal": ["INFRA-001", "team_lead"],
+      "security": ["INFRA-001", "SEC-001"],
+      "emergency": ["INFRA-001"]
+    }
+  },
+  "metrics": {
+    "targets": {
+      "gate_pass_rate": 90,
+      "bypass_rate_max": 5,
+      "average_gate_time_hours": 4,
+      "handoff_acceptance_rate": 95,
+      "escalation_resolution_rate": 95,
+      "incident_response_sla_compliance": 99
+    },
+    "alerts": {
+      "gate_pass_rate_min": 80,
+      "bypass_rate_alert": 10,
+      "average_gate_time_max_hours": 8,
+      "handoff_rejection_rate_max": 10
+    }
+  },
+  "integrations": {
+    "version_control": {
+      "platform": "github",
+      "branch_protection": true,
+      "required_reviews": true,
+      "required_status_checks": true
+    },
+    "ci_cd": {
+      "platform": "github_actions",
+      "automated_testing": true,
+      "automated_scanning": true
+    },
+    "monitoring": {
+      "metrics": "prometheus",
+      "logging": "elk",
+      "tracing": "jaeger",
+      "alerting": "pagerduty"
+    },
+    "security_tools": {
+      "sast": "semgrep",
+      "dast": "owasp_zap",
+      "sca": "snyk",
+      "secrets": "trufflehog"
+    }
+  },
+  "team_settings": {
+    "development": {
+      "lead": "DEV-001",
+      "members": ["DEV-001", "DEV-002", "DEV-003", "DEV-004", "DEV-005", "DEV-006"],
+      "primary_channel": "#dev-team"
+    },
+    "security": {
+      "lead": "SEC-001",
+      "members": ["SEC-001", "SEC-002", "SEC-003", "SEC-004", "SEC-005", "SEC-006"],
+      "primary_channel": "#security-team"
+    },
+    "infrastructure": {
+      "lead": "INFRA-001",
+      "members": ["INFRA-001", "INFRA-002", "INFRA-003", "INFRA-004", "INFRA-005", "INFRA-006"],
+      "primary_channel": "#infra-team"
+    },
+    "qa": {
+      "lead": "QA-001",
+      "members": ["QA-001", "QA-002", "QA-003", "QA-004", "QA-005", "QA-006"],
+      "primary_channel": "#qa-team"
+    }
+  }
+}

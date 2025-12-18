@@ -1,0 +1,58 @@
+# HIVEMIND Engine Configuration
+# 
+# Supported engines: codex, claude-code
+# Set which engine runs HIVEMIND and which runs sub-agents
+
+# Active configuration
+active:
+  hivemind: codex           # Engine for HIVEMIND orchestrator
+  agents: claude-code       # Engine for sub-agents
+
+# Engine definitions
+engines:
+  codex:
+    name: "Codex CLI"
+    command: "codex"
+    flags:
+      model: "--model"
+      system: "--system-prompt"
+      quiet: "--quiet"
+      print: "--print"
+    default_model: "claude-sonnet-4-20250514"
+    supports:
+      - streaming
+      - system_prompt
+      - context_file
+      
+  claude-code:
+    name: "Claude Code CLI"
+    command: "claude"
+    flags:
+      model: "--model"
+      system: "--system-prompt"
+      quiet: "--quiet"
+      print: "--print"
+    default_model: "claude-sonnet-4-20250514"
+    supports:
+      - streaming
+      - system_prompt
+      - context_file
+
+# Presets (quick switch)
+presets:
+  recommended:
+    hivemind: codex
+    agents: claude-code
+    
+  full-codex:
+    hivemind: codex
+    agents: codex
+    
+  full-claude:
+    hivemind: claude-code
+    agents: claude-code
+    
+  inverse:
+    hivemind: claude-code
+    agents: codex
+

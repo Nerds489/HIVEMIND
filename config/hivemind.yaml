@@ -1,0 +1,14 @@
+# Main HIVEMIND configuration (engine-agnostic)
+
+hivemind:
+  name: "HIVEMIND"
+  version: "0.1.0"
+  session_dir: "memory/sessions"
+  workspace_dir: "workspace"
+  logs_dir: "logs"
+
+output:
+  unified_voice: true
+  silent_operation: true
+  write_agent_outputs_to_workspace: true
+

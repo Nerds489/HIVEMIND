@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hivemind.local/schemas/working.json",
+  "title": "Working Memory Content",
+  "description": "Schema for working memory content - ephemeral, session-scoped context",
+  "type": "object",
+  "required": ["memory_type", "status"],
+  "properties": {
+    "memory_type": {
+      "type": "string",
+      "enum": ["task", "handoff", "blocker", "note", "scratch", "pending_decision"],
+      "description": "Type of working memory"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "pending", "resolved", "cancelled", "expired"],
+      "default": "active",
+      "description": "Current status"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Owning agent"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Auto-cleanup time"
+    },
+    "task_context": {
+      "type": "object",
+      "properties": {
+        "task_id": {"type": "string"},
+        "description": {"type": "string"},
+        "started_at": {"type": "string", "format": "date-time"},
+        "current_step": {"type": "string"},
+        "progress_notes": {"type": "array", "items": {"type": "string"}},
+        "files_modified": {"type": "array", "items": {"type": "string"}},
+        "decisions_pending": {"type": "array", "items": {"type": "string"}}
+      },
+      "description": "For task-type working memory"
+    },
+    "handoff_context": {
+      "type": "object",
+      "properties": {
+        "handoff_id": {"type": "string"},
+        "from_agent": {"type": "string"},
+        "to_agent": {"type": "string"},
+        "task_summary": {"type": "string"},
+        "context_provided": {"type": "object"},
+        "memories_included": {"type": "array", "items": {"type": "string"}},
+        "expected_action": {"type": "string"},
+        "deadline": {"type": "string", "format": "date-time"}
+      },
+      "description": "For handoff-type working memory"
+    },
+    "blocker_context": {
+      "type": "object",
+      "properties": {
+        "blocker_type": {
+          "type": "string",
+          "enum": ["dependency", "clarification", "resource", "technical", "external"]
+        },
+        "description": {"type": "string"},
+        "blocking_task": {"type": "string"},
+        "waiting_for": {"type": "string"},
+        "attempts_made": {"type": "array", "items": {"type": "string"}},
+        "escalation_needed": {"type": "boolean"}
+      },
+      "description": "For blocker-type working memory"
+    },
+    "note_content": {
+      "type": "object",
+      "properties": {
+        "note": {"type": "string"},
+        "category": {"type": "string"},
+        "for_later": {"type": "boolean"},
+        "related_to": {"type": "string"}
+      },
+      "description": "For note/scratch-type working memory"
+    },
+    "decision_context": {
+      "type": "object",
+      "properties": {
+        "question": {"type": "string"},
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "option": {"type": "string"},
+              "pros": {"type": "array", "items": {"type": "string"}},
+              "cons": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        },
+        "recommendation": {"type": "string"},
+        "needs_user_input": {"type": "boolean"}
+      },
+      "description": "For pending_decision-type working memory"
+    }
+  }
+}
