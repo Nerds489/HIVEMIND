@@ -25,7 +25,29 @@ ensure_file() {
 }
 
 gen_id() {
-  echo "mem_$(tr -dc 'a-z0-9' </dev/urandom | fold -w 12 | head -n 1)"
+  # Prefer UUID sources to avoid `/dev/urandom | tr ...` pipelines, which can
+  # hang in some environments due to upstream processes not terminating.
+  if [[ -r /proc/sys/kernel/random/uuid ]]; then
+    echo "mem_$(tr -d '-' < /proc/sys/kernel/random/uuid | tr '[:upper:]' '[:lower:]' | head -c 12)"
+    return 0
+  fi
+
+  if command -v uuidgen >/dev/null 2>&1; then
+    echo "mem_$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]' | head -c 12)"
+    return 0
+  fi
+
+  if command -v python >/dev/null 2>&1; then
+    python - <<'PY'
+import secrets, string
+alphabet = string.ascii_lowercase + string.digits
+print("mem_" + "".join(secrets.choice(alphabet) for _ in range(12)))
+PY
+    return 0
+  fi
+
+  # Last-resort fallback.
+  echo "mem_$(date +%s%N | tr -dc 'a-z0-9' | head -c 12)"
 }
 
 now_iso() {
