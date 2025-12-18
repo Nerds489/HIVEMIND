@@ -9,7 +9,7 @@
 ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝
 ```
 
-**Multi-Agent Orchestration System for Claude Code**
+**Engine-Agnostic Multi-Agent Orchestration System**
 
 24 Agents | 4 Teams | Unified Intelligence
 
@@ -18,6 +18,7 @@
 ## Start Here
 
 - `BOOTSTRAP.md` — single entry point + load sequence
+- `./hivemind` — working orchestrator CLI (engine-agnostic)
 - `INDEX.md` — complete file map
 - `CLAUDE.md` — canonical operating rules
 
@@ -25,7 +26,12 @@
 
 ## What is HIVEMIND?
 
-HIVEMIND is a prompt engineering framework that transforms Claude into a coordinated team of 24 specialized AI agents. Each agent has distinct expertise, communication protocols, and collaboration patterns.
+HIVEMIND is an engine-agnostic multi-agent orchestration system. The orchestrator can run on **Codex** or **Claude Code**, and sub-agents can also run on either engine (any combination).
+
+It includes:
+- A working **CLI runtime** (`./hivemind` + `bin/` utilities)
+- A **policy + playbook layer** (routing, workflows, protocols, templates)
+- A **file-based memory system** (plus real tooling to read/write it)
 
 **Use Cases:**
 - Full-stack software development with architecture, coding, review, and testing
@@ -35,7 +41,18 @@ HIVEMIND is a prompt engineering framework that transforms Claude into a coordin
 
 ---
 
-## Quick Setup
+## Supported Engine Configurations
+
+| HIVEMIND Engine | Sub-Agent Engine | Use Case |
+|---|---|---|
+| codex | claude-code | Recommended |
+| codex | codex | Full Codex |
+| claude-code | claude-code | Full Claude |
+| claude-code | codex | Inverse |
+
+---
+
+## Quick Setup (CLI Orchestrator)
 
 ### 1. Navigate to HIVEMIND
 
@@ -43,28 +60,65 @@ HIVEMIND is a prompt engineering framework that transforms Claude into a coordin
 cd /home/mintys/Desktop/HIVEMIND
 ```
 
-### 2. Start Claude Code
+### 2. Install (permissions + memory init)
 
 ```bash
+./install.sh
+```
+
+### 3. Verify
+
+```bash
+./hivemind --help
+./hivemind --config
+./bin/test-hivemind
+```
+
+### 4. Run
+
+```bash
+# Interactive mode
+./hivemind
+
+# Direct task
+./hivemind "Design a secure authentication system"
+```
+
+### 5. Multi-agent orchestration (spawn → wait → synthesize)
+
+```bash
+./bin/orchestrate "Design a secure auth system" security-architect backend qa-architect
+```
+
+### 6. Memory operations (real read/write)
+
+```bash
+./bin/memory-ops store fact "We use snake_case for Python" python style
+./bin/memory-ops recall "snake_case"
+```
+
+**Requirements:**
+- `jq` (required for `bin/memory-ops` and `bin/orchestrate`)
+- At least one engine installed: `codex` and/or `claude`
+
+---
+
+## Quick Setup (Prompt/Policy Mode)
+
+This mode uses the policy framework inside an interactive coding assistant.
+
+### Claude Code
+
+```bash
+cd /home/mintys/Desktop/HIVEMIND
 claude
 ```
 
-Claude automatically loads `CLAUDE.md` and becomes the HIVEMIND coordinator.
-
-### 3. Start Using Agents
+### Codex CLI
 
 ```bash
-# Full system
-"Design and implement a REST API for user management"
-
-# Specific agent
-"As DEV-001, design the architecture for a microservices platform"
-
-# Specific team
-"Security team, assess this codebase for vulnerabilities"
-
-# Workflow
-"Run full SDLC for implementing OAuth authentication"
+cd /home/mintys/Desktop/HIVEMIND
+codex
 ```
 
 ---
@@ -73,46 +127,50 @@ Claude automatically loads `CLAUDE.md` and becomes the HIVEMIND coordinator.
 
 ```
 HIVEMIND/
+├── hivemind                      # Main executable (engine-agnostic)
+├── install.sh                    # Installer (chmod + memory init)
+├── IDENTITY.md                   # Runtime persona/instructions
 ├── BOOTSTRAP.md                 # Single entry point (start here)
 ├── README.md                    # This file
-├── CLAUDE.md                    # Auto-loaded by Claude Code (agent system)
+├── CLAUDE.md                    # Canonical operating rules
 ├── HIVEMIND.md                  # Complete system documentation
 ├── QUICKSTART.md                # Quick reference guide
 ├── INDEX.md                     # Complete file map
 ├── CODEX.md                     # Codex entrypoint
 ├── CODEX-INSTRUCTIONS.md        # Codex activation + operating rules
 │
-├── agents/                      # 24 Agent Definitions
-│   ├── development/             # DEV-001 to DEV-006
-│   │   ├── architect.md
-│   │   ├── backend-developer.md
-│   │   ├── frontend-developer.md
-│   │   ├── code-reviewer.md
-│   │   ├── technical-writer.md
-│   │   └── devops-liaison.md
-│   ├── security/                # SEC-001 to SEC-006
-│   │   ├── security-architect.md
-│   │   ├── penetration-tester.md
-│   │   ├── malware-analyst.md
-│   │   ├── wireless-security-expert.md
-│   │   ├── compliance-auditor.md
-│   │   └── incident-responder.md
-│   ├── infrastructure/          # INF-001 to INF-006
-│   │   ├── infrastructure-architect.md
-│   │   ├── systems-administrator.md
-│   │   ├── network-engineer.md
-│   │   ├── database-administrator.md
-│   │   ├── site-reliability-engineer.md
-│   │   └── automation-engineer.md
-│   └── qa/                      # QA-001 to QA-006
-│       ├── qa-architect.md
-│       ├── test-automation-engineer.md
-│       ├── performance-tester.md
-│       ├── security-tester.md
-│       ├── manual-qa-tester.md
-│       └── test-data-manager.md
-│   └── registry/                # ID-based registry entries
-│       └── *.md
+├── bin/                         # Runtime utilities
+│   ├── hm                       # Alias to ./hivemind
+│   ├── list-agents
+│   ├── spawn-agent
+│   ├── wait-agent
+│   ├── query-agent
+│   ├── orchestrate              # Multi-agent spawn/wait/synthesize
+│   ├── memory-ops               # Memory store/recall/boost/decay
+│   └── test-hivemind            # Smoke tests
+│
+├── engines/                     # Engine abstraction + adapters (runtime)
+│   ├── engine.sh
+│   ├── codex.sh
+│   └── claude-code.sh
+│
+├── core/                        # Runtime orchestration helpers (shell)
+│   ├── orchestrator.sh
+│   ├── spawner.sh
+│   ├── router.sh
+│   └── synthesizer.sh
+│
+├── workspace/                   # Runtime agent workspaces (outputs)
+├── logs/                        # Runtime logs
+│
+├── agents/                      # Agent definitions and runtime prompts
+│   ├── base-prompt.md
+│   ├── dev/                     # Runtime sub-agent prompts (6)
+│   ├── development/             # Role-based specialist docs (6)
+│   ├── registry/                # ID-based registry entries (24)
+│   ├── security/                # Runtime prompts + role docs (6+)
+│   ├── infrastructure/          # Runtime prompts + role docs (6+)
+│   └── qa/                      # Runtime prompts + role docs (6+)
 │
 ├── teams/                       # Team Configurations
 │   ├── development.md
@@ -142,6 +200,10 @@ HIVEMIND/
 │
 ├── config/                      # Configuration Files
 │   ├── README.md                # Config map
+│   ├── engines.yaml             # Runtime engine config + presets
+│   ├── hivemind.yaml            # Runtime settings
+│   ├── agents.yaml              # Runtime agent registry
+│   ├── routing.yaml             # Runtime routing rules
 │   ├── agents.json              # Agent registry with metadata
 │   ├── routing.json             # Task routing rules
 │   ├── settings.json            # System settings
@@ -244,6 +306,13 @@ HIVEMIND/
 
 ## Invocation Methods
 
+### 0. CLI Runtime (Engine-Agnostic)
+
+```bash
+./hivemind "Design a secure authentication system"
+./bin/orchestrate "Audit our auth flow" security-architect backend reviewer
+```
+
 ### 1. Natural Language (Auto-Routes)
 
 ```
@@ -295,6 +364,22 @@ HIVEMIND/
 ---
 
 ## Configuration
+
+### engines.yaml (runtime)
+
+Controls which engine runs the orchestrator and which engine runs sub-agents (plus presets):
+- `active.hivemind`: `codex` or `claude-code`
+- `active.agents`: `codex` or `claude-code`
+
+Switch temporarily:
+```bash
+./hivemind --preset full-codex
+./hivemind --engine claude-code --agents codex --config
+```
+
+### hivemind.yaml / agents.yaml / routing.yaml (runtime)
+
+Minimal runtime configuration for sessions, agent registry, and simple routing defaults.
 
 ### agents.json
 
@@ -360,7 +445,20 @@ HIVEMIND includes a persistent memory system that remembers:
 - **Team learnings** - Bug patterns, solutions, best practices
 - **Session state** - Current task, loaded memories, working context
 
-Memory operations are automatic:
+Memory operations exist in two forms:
+
+1) **Policy triggers** (documented in `memory/TRIGGERS.md`)
+2) **Runtime tooling** (implemented in `bin/memory-ops`)
+
+Examples (runtime):
+
+```bash
+./bin/memory-ops store fact "We use snake_case for Python" python style
+./bin/memory-ops store decision "We chose PostgreSQL for transactional consistency" db
+./bin/memory-ops recall "PostgreSQL"
+```
+
+Examples (policy triggers):
 
 ```
 "Remember that we use snake_case for Python"     → Creates factual memory
@@ -368,11 +466,10 @@ Memory operations are automatic:
 "We decided to use PostgreSQL because..."        → Creates semantic memory
 ```
 
-Query memory:
+Query memory (runtime):
 
-```
-/recall deployment procedures
-/memories
+```bash
+./bin/memory-ops recall "deployment"
 ```
 
 ---
@@ -415,9 +512,16 @@ Reference specific agents when working in any directory:
 
 | File | Purpose |
 |:-----|:--------|
-| `CLAUDE.md` | Auto-loaded by Claude Code, contains full agent system |
+| `BOOTSTRAP.md` | Single entry point and load sequence |
+| `CLAUDE.md` | Canonical operating rules (prompt/policy layer) |
 | `HIVEMIND.md` | Complete system documentation |
 | `QUICKSTART.md` | Quick reference and examples |
+| `hivemind` | Runtime orchestrator CLI |
+| `install.sh` | Installer (permissions + memory init) |
+| `IDENTITY.md` | Runtime orchestrator persona/instructions |
+| `config/engines.yaml` | Runtime engine configuration + presets |
+| `bin/orchestrate` | Multi-agent spawn/wait/synthesize |
+| `bin/memory-ops` | Memory store/recall/boost/decay |
 | `config/agents.json` | Agent registry |
 | `config/routing.json` | Task routing rules |
 | `config/settings.json` | System settings |
@@ -463,7 +567,7 @@ Reference specific agents when working in any directory:
 2. **Provide context** - Reference files, PRs, systems
 3. **Name workflows** - "Run full SDLC" triggers complete pipeline
 4. **Trust routing** - HIVEMIND auto-selects appropriate agents
-5. **Use memory** - "Remember that..." persists preferences
+5. **Use memory** - `./bin/memory-ops store ...` persists preferences and decisions
 
 ---
 
