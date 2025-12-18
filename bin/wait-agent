@@ -1,0 +1,33 @@
+#!/bin/bash
+# Wait for agent to complete and return result
+
+set -euo pipefail
+
+WORKSPACE="${1:-}"
+TIMEOUT="${2:-300}"  # 5 min default
+
+if [[ -z "$WORKSPACE" ]]; then
+    echo "Usage: wait-agent <workspace-path> [timeout-seconds]" >&2
+    exit 1
+fi
+
+elapsed=0
+while [[ $elapsed -lt $TIMEOUT ]]; do
+    if [[ -f "$WORKSPACE/status.txt" ]]; then
+        status="$(cat "$WORKSPACE/status.txt" 2>/dev/null || true)"
+        if [[ "$status" == "DONE" ]]; then
+            if [[ -f "$WORKSPACE/result.md" ]]; then
+                cat "$WORKSPACE/result.md"
+            else
+                echo "Agent completed but no result.md found" >&2
+            fi
+            exit 0
+        fi
+    fi
+    sleep 2
+    elapsed=$((elapsed + 2))
+done
+
+echo "Timeout waiting for agent at $WORKSPACE" >&2
+exit 1
+

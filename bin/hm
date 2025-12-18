@@ -1,0 +1,3 @@
+#!/bin/bash
+exec "$(dirname "$(dirname "$(realpath "$0")")")/hivemind" "$@"
+

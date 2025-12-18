@@ -1,0 +1,38 @@
+#!/bin/bash
+# Test HIVEMIND installation
+
+set -euo pipefail
+
+HIVEMIND_ROOT="${HIVEMIND_ROOT:-$(dirname "$(dirname "$(realpath "$0")")")}"
+
+echo "HIVEMIND System Test"
+echo "===================="
+
+echo -n "1. Config loads: "
+"$HIVEMIND_ROOT/hivemind" --config > /dev/null 2>&1 && echo "PASS" || echo "FAIL"
+
+echo -n "2. Help works: "
+"$HIVEMIND_ROOT/hivemind" --help > /dev/null 2>&1 && echo "PASS" || echo "FAIL"
+
+echo -n "3. Engine abstraction: "
+source "$HIVEMIND_ROOT/engines/engine.sh"
+[[ "$(get_engine_command codex)" == "codex" ]] && echo "PASS" || echo "FAIL"
+
+echo -n "4. Memory store: "
+id=$("$HIVEMIND_ROOT/bin/memory-ops" store fact "Test memory" test)
+[[ "$id" == mem_* ]] && echo "PASS ($id)" || echo "FAIL"
+
+echo -n "5. Memory recall: "
+result=$("$HIVEMIND_ROOT/bin/memory-ops" recall "Test" || true)
+[[ -n "$result" ]] && echo "PASS" || echo "FAIL"
+
+echo -n "6. All 24 agent prompts: "
+count=$(find "$HIVEMIND_ROOT/agents" -path "$HIVEMIND_ROOT/agents/registry" -prune -o -name "*.md" -type f -print | wc -l)
+[[ $count -ge 25 ]] && echo "PASS ($count files)" || echo "FAIL ($count files)"
+
+echo -n "7. Spawn script exists: "
+[[ -x "$HIVEMIND_ROOT/bin/spawn-agent" ]] && echo "PASS" || echo "FAIL"
+
+echo ""
+echo "Tests complete."
+

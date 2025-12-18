@@ -1,0 +1,66 @@
+#!/bin/bash
+# Orchestrate multiple agents and synthesize results
+
+set -euo pipefail
+
+HIVEMIND_ROOT="${HIVEMIND_ROOT:-$(dirname "$(dirname "$(realpath "$0")")")}"
+source "$HIVEMIND_ROOT/engines/engine.sh"
+
+TASK="${1:-}"
+shift || true
+AGENTS=("$@")
+
+if [[ -z "$TASK" ]] || [[ ${#AGENTS[@]} -eq 0 ]]; then
+    echo "Usage: orchestrate \"<task>\" agent1 agent2 ..." >&2
+    exit 1
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is required for orchestrate." >&2
+    exit 1
+fi
+
+TASK_ID="$(date +%s)_$$"
+ORCHESTRATION_DIR="$HIVEMIND_ROOT/workspace/_orchestrations/$TASK_ID"
+mkdir -p "$ORCHESTRATION_DIR"
+
+declare -A WORKSPACES
+
+for agent in "${AGENTS[@]}"; do
+    result="$("$HIVEMIND_ROOT/bin/spawn-agent" "$agent" "$TASK")"
+    workspace="$(echo "$result" | jq -r '.workspace')"
+    WORKSPACES["$agent"]="$workspace"
+    echo "Spawned $agent -> $workspace" >&2
+done
+
+echo "Waiting for agents to complete..." >&2
+
+RESULTS=""
+for agent in "${AGENTS[@]}"; do
+    workspace="${WORKSPACES[$agent]}"
+    echo "Waiting for $agent..." >&2
+    result="$("$HIVEMIND_ROOT/bin/wait-agent" "$workspace" 300)"
+    RESULTS="${RESULTS}\n\n## ${agent}\n${result}"
+done
+
+echo -e "$RESULTS" > "$ORCHESTRATION_DIR/combined.md"
+
+SYNTHESIS_PROMPT="You are synthesizing outputs from multiple specialists into ONE unified response.
+
+Task: $TASK
+
+Agent Outputs:
+$RESULTS
+
+Synthesize these into a single, coherent response. Use first person (I, my). Do not reference the individual agents or their names. Present as one unified expert opinion."
+
+SYN_ENGINE="${HIVEMIND_ENGINE:-$(load_engine_config "hivemind")}"
+
+if command -v "$(get_engine_command "$SYN_ENGINE")" >/dev/null 2>&1; then
+    run_engine "$SYN_ENGINE" "$SYNTHESIS_PROMPT" "Synthesize the above into one unified response" "print" > "$ORCHESTRATION_DIR/synthesis.md"
+    cat "$ORCHESTRATION_DIR/synthesis.md"
+else
+    echo "(Synthesis engine not available; returning combined results.)" >&2
+    cat "$ORCHESTRATION_DIR/combined.md"
+fi
+
