@@ -45,10 +45,10 @@ It includes:
 
 | HIVEMIND Engine | Sub-Agent Engine | Use Case |
 |---|---|---|
-| codex | claude-code | Recommended |
+| codex | claude | Recommended |
 | codex | codex | Full Codex |
-| claude-code | claude-code | Full Claude |
-| claude-code | codex | Inverse |
+| claude | claude | Full Claude |
+| claude | codex | Inverse |
 
 ---
 
@@ -163,7 +163,7 @@ HIVEMIND/
 ├── engines/                     # Engine abstraction + adapters (runtime)
 │   ├── engine.sh
 │   ├── codex.sh
-│   └── claude-code.sh
+│   └── claude-code.sh             # Adapter for the `claude` CLI
 │
 ├── core/                        # Runtime orchestration helpers (shell)
 │   ├── orchestrator.sh
@@ -379,13 +379,13 @@ HIVEMIND/
 ### engines.yaml (runtime)
 
 Controls which engine runs the orchestrator and which engine runs sub-agents (plus presets):
-- `active.hivemind`: `codex` or `claude-code`
-- `active.agents`: `codex` or `claude-code`
+- `active.hivemind`: `codex` or `claude`
+- `active.agents`: `codex` or `claude`
 
 Switch temporarily:
 ```bash
 ./hivemind --preset full-codex
-./hivemind --engine claude-code --agents codex --config
+./hivemind --engine claude --agents codex --config
 ```
 
 ### hivemind.yaml / agents.yaml / routing.yaml (runtime)

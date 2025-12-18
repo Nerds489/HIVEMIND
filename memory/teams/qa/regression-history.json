@@ -1,5 +1,5 @@
 {
-  "id": "mem_qa_regression",
+  "id": "mem_3f217317d519",
   "type": "episodic",
   "subtype": "regression-history",
   "created_by": "SYSTEM",
@@ -7,7 +7,12 @@
   "updated_at": "2025-12-18T00:00:00Z",
   "scope": "team",
   "scope_id": "qa",
-  "tags": ["regression", "history", "testing", "results"],
+  "tags": [
+    "regression",
+    "history",
+    "testing",
+    "results"
+  ],
   "priority": "medium",
   "ttl": "permanent",
   "content": {

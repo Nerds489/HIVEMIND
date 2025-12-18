@@ -1,5 +1,5 @@
 {
-  "id": "mem_dev_archdec",
+  "id": "mem_2f610af4aaa3",
   "type": "semantic",
   "subtype": "architecture-decisions",
   "created_by": "SYSTEM",
@@ -7,7 +7,13 @@
   "updated_at": "2025-12-18T00:00:00Z",
   "scope": "team",
   "scope_id": "development",
-  "tags": ["architecture", "decisions", "adr", "design", "permanent"],
+  "tags": [
+    "architecture",
+    "decisions",
+    "adr",
+    "design",
+    "permanent"
+  ],
   "priority": "critical",
   "ttl": "permanent",
   "content": {

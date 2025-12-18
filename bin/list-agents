@@ -1,13 +1,42 @@
 #!/bin/bash
 #
-# List available agent types (static list)
+# List available agent types (and optionally running workspaces)
 
 set -euo pipefail
 
-cat <<'EOF'
+HIVEMIND_ROOT="${HIVEMIND_ROOT:-$(dirname "$(dirname "$(realpath "$0")")")}"
+
+show_available() {
+  cat <<'EOF'
 Development: architect, backend, frontend, reviewer, writer, devops
 Security: security-architect, pentester, malware, wireless, compliance, incident
 Infrastructure: infra-architect, sysadmin, network, dba, sre, automation
 QA: qa-architect, test-auto, performance, security-test, manual-qa, test-data
 EOF
+}
 
+show_running() {
+  shopt -s nullglob
+  local any=0
+  for status in "$HIVEMIND_ROOT"/workspace/*/*/status.txt; do
+    any=1
+    ws="$(dirname "$status")"
+    st="$(cat "$status" 2>/dev/null || true)"
+    printf '%s\t%s\n' "$st" "$ws"
+  done
+  if [[ "$any" -eq 0 ]]; then
+    echo "(no running workspaces found)"
+  fi
+}
+
+case "${1:-}" in
+  --running)
+    show_running
+    ;;
+  -h|--help)
+    echo "Usage: list-agents [--running]" >&2
+    ;;
+  *)
+    show_available
+    ;;
+esac

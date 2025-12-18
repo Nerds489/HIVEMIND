@@ -20,12 +20,13 @@
 #   hivemind --set-hivemind codex      Set HIVEMIND engine permanently
 #   hivemind --set-agents claude       Set agent engine permanently
 
-set -e
+set -euo pipefail
 
 HIVEMIND_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export HIVEMIND_ROOT
 
 source "$HIVEMIND_ROOT/engines/engine.sh"
+source "$HIVEMIND_ROOT/core/router.sh"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -39,6 +40,7 @@ NC='\033[0m'
 HIVEMIND_ENGINE="${HIVEMIND_ENGINE:-}"
 AGENT_ENGINE="${AGENT_ENGINE:-}"
 HIVEMIND_MODEL="${HIVEMIND_MODEL:-claude-sonnet-4-20250514}"
+AUTO_ORCHESTRATE="${HIVEMIND_AUTO_ORCHESTRATE:-auto}"  # auto|on|off
 
 load_defaults() {
     if [[ -z "$HIVEMIND_ENGINE" ]]; then
@@ -76,10 +78,10 @@ show_config() {
     echo -e "  Model:             ${BLUE}$HIVEMIND_MODEL${NC}"
     echo ""
     echo -e "${YELLOW}Available Presets:${NC}"
-    echo -e "  ${BOLD}recommended${NC}   - codex + claude-code (default)"
+    echo -e "  ${BOLD}recommended${NC}   - codex + claude (default)"
     echo -e "  ${BOLD}full-codex${NC}    - codex + codex"
-    echo -e "  ${BOLD}full-claude${NC}   - claude-code + claude-code"
-    echo -e "  ${BOLD}inverse${NC}       - claude-code + codex"
+    echo -e "  ${BOLD}full-claude${NC}   - claude + claude"
+    echo -e "  ${BOLD}inverse${NC}       - claude + codex"
     echo ""
     echo -e "${YELLOW}Switch with:${NC}"
     echo -e "  hivemind --preset full-codex"
@@ -92,18 +94,18 @@ apply_preset() {
     case "$preset" in
         recommended)
             HIVEMIND_ENGINE="codex"
-            AGENT_ENGINE="claude-code"
+            AGENT_ENGINE="claude"
             ;;
         full-codex)
             HIVEMIND_ENGINE="codex"
             AGENT_ENGINE="codex"
             ;;
         full-claude)
-            HIVEMIND_ENGINE="claude-code"
-            AGENT_ENGINE="claude-code"
+            HIVEMIND_ENGINE="claude"
+            AGENT_ENGINE="claude"
             ;;
         inverse)
-            HIVEMIND_ENGINE="claude-code"
+            HIVEMIND_ENGINE="claude"
             AGENT_ENGINE="codex"
             ;;
         *)
@@ -136,6 +138,51 @@ init_session() {
     mkdir -p "$HIVEMIND_ROOT/memory/sessions/$HIVEMIND_SESSION"
     mkdir -p "$HIVEMIND_ROOT/workspace"
     mkdir -p "$HIVEMIND_ROOT/logs"
+
+    mkdir -p "$HIVEMIND_ROOT/memory/short-term"
+    [[ -f "$HIVEMIND_ROOT/memory/short-term/context.json" ]] || echo '{}' > "$HIVEMIND_ROOT/memory/short-term/context.json"
+    [[ -f "$HIVEMIND_ROOT/memory/short-term/working.json" ]] || echo '{}' > "$HIVEMIND_ROOT/memory/short-term/working.json"
+    [[ -f "$HIVEMIND_ROOT/memory/short-term/project-context.json" ]] || echo '{}' > "$HIVEMIND_ROOT/memory/short-term/project-context.json"
+    [[ -f "$HIVEMIND_ROOT/memory/short-term/decisions.json" ]] || echo '{}' > "$HIVEMIND_ROOT/memory/short-term/decisions.json"
+}
+
+maybe_store_trigger() {
+    local task="$1"
+    local mem="$HIVEMIND_ROOT/bin/memory-ops"
+    [[ -x "$mem" ]] || return 0
+
+    shopt -s nocasematch
+    if [[ "$task" =~ ^remember[[:space:]]+that[[:space:]]+(.+) ]]; then
+        "$mem" store fact "${BASH_REMATCH[1]}" trigger remember || true
+    elif [[ "$task" =~ ^we[[:space:]]+decided[[:space:]]+(.+) ]]; then
+        "$mem" store decision "${BASH_REMATCH[1]}" trigger decision || true
+    elif [[ "$task" =~ ^i[[:space:]]+prefer[[:space:]]+(.+) ]]; then
+        "$mem" store preference "${BASH_REMATCH[1]}" trigger preference || true
+    elif [[ "$task" =~ ^always[[:space:]]+(.+) ]]; then
+        "$mem" store rule "${BASH_REMATCH[1]}" trigger rule || true
+    elif [[ "$task" =~ ^never[[:space:]]+(.+) ]]; then
+        "$mem" store rule "${BASH_REMATCH[1]}" trigger rule || true
+    fi
+    shopt -u nocasematch
+}
+
+build_memory_context() {
+    local task="$1"
+    local mem="$HIVEMIND_ROOT/bin/memory-ops"
+    [[ -x "$mem" ]] || return 0
+
+    local prefs="$HIVEMIND_ROOT/memory/long-term/preferences.json"
+    local proj="$HIVEMIND_ROOT/memory/long-term/project.json"
+    local user="$HIVEMIND_ROOT/memory/long-term/user-profile.json"
+
+    echo "## MEMORY (AUTO-LOADED)"
+    [[ -f "$prefs" ]] && echo "- preferences: $prefs"
+    [[ -f "$proj" ]] && echo "- project: $proj"
+    [[ -f "$user" ]] && echo "- user-profile: $user"
+    echo ""
+    echo "## RELEVANT MEMORIES (STRING MATCH)"
+    "$mem" recall "$task" | head -n 40 || true
+    echo ""
 }
 
 build_hivemind_prompt() {
@@ -169,17 +216,44 @@ Read results from: workspace/<agent>/<task-id>/result.md
 Current session: $HIVEMIND_SESSION
 Session memory: \$HIVEMIND_ROOT/memory/sessions/$HIVEMIND_SESSION/
 
+$(build_memory_context "${HIVEMIND_LAST_TASK:-}")
 EOF
 }
 
 run_hivemind() {
     local task="$1"
     local prompt
+
+    export HIVEMIND_LAST_TASK="$task"
+    maybe_store_trigger "$task"
     prompt="$(build_hivemind_prompt)"
 
     export AGENT_ENGINE
 
     run_engine "$HIVEMIND_ENGINE" "$prompt" "$task" "interactive"
+}
+
+run_auto_orchestrate() {
+    local task="$1"
+    local orchestrate="$HIVEMIND_ROOT/bin/orchestrate"
+
+    if [[ ! -x "$orchestrate" ]] || ! command -v jq >/dev/null 2>&1; then
+        run_hivemind "$task"
+        return 0
+    fi
+
+    mapfile -t agents < <(choose_agents_for_task "$task" || true)
+    if [[ "${#agents[@]}" -eq 0 ]]; then
+        run_hivemind "$task"
+        return 0
+    fi
+
+    if [[ "$AUTO_ORCHESTRATE" == "auto" && "${#agents[@]}" -lt 2 ]]; then
+        run_hivemind "$task"
+        return 0
+    fi
+
+    "$orchestrate" "$task" "${agents[@]}"
 }
 
 show_status() {
@@ -212,21 +286,23 @@ show_help() {
     echo "  hivemind \"task\"                       Direct task execution"
     echo ""
     echo -e "${YELLOW}ENGINE OPTIONS:${NC}"
-    echo "  --engine <engine>                     Set HIVEMIND engine (codex|claude-code)"
-    echo "  --agents <engine>                     Set agent engine (codex|claude-code)"
+    echo "  --engine <engine>                     Set HIVEMIND engine (codex|claude)"
+    echo "  --agents <engine>                     Set agent engine (codex|claude)"
     echo "  --preset <name>                       Apply preset configuration"
     echo "  --set-hivemind <engine>               Save HIVEMIND engine to config"
     echo "  --set-agents <engine>                 Save agent engine to config"
     echo ""
     echo -e "${YELLOW}PRESETS:${NC}"
-    echo "  recommended                           codex + claude-code (default)"
+    echo "  recommended                           codex + claude (default)"
     echo "  full-codex                            codex + codex"
-    echo "  full-claude                           claude-code + claude-code"
-    echo "  inverse                               claude-code + codex"
+    echo "  full-claude                           claude + claude"
+    echo "  inverse                               claude + codex"
     echo ""
     echo -e "${YELLOW}OTHER OPTIONS:${NC}"
     echo "  --config                              Show current configuration"
     echo "  --status                              Show system status"
+    echo "  --auto                                Enable auto-orchestration for direct tasks"
+    echo "  --no-auto                             Disable auto-orchestration for direct tasks"
     echo "  --help                                Show this help"
     echo ""
     echo -e "${YELLOW}EXAMPLES:${NC}"
@@ -311,6 +387,14 @@ while [[ $# -gt 0 ]]; do
             show_status
             exit 0
             ;;
+        --auto)
+            AUTO_ORCHESTRATE="on"
+            shift
+            ;;
+        --no-auto)
+            AUTO_ORCHESTRATE="off"
+            shift
+            ;;
         --help|-h)
             show_help
             exit 0
@@ -333,6 +417,9 @@ else
     init_session
     echo -e "${BLUE}Engine: HIVEMIND=${GREEN}$HIVEMIND_ENGINE${BLUE} | Agents=${GREEN}$AGENT_ENGINE${NC}"
     echo ""
-    run_hivemind "$TASK"
+    if [[ "$AUTO_ORCHESTRATE" == "off" ]]; then
+        run_hivemind "$TASK"
+    else
+        run_auto_orchestrate "$TASK"
+    fi
 fi
-

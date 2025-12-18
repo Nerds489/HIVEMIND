@@ -52,7 +52,12 @@
     "bypass_followup_hours": 24
   },
   "incident_response": {
-    "severity_levels": ["SEV1", "SEV2", "SEV3", "SEV4"],
+    "severity_levels": [
+      "SEV1",
+      "SEV2",
+      "SEV3",
+      "SEV4"
+    ],
     "response_time_targets_minutes": {
       "SEV1": 5,
       "SEV2": 15,
@@ -69,12 +74,22 @@
   "change_management": {
     "change_windows": {
       "production": {
-        "allowed_days": ["Tuesday", "Wednesday", "Thursday"],
+        "allowed_days": [
+          "Tuesday",
+          "Wednesday",
+          "Thursday"
+        ],
         "allowed_hours_utc": "02:00-06:00",
         "emergency_allowed": true
       },
       "staging": {
-        "allowed_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "allowed_days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
         "allowed_hours_utc": "08:00-18:00",
         "emergency_allowed": true
       },
@@ -85,10 +100,20 @@
       }
     },
     "approval_requirements": {
-      "standard": ["INFRA-001"],
-      "normal": ["INFRA-001", "team_lead"],
-      "security": ["INFRA-001", "SEC-001"],
-      "emergency": ["INFRA-001"]
+      "standard": [
+        "INF-001"
+      ],
+      "normal": [
+        "INF-001",
+        "team_lead"
+      ],
+      "security": [
+        "INF-001",
+        "SEC-001"
+      ],
+      "emergency": [
+        "INF-001"
+      ]
     }
   },
   "metrics": {
@@ -135,22 +160,50 @@
   "team_settings": {
     "development": {
       "lead": "DEV-001",
-      "members": ["DEV-001", "DEV-002", "DEV-003", "DEV-004", "DEV-005", "DEV-006"],
+      "members": [
+        "DEV-001",
+        "DEV-002",
+        "DEV-003",
+        "DEV-004",
+        "DEV-005",
+        "DEV-006"
+      ],
       "primary_channel": "#dev-team"
     },
     "security": {
       "lead": "SEC-001",
-      "members": ["SEC-001", "SEC-002", "SEC-003", "SEC-004", "SEC-005", "SEC-006"],
+      "members": [
+        "SEC-001",
+        "SEC-002",
+        "SEC-003",
+        "SEC-004",
+        "SEC-005",
+        "SEC-006"
+      ],
       "primary_channel": "#security-team"
     },
     "infrastructure": {
-      "lead": "INFRA-001",
-      "members": ["INFRA-001", "INFRA-002", "INFRA-003", "INFRA-004", "INFRA-005", "INFRA-006"],
+      "lead": "INF-001",
+      "members": [
+        "INF-001",
+        "INF-002",
+        "INF-003",
+        "INF-004",
+        "INF-005",
+        "INF-006"
+      ],
       "primary_channel": "#infra-team"
     },
     "qa": {
       "lead": "QA-001",
-      "members": ["QA-001", "QA-002", "QA-003", "QA-004", "QA-005", "QA-006"],
+      "members": [
+        "QA-001",
+        "QA-002",
+        "QA-003",
+        "QA-004",
+        "QA-005",
+        "QA-006"
+      ],
       "primary_channel": "#qa-team"
     }
   }

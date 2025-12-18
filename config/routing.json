@@ -5,147 +5,354 @@
       "description": "Route based on keywords in request",
       "rules": [
         {
-          "keywords": ["architecture", "design", "system design", "microservices", "api design", "scalability"],
+          "keywords": [
+            "architecture",
+            "design",
+            "system design",
+            "microservices",
+            "api design",
+            "scalability"
+          ],
           "primary_agent": "DEV-001",
-          "secondary_agents": ["INFRA-001", "SEC-001"],
+          "secondary_agents": [
+            "INF-001",
+            "SEC-001"
+          ],
           "priority": 1
         },
         {
-          "keywords": ["backend", "api", "server", "rest", "graphql", "database query", "endpoint"],
+          "keywords": [
+            "backend",
+            "api",
+            "server",
+            "rest",
+            "graphql",
+            "database query",
+            "endpoint"
+          ],
           "primary_agent": "DEV-002",
-          "secondary_agents": ["INFRA-004"],
+          "secondary_agents": [
+            "INF-004"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["frontend", "ui", "ux", "react", "vue", "angular", "css", "component"],
+          "keywords": [
+            "frontend",
+            "ui",
+            "ux",
+            "react",
+            "vue",
+            "angular",
+            "css",
+            "component"
+          ],
           "primary_agent": "DEV-003",
-          "secondary_agents": ["DEV-005"],
+          "secondary_agents": [
+            "DEV-005"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["review", "code review", "pr", "pull request", "code quality"],
+          "keywords": [
+            "review",
+            "code review",
+            "pr",
+            "pull request",
+            "code quality"
+          ],
           "primary_agent": "DEV-004",
-          "secondary_agents": ["QA-004"],
+          "secondary_agents": [
+            "QA-004"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["documentation", "docs", "readme", "api docs", "guide"],
+          "keywords": [
+            "documentation",
+            "docs",
+            "readme",
+            "api docs",
+            "guide"
+          ],
           "primary_agent": "DEV-005",
           "secondary_agents": [],
           "priority": 3
         },
         {
-          "keywords": ["ci", "cd", "pipeline", "deployment", "build", "github actions", "jenkins"],
+          "keywords": [
+            "ci",
+            "cd",
+            "pipeline",
+            "deployment",
+            "build",
+            "github actions",
+            "jenkins"
+          ],
           "primary_agent": "DEV-006",
-          "secondary_agents": ["INFRA-005"],
+          "secondary_agents": [
+            "INF-005"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["security architecture", "threat model", "security design", "security requirements"],
+          "keywords": [
+            "security architecture",
+            "threat model",
+            "security design",
+            "security requirements"
+          ],
           "primary_agent": "SEC-001",
-          "secondary_agents": ["DEV-001"],
+          "secondary_agents": [
+            "DEV-001"
+          ],
           "priority": 1
         },
         {
-          "keywords": ["pentest", "penetration", "exploit", "vulnerability", "hack", "attack surface"],
+          "keywords": [
+            "pentest",
+            "penetration",
+            "exploit",
+            "vulnerability",
+            "hack",
+            "attack surface"
+          ],
           "primary_agent": "SEC-002",
-          "secondary_agents": ["QA-004"],
+          "secondary_agents": [
+            "QA-004"
+          ],
           "priority": 1
         },
         {
-          "keywords": ["malware", "reverse engineering", "binary", "disassemble", "ioc", "threat"],
+          "keywords": [
+            "malware",
+            "reverse engineering",
+            "binary",
+            "disassemble",
+            "ioc",
+            "threat"
+          ],
           "primary_agent": "SEC-003",
-          "secondary_agents": ["SEC-006"],
+          "secondary_agents": [
+            "SEC-006"
+          ],
           "priority": 1
         },
         {
-          "keywords": ["wireless", "wifi", "bluetooth", "rf", "iot security", "wpa"],
+          "keywords": [
+            "wireless",
+            "wifi",
+            "bluetooth",
+            "rf",
+            "iot security",
+            "wpa"
+          ],
           "primary_agent": "SEC-004",
-          "secondary_agents": ["SEC-002"],
+          "secondary_agents": [
+            "SEC-002"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["compliance", "audit", "gdpr", "soc2", "pci", "hipaa", "iso", "regulation"],
+          "keywords": [
+            "compliance",
+            "audit",
+            "gdpr",
+            "soc2",
+            "pci",
+            "hipaa",
+            "iso",
+            "regulation"
+          ],
           "primary_agent": "SEC-005",
-          "secondary_agents": ["SEC-001"],
+          "secondary_agents": [
+            "SEC-001"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["incident", "breach", "forensics", "containment", "compromise"],
+          "keywords": [
+            "incident",
+            "breach",
+            "forensics",
+            "containment",
+            "compromise"
+          ],
           "primary_agent": "SEC-006",
-          "secondary_agents": ["INFRA-005", "SEC-003"],
+          "secondary_agents": [
+            "INF-005",
+            "SEC-003"
+          ],
           "priority": 1
         },
         {
-          "keywords": ["infrastructure", "cloud", "aws", "azure", "gcp", "capacity"],
-          "primary_agent": "INFRA-001",
-          "secondary_agents": ["DEV-001"],
+          "keywords": [
+            "infrastructure",
+            "cloud",
+            "aws",
+            "azure",
+            "gcp",
+            "capacity"
+          ],
+          "primary_agent": "INF-001",
+          "secondary_agents": [
+            "DEV-001"
+          ],
           "priority": 1
         },
         {
-          "keywords": ["sysadmin", "linux", "windows", "server", "configuration", "admin"],
-          "primary_agent": "INFRA-002",
+          "keywords": [
+            "sysadmin",
+            "linux",
+            "windows",
+            "server",
+            "configuration",
+            "admin"
+          ],
+          "primary_agent": "INF-002",
           "secondary_agents": [],
           "priority": 2
         },
         {
-          "keywords": ["network", "firewall", "dns", "routing", "vpn", "load balancer"],
-          "primary_agent": "INFRA-003",
-          "secondary_agents": ["SEC-004"],
+          "keywords": [
+            "network",
+            "firewall",
+            "dns",
+            "routing",
+            "vpn",
+            "load balancer"
+          ],
+          "primary_agent": "INF-003",
+          "secondary_agents": [
+            "SEC-004"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["database", "sql", "postgresql", "mysql", "mongodb", "optimization", "query"],
-          "primary_agent": "INFRA-004",
-          "secondary_agents": ["DEV-002"],
+          "keywords": [
+            "database",
+            "sql",
+            "postgresql",
+            "mysql",
+            "mongodb",
+            "optimization",
+            "query"
+          ],
+          "primary_agent": "INF-004",
+          "secondary_agents": [
+            "DEV-002"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["sre", "reliability", "monitoring", "alerting", "slo", "oncall", "uptime"],
-          "primary_agent": "INFRA-005",
-          "secondary_agents": ["INFRA-002"],
+          "keywords": [
+            "sre",
+            "reliability",
+            "monitoring",
+            "alerting",
+            "slo",
+            "oncall",
+            "uptime"
+          ],
+          "primary_agent": "INF-005",
+          "secondary_agents": [
+            "INF-002"
+          ],
           "priority": 1
         },
         {
-          "keywords": ["automation", "terraform", "ansible", "puppet", "iac", "infrastructure as code"],
-          "primary_agent": "INFRA-006",
-          "secondary_agents": ["INFRA-001"],
+          "keywords": [
+            "automation",
+            "terraform",
+            "ansible",
+            "puppet",
+            "iac",
+            "infrastructure as code"
+          ],
+          "primary_agent": "INF-006",
+          "secondary_agents": [
+            "INF-001"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["test strategy", "qa process", "quality", "test architecture"],
+          "keywords": [
+            "test strategy",
+            "qa process",
+            "quality",
+            "test architecture"
+          ],
           "primary_agent": "QA-001",
           "secondary_agents": [],
           "priority": 1
         },
         {
-          "keywords": ["test automation", "selenium", "playwright", "cypress", "automated test"],
+          "keywords": [
+            "test automation",
+            "selenium",
+            "playwright",
+            "cypress",
+            "automated test"
+          ],
           "primary_agent": "QA-002",
-          "secondary_agents": ["DEV-006"],
+          "secondary_agents": [
+            "DEV-006"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["performance", "load test", "stress test", "benchmark", "jmeter", "k6"],
+          "keywords": [
+            "performance",
+            "load test",
+            "stress test",
+            "benchmark",
+            "jmeter",
+            "k6"
+          ],
           "primary_agent": "QA-003",
-          "secondary_agents": ["INFRA-005"],
+          "secondary_agents": [
+            "INF-005"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["security testing", "sast", "dast", "vulnerability scan", "security scan"],
+          "keywords": [
+            "security testing",
+            "sast",
+            "dast",
+            "vulnerability scan",
+            "security scan"
+          ],
           "primary_agent": "QA-004",
-          "secondary_agents": ["SEC-002"],
+          "secondary_agents": [
+            "SEC-002"
+          ],
           "priority": 2
         },
         {
-          "keywords": ["manual testing", "exploratory", "uat", "user acceptance", "regression"],
+          "keywords": [
+            "manual testing",
+            "exploratory",
+            "uat",
+            "user acceptance",
+            "regression"
+          ],
           "primary_agent": "QA-005",
           "secondary_agents": [],
           "priority": 3
         },
         {
-          "keywords": ["test data", "fixtures", "mock", "environment setup", "data generation"],
+          "keywords": [
+            "test data",
+            "fixtures",
+            "mock",
+            "environment setup",
+            "data generation"
+          ],
           "primary_agent": "QA-006",
-          "secondary_agents": ["INFRA-004"],
+          "secondary_agents": [
+            "INF-004"
+          ],
           "priority": 3
         }
       ]
@@ -154,22 +361,44 @@
       "description": "Route to workflows based on request patterns",
       "rules": [
         {
-          "patterns": ["full sdlc", "end to end", "complete development", "new feature", "build feature"],
+          "patterns": [
+            "full sdlc",
+            "end to end",
+            "complete development",
+            "new feature",
+            "build feature"
+          ],
           "workflow": "full-sdlc",
           "lead_agent": "DEV-001"
         },
         {
-          "patterns": ["security assessment", "pentest", "security audit", "vulnerability assessment"],
+          "patterns": [
+            "security assessment",
+            "pentest",
+            "security audit",
+            "vulnerability assessment"
+          ],
           "workflow": "security-assessment",
           "lead_agent": "SEC-001"
         },
         {
-          "patterns": ["code review", "review pr", "review code", "pull request review"],
+          "patterns": [
+            "code review",
+            "review pr",
+            "review code",
+            "pull request review"
+          ],
           "workflow": "code-review",
           "lead_agent": "DEV-004"
         },
         {
-          "patterns": ["incident", "outage", "breach", "emergency", "production issue"],
+          "patterns": [
+            "incident",
+            "outage",
+            "breach",
+            "emergency",
+            "production issue"
+          ],
           "workflow": "incident-response",
           "lead_agent": "SEC-006"
         }
@@ -179,17 +408,26 @@
       "description": "Route based on task complexity assessment",
       "thresholds": {
         "simple": {
-          "score_range": [0, 3],
+          "score_range": [
+            0,
+            3
+          ],
           "routing": "single_agent",
           "escalation": false
         },
         "moderate": {
-          "score_range": [4, 6],
+          "score_range": [
+            4,
+            6
+          ],
           "routing": "primary_with_consult",
           "escalation": "optional"
         },
         "complex": {
-          "score_range": [7, 10],
+          "score_range": [
+            7,
+            10
+          ],
           "routing": "multi_agent_workflow",
           "escalation": "required"
         }
@@ -228,11 +466,25 @@
     "escalation_routing": {
       "description": "Automatic escalation paths",
       "paths": {
-        "development": ["DEV-001", "COORDINATOR"],
-        "security": ["SEC-001", "COORDINATOR"],
-        "infrastructure": ["INFRA-001", "COORDINATOR"],
-        "qa": ["QA-001", "COORDINATOR"],
-        "cross_team": ["COORDINATOR"]
+        "development": [
+          "DEV-001",
+          "COORDINATOR"
+        ],
+        "security": [
+          "SEC-001",
+          "COORDINATOR"
+        ],
+        "infrastructure": [
+          "INF-001",
+          "COORDINATOR"
+        ],
+        "qa": [
+          "QA-001",
+          "COORDINATOR"
+        ],
+        "cross_team": [
+          "COORDINATOR"
+        ]
       },
       "triggers": {
         "blocker": "immediate",
@@ -247,40 +499,80 @@
       "patterns": {
         "design_to_implement": {
           "from": "DEV-001",
-          "to": ["DEV-002", "DEV-003"],
-          "required_artifacts": ["architecture_doc", "api_spec", "data_model"]
+          "to": [
+            "DEV-002",
+            "DEV-003"
+          ],
+          "required_artifacts": [
+            "architecture_doc",
+            "api_spec",
+            "data_model"
+          ]
         },
         "implement_to_review": {
-          "from": ["DEV-002", "DEV-003"],
+          "from": [
+            "DEV-002",
+            "DEV-003"
+          ],
           "to": "DEV-004",
-          "required_artifacts": ["code", "tests", "pr"]
+          "required_artifacts": [
+            "code",
+            "tests",
+            "pr"
+          ]
         },
         "review_to_security": {
           "from": "DEV-004",
           "to": "QA-004",
-          "conditions": ["security_sensitive_changes"],
-          "required_artifacts": ["code", "review_approval"]
+          "conditions": [
+            "security_sensitive_changes"
+          ],
+          "required_artifacts": [
+            "code",
+            "review_approval"
+          ]
         },
         "security_to_qa": {
           "from": "QA-004",
-          "to": ["QA-002", "QA-003", "QA-005"],
-          "required_artifacts": ["security_scan_results"]
+          "to": [
+            "QA-002",
+            "QA-003",
+            "QA-005"
+          ],
+          "required_artifacts": [
+            "security_scan_results"
+          ]
         },
         "qa_to_deploy": {
           "from": "QA-001",
-          "to": "INFRA-005",
-          "required_artifacts": ["test_results", "qa_signoff"]
+          "to": "INF-005",
+          "required_artifacts": [
+            "test_results",
+            "qa_signoff"
+          ]
         },
         "pentest_findings": {
           "from": "SEC-002",
-          "to": ["SEC-001", "DEV-002"],
-          "required_artifacts": ["findings_report", "poc"]
+          "to": [
+            "SEC-001",
+            "DEV-002"
+          ],
+          "required_artifacts": [
+            "findings_report",
+            "poc"
+          ]
         },
         "incident_response": {
           "from": "SEC-006",
-          "to": ["INFRA-002", "INFRA-005"],
+          "to": [
+            "INF-002",
+            "INF-005"
+          ],
           "priority": "immediate",
-          "required_artifacts": ["incident_report", "iocs"]
+          "required_artifacts": [
+            "incident_report",
+            "iocs"
+          ]
         }
       }
     }

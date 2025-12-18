@@ -1,5 +1,5 @@
 {
-  "id": "mem_inf-004_working",
+  "id": "mem_e11d72eb100a",
   "type": "working",
   "subtype": "agent-working-memory",
   "created_by": "SYSTEM",
@@ -7,7 +7,11 @@
   "updated_at": "2025-12-18T00:00:00Z",
   "scope": "agent",
   "scope_id": "INF-004",
-  "tags": ["working", "agent", "inf"],
+  "tags": [
+    "working",
+    "agent",
+    "inf"
+  ],
   "priority": "medium",
   "ttl": "PT4H",
   "content": {

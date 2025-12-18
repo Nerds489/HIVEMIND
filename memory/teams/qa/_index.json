@@ -6,40 +6,60 @@
   "entry_count": 4,
   "entries": [
     {
-      "id": "mem_qa_patterns",
+      "id": "mem_d7255f24371d",
       "type": "procedural",
       "subtype": "test-patterns",
-      "tags": ["testing", "patterns", "best-practices", "qa"],
+      "tags": [
+        "testing",
+        "patterns",
+        "best-practices",
+        "qa"
+      ],
       "summary": "Testing patterns and best practices",
       "priority": "high",
       "created_at": "2025-12-18T00:00:00Z",
       "file_path": "test-patterns.json"
     },
     {
-      "id": "mem_qa_bugs",
+      "id": "mem_077aca7a89c5",
       "type": "episodic",
       "subtype": "known-bugs",
-      "tags": ["bugs", "issues", "defects", "tracking"],
+      "tags": [
+        "bugs",
+        "issues",
+        "defects",
+        "tracking"
+      ],
       "summary": "Known bugs and issues tracking",
       "priority": "high",
       "created_at": "2025-12-18T00:00:00Z",
       "file_path": "known-bugs.json"
     },
     {
-      "id": "mem_qa_regression",
+      "id": "mem_3f217317d519",
       "type": "episodic",
       "subtype": "regression-history",
-      "tags": ["regression", "history", "testing", "results"],
+      "tags": [
+        "regression",
+        "history",
+        "testing",
+        "results"
+      ],
       "summary": "Regression testing history and results",
       "priority": "medium",
       "created_at": "2025-12-18T00:00:00Z",
       "file_path": "regression-history.json"
     },
     {
-      "id": "mem_qa_envconfig",
+      "id": "mem_196445caa0e9",
       "type": "factual",
       "subtype": "environment-configs",
-      "tags": ["environment", "config", "testing", "setup"],
+      "tags": [
+        "environment",
+        "config",
+        "testing",
+        "setup"
+      ],
       "summary": "Test environment configurations",
       "priority": "high",
       "created_at": "2025-12-18T00:00:00Z",
@@ -47,24 +67,60 @@
     }
   ],
   "tag_index": {
-    "testing": ["mem_qa_patterns", "mem_qa_regression"],
-    "patterns": ["mem_qa_patterns"],
-    "best-practices": ["mem_qa_patterns"],
-    "qa": ["mem_qa_patterns"],
-    "bugs": ["mem_qa_bugs"],
-    "issues": ["mem_qa_bugs"],
-    "defects": ["mem_qa_bugs"],
-    "tracking": ["mem_qa_bugs"],
-    "regression": ["mem_qa_regression"],
-    "history": ["mem_qa_regression"],
-    "results": ["mem_qa_regression"],
-    "environment": ["mem_qa_envconfig"],
-    "config": ["mem_qa_envconfig"],
-    "setup": ["mem_qa_envconfig"]
+    "testing": [
+      "mem_d7255f24371d",
+      "mem_3f217317d519"
+    ],
+    "patterns": [
+      "mem_d7255f24371d"
+    ],
+    "best-practices": [
+      "mem_d7255f24371d"
+    ],
+    "qa": [
+      "mem_d7255f24371d"
+    ],
+    "bugs": [
+      "mem_077aca7a89c5"
+    ],
+    "issues": [
+      "mem_077aca7a89c5"
+    ],
+    "defects": [
+      "mem_077aca7a89c5"
+    ],
+    "tracking": [
+      "mem_077aca7a89c5"
+    ],
+    "regression": [
+      "mem_3f217317d519"
+    ],
+    "history": [
+      "mem_3f217317d519"
+    ],
+    "results": [
+      "mem_3f217317d519"
+    ],
+    "environment": [
+      "mem_196445caa0e9"
+    ],
+    "config": [
+      "mem_196445caa0e9"
+    ],
+    "setup": [
+      "mem_196445caa0e9"
+    ]
   },
   "type_index": {
-    "procedural": ["mem_qa_patterns"],
-    "episodic": ["mem_qa_bugs", "mem_qa_regression"],
-    "factual": ["mem_qa_envconfig"]
+    "procedural": [
+      "mem_d7255f24371d"
+    ],
+    "episodic": [
+      "mem_077aca7a89c5",
+      "mem_3f217317d519"
+    ],
+    "factual": [
+      "mem_196445caa0e9"
+    ]
   }
 }

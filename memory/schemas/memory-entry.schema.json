@@ -8,8 +8,8 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^mem_[a-z0-9]{12}$|^mem_[a-z_]+$",
-      "description": "Unique memory identifier (mem_ + 12 alphanumeric or reserved name)"
+      "pattern": "^mem_[a-z0-9]{12}$",
+      "description": "Unique memory identifier (mem_ + 12 lowercase alphanumeric)"
     },
     "type": {
       "type": "string",

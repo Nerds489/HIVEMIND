@@ -180,6 +180,26 @@ recall() {
   fi
 }
 
+list_memories() {
+  require_jq
+  local scope="${1:-all}"
+
+  case "$scope" in
+    all|long-term)
+      [[ -f "$MEMORY_DIR/long-term/learnings.json" ]] && jq -r '.entries[]? | "\(.id)\t\(.type)\t\(.content)"' "$MEMORY_DIR/long-term/learnings.json" 2>/dev/null || true
+      [[ -f "$MEMORY_DIR/long-term/preferences.json" ]] && jq -r '.user_preferences.rules[]? | "\(.id)\t\(.type)\t\(.content)"' "$MEMORY_DIR/long-term/preferences.json" 2>/dev/null || true
+      [[ -f "$MEMORY_DIR/long-term/decisions.json" ]] && jq -r '.decisions[]? | "\(.id)\t\(.type)\t\(.content)"' "$MEMORY_DIR/long-term/decisions.json" 2>/dev/null || true
+      ;;
+    events|episodic)
+      [[ -f "$MEMORY_DIR/episodic/events.json" ]] && jq -r '.events[]? | "\(.id)\t\(.type)\t\(.content)"' "$MEMORY_DIR/episodic/events.json" 2>/dev/null || true
+      ;;
+    *)
+      echo "Usage: memory-ops list [all|long-term|events]" >&2
+      exit 1
+      ;;
+  esac
+}
+
 mutate_confidence() {
   require_jq
   local op="$1"
@@ -244,11 +264,11 @@ decay() { mutate_confidence decay "$@"; }
 case "${1:-}" in
   store) shift; store "$@" ;;
   recall) shift; recall "$@" ;;
+  list) shift; list_memories "$@" ;;
   boost) shift; boost "$@" ;;
   decay) shift; decay "$@" ;;
   *)
-    echo "Usage: memory-ops {store|recall|boost|decay} [args]" >&2
+    echo "Usage: memory-ops {store|recall|list|boost|decay} [args]" >&2
     exit 1
     ;;
 esac
-

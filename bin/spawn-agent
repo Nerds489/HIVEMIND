@@ -2,23 +2,66 @@
 #
 # Spawn a sub-agent using configured engine
 #
-# Usage: spawn-agent <agent-type> "<task>"
+# Usage:
+#   spawn-agent <agent-type> "<task>"
+#   spawn-agent <agent-id> "<task>"
 
 set -euo pipefail
 
 HIVEMIND_ROOT="${HIVEMIND_ROOT:-$(dirname "$(dirname "$(realpath "$0")")")}"
 source "$HIVEMIND_ROOT/engines/engine.sh"
 
-AGENT_TYPE="${1:-}"
+INPUT_AGENT="${1:-}"
 TASK="${2:-}"
 TASK_ID="$(date +%s)_$$"
 
 AGENT_ENGINE="${AGENT_ENGINE:-$(load_engine_config "agents")}"
 
-if [[ -z "$AGENT_TYPE" ]] || [[ -z "$TASK" ]]; then
-    echo "Usage: spawn-agent <agent-type> \"<task>\"" >&2
+if [[ -z "$INPUT_AGENT" ]] || [[ -z "$TASK" ]]; then
+    echo "Usage: spawn-agent <agent-type|agent-id> \"<task>\"" >&2
     "$HIVEMIND_ROOT/bin/list-agents" >&2 || true
     exit 1
+fi
+
+map_agent_id_to_type() {
+    local id="$1"
+    case "$id" in
+        DEV-001) echo "architect" ;;
+        DEV-002) echo "backend" ;;
+        DEV-003) echo "frontend" ;;
+        DEV-004) echo "reviewer" ;;
+        DEV-005) echo "writer" ;;
+        DEV-006) echo "devops" ;;
+        SEC-001) echo "security-architect" ;;
+        SEC-002) echo "pentester" ;;
+        SEC-003) echo "malware" ;;
+        SEC-004) echo "wireless" ;;
+        SEC-005) echo "compliance" ;;
+        SEC-006) echo "incident" ;;
+        INF-001) echo "infra-architect" ;;
+        INF-002) echo "sysadmin" ;;
+        INF-003) echo "network" ;;
+        INF-004) echo "dba" ;;
+        INF-005) echo "sre" ;;
+        INF-006) echo "automation" ;;
+        QA-001) echo "qa-architect" ;;
+        QA-002) echo "test-auto" ;;
+        QA-003) echo "performance" ;;
+        QA-004) echo "security-test" ;;
+        QA-005) echo "manual-qa" ;;
+        QA-006) echo "test-data" ;;
+        *) echo "" ;;
+    esac
+}
+
+AGENT_TYPE="$INPUT_AGENT"
+if [[ "$INPUT_AGENT" =~ ^[A-Z]{2,4}-[0-9]{3}$ ]]; then
+    mapped="$(map_agent_id_to_type "$INPUT_AGENT")"
+    if [[ -z "$mapped" ]]; then
+        echo "Unknown agent id: $INPUT_AGENT" >&2
+        exit 1
+    fi
+    AGENT_TYPE="$mapped"
 fi
 
 get_agent_prompt_file() {
@@ -81,28 +124,34 @@ $(cat "$FULL_PROMPT_PATH")
 
 TASK: $TASK
 
-WORKSPACE: $WORKSPACE
-- Write main result to: $WORKSPACE/result.md
-- Write code to: $WORKSPACE/code/
-- Write other files to: $WORKSPACE/artifacts/
-- When done, write DONE to: $WORKSPACE/status.txt
+OUTPUT RULES:
+- Output MUST be valid Markdown.
+- Do NOT mention internal agent IDs, routing, spawning, or orchestration.
+- Speak in first person singular (“I …”).
+- Provide a complete, actionable result for the task.
 
 Execute now.
 EOF
 )
 
-ENGINE_CMD="$(get_engine_command "$AGENT_ENGINE")"
-ENGINE_PRINT_FLAG="$(get_engine_flags "$AGENT_ENGINE" "print")"
-ENGINE_SYSTEM_FLAG="$(get_engine_flags "$AGENT_ENGINE" "system")"
+touch "$WORKSPACE/status.txt"
+echo "RUNNING" > "$WORKSPACE/status.txt"
+echo "$AGENT_ENGINE" > "$WORKSPACE/engine.txt"
 
-$ENGINE_CMD $ENGINE_PRINT_FLAG \
-    $ENGINE_SYSTEM_FLAG "$FULL_PROMPT" \
-    "Execute the assigned task" \
-    > "$WORKSPACE/stdout.log" 2>&1 &
+(
+    set -euo pipefail
+    trap 'echo "ERROR" > "$WORKSPACE/status.txt"' ERR
+
+    # Capture the model output as the agent result (so orchestration works end-to-end).
+    run_engine "$AGENT_ENGINE" "$FULL_PROMPT" "Execute the assigned task" "print" \
+      2> "$WORKSPACE/stderr.log" \
+      | tee "$WORKSPACE/result.md" > "$WORKSPACE/stdout.log"
+
+    echo "DONE" > "$WORKSPACE/status.txt"
+) &
 
 AGENT_PID=$!
 echo "$AGENT_PID" > "$WORKSPACE/pid.txt"
-echo "$AGENT_ENGINE" > "$WORKSPACE/engine.txt"
 
 cat << EOF
 {
@@ -114,4 +163,3 @@ cat << EOF
   "status": "spawned"
 }
 EOF
-

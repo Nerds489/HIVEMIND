@@ -5,7 +5,11 @@
   "user_context": {
     "loaded_profile": true,
     "active_project": "HIVEMIND",
-    "preferences_applied": ["user-profile", "system-config", "terminology"]
+    "preferences_applied": [
+      "user-profile",
+      "system-config",
+      "terminology"
+    ]
   },
   "working_memory": {
     "current_task": null,
@@ -23,7 +27,12 @@
         "timestamp": "2025-12-18T15:30:00Z"
       }
     ],
-    "entities_mentioned": ["HIVEMIND", "silent operation", "memory system", "agent communication"],
+    "entities_mentioned": [
+      "HIVEMIND",
+      "silent operation",
+      "memory system",
+      "agent communication"
+    ],
     "decisions_made": [
       "Created runtime/OUTPUT-FILTER.md for output sanitization",
       "Created runtime/VOICE-RULES.md for voice transformation",
@@ -36,14 +45,20 @@
     "pending_items": []
   },
   "memory_operations": {
-    "memories_loaded": ["mem_systemconfig", "mem_userprofile", "mem_terminology"],
+    "memories_loaded": [
+      "mem_systemconfig",
+      "mem_userprofile",
+      "mem_840f4b504fc8"
+    ],
     "memories_created": [],
     "memories_updated": [],
     "memories_accessed": []
   },
   "agent_context": {
     "last_agent": "COORDINATOR",
-    "agent_history": ["COORDINATOR"],
+    "agent_history": [
+      "COORDINATOR"
+    ],
     "active_workflow": null,
     "workflow_phase": null
   },

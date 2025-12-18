@@ -23,6 +23,14 @@ while [[ $elapsed -lt $TIMEOUT ]]; do
             fi
             exit 0
         fi
+        if [[ "$status" == "ERROR" ]]; then
+            echo "Agent error in workspace: $WORKSPACE" >&2
+            if [[ -f "$WORKSPACE/stderr.log" ]]; then
+                echo "stderr:" >&2
+                sed -n '1,120p' "$WORKSPACE/stderr.log" >&2 || true
+            fi
+            exit 1
+        fi
     fi
     sleep 2
     elapsed=$((elapsed + 2))
@@ -30,4 +38,3 @@ done
 
 echo "Timeout waiting for agent at $WORKSPACE" >&2
 exit 1
-

@@ -1,5 +1,5 @@
 {
-  "id": "mem_dev-003_working",
+  "id": "mem_11cd4903bd3f",
   "type": "working",
   "subtype": "agent-working-memory",
   "created_by": "SYSTEM",
@@ -7,7 +7,11 @@
   "updated_at": "2025-12-18T00:00:00Z",
   "scope": "agent",
   "scope_id": "DEV-003",
-  "tags": ["working", "agent", "dev"],
+  "tags": [
+    "working",
+    "agent",
+    "dev"
+  ],
   "priority": "medium",
   "ttl": "PT4H",
   "content": {

@@ -1,5 +1,5 @@
 {
-  "id": "mem_inf_network",
+  "id": "mem_e16eba5a072c",
   "type": "factual",
   "subtype": "network-topology",
   "created_by": "SYSTEM",
@@ -7,7 +7,12 @@
   "updated_at": "2025-12-18T00:00:00Z",
   "scope": "team",
   "scope_id": "infrastructure",
-  "tags": ["network", "topology", "infrastructure", "connectivity"],
+  "tags": [
+    "network",
+    "topology",
+    "infrastructure",
+    "connectivity"
+  ],
   "priority": "high",
   "ttl": "permanent",
   "content": {

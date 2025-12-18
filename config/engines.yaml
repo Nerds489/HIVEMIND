@@ -1,18 +1,28 @@
 # HIVEMIND Engine Configuration
 # 
-# Supported engines: codex, claude-code
+# Supported engines: codex, claude
 # Set which engine runs HIVEMIND and which runs sub-agents
+
+# Required compatibility keys (used by validation tooling)
+default: claude
+
+# Preferred engine order (used by higher-level tooling)
+hivemind:
+  prefer: claude
+  fallback: codex
 
 # Active configuration
 active:
   hivemind: codex           # Engine for HIVEMIND orchestrator
-  agents: claude-code       # Engine for sub-agents
+  agents: claude            # Engine for sub-agents
 
 # Engine definitions
 engines:
   codex:
     name: "Codex CLI"
     command: "codex"
+    mode: "chat"
+    available: true
     flags:
       model: "--model"
       system: "--system-prompt"
@@ -24,9 +34,11 @@ engines:
       - system_prompt
       - context_file
       
-  claude-code:
+  claude:
     name: "Claude Code CLI"
     command: "claude"
+    mode: "print"
+    available: true
     flags:
       model: "--model"
       system: "--system-prompt"
@@ -42,17 +54,16 @@ engines:
 presets:
   recommended:
     hivemind: codex
-    agents: claude-code
+    agents: claude
     
   full-codex:
     hivemind: codex
     agents: codex
     
   full-claude:
-    hivemind: claude-code
-    agents: claude-code
+    hivemind: claude
+    agents: claude
     
   inverse:
-    hivemind: claude-code
+    hivemind: claude
     agents: codex
-

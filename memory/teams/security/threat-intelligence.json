@@ -1,5 +1,5 @@
 {
-  "id": "mem_sec_threats",
+  "id": "mem_b6784202bdd2",
   "type": "factual",
   "subtype": "threat-intelligence",
   "created_by": "SYSTEM",
@@ -7,7 +7,12 @@
   "updated_at": "2025-12-18T00:00:00Z",
   "scope": "team",
   "scope_id": "security",
-  "tags": ["threats", "intelligence", "security", "monitoring"],
+  "tags": [
+    "threats",
+    "intelligence",
+    "security",
+    "monitoring"
+  ],
   "priority": "critical",
   "ttl": "permanent",
   "content": {

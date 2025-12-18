@@ -1,5 +1,5 @@
 {
-  "id": "mem_sec-002_working",
+  "id": "mem_1f8f1cf3d6f7",
   "type": "working",
   "subtype": "agent-working-memory",
   "created_by": "SYSTEM",
@@ -7,7 +7,11 @@
   "updated_at": "2025-12-18T00:00:00Z",
   "scope": "agent",
   "scope_id": "SEC-002",
-  "tags": ["working", "agent", "sec"],
+  "tags": [
+    "working",
+    "agent",
+    "sec"
+  ],
   "priority": "medium",
   "ttl": "PT4H",
   "content": {

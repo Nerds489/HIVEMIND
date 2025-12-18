@@ -6,30 +6,46 @@
   "entry_count": 3,
   "entries": [
     {
-      "id": "mem_dev_codebase",
+      "id": "mem_312e740e0c76",
       "type": "factual",
       "subtype": "codebase-knowledge",
-      "tags": ["codebase", "knowledge", "development", "structure"],
+      "tags": [
+        "codebase",
+        "knowledge",
+        "development",
+        "structure"
+      ],
       "summary": "Knowledge about codebase structure, patterns, and conventions",
       "priority": "high",
       "created_at": "2025-12-18T00:00:00Z",
       "file_path": "codebase-knowledge.json"
     },
     {
-      "id": "mem_dev_archdec",
+      "id": "mem_2f610af4aaa3",
       "type": "semantic",
       "subtype": "architecture-decisions",
-      "tags": ["architecture", "decisions", "adr", "design", "permanent"],
+      "tags": [
+        "architecture",
+        "decisions",
+        "adr",
+        "design",
+        "permanent"
+      ],
       "summary": "Architecture Decision Records (ADRs) for the codebase",
       "priority": "critical",
       "created_at": "2025-12-18T00:00:00Z",
       "file_path": "architecture-decisions.json"
     },
     {
-      "id": "mem_dev_techdebt",
+      "id": "mem_a341d3a9983b",
       "type": "factual",
       "subtype": "tech-debt",
-      "tags": ["tech-debt", "refactoring", "improvement", "backlog"],
+      "tags": [
+        "tech-debt",
+        "refactoring",
+        "improvement",
+        "backlog"
+      ],
       "summary": "Technical debt tracking and improvement opportunities",
       "priority": "medium",
       "created_at": "2025-12-18T00:00:00Z",
@@ -37,22 +53,53 @@
     }
   ],
   "tag_index": {
-    "codebase": ["mem_dev_codebase"],
-    "knowledge": ["mem_dev_codebase"],
-    "development": ["mem_dev_codebase"],
-    "structure": ["mem_dev_codebase"],
-    "architecture": ["mem_dev_archdec"],
-    "decisions": ["mem_dev_archdec"],
-    "adr": ["mem_dev_archdec"],
-    "design": ["mem_dev_archdec"],
-    "permanent": ["mem_dev_archdec"],
-    "tech-debt": ["mem_dev_techdebt"],
-    "refactoring": ["mem_dev_techdebt"],
-    "improvement": ["mem_dev_techdebt"],
-    "backlog": ["mem_dev_techdebt"]
+    "codebase": [
+      "mem_312e740e0c76"
+    ],
+    "knowledge": [
+      "mem_312e740e0c76"
+    ],
+    "development": [
+      "mem_312e740e0c76"
+    ],
+    "structure": [
+      "mem_312e740e0c76"
+    ],
+    "architecture": [
+      "mem_2f610af4aaa3"
+    ],
+    "decisions": [
+      "mem_2f610af4aaa3"
+    ],
+    "adr": [
+      "mem_2f610af4aaa3"
+    ],
+    "design": [
+      "mem_2f610af4aaa3"
+    ],
+    "permanent": [
+      "mem_2f610af4aaa3"
+    ],
+    "tech-debt": [
+      "mem_a341d3a9983b"
+    ],
+    "refactoring": [
+      "mem_a341d3a9983b"
+    ],
+    "improvement": [
+      "mem_a341d3a9983b"
+    ],
+    "backlog": [
+      "mem_a341d3a9983b"
+    ]
   },
   "type_index": {
-    "factual": ["mem_dev_codebase", "mem_dev_techdebt"],
-    "semantic": ["mem_dev_archdec"]
+    "factual": [
+      "mem_312e740e0c76",
+      "mem_a341d3a9983b"
+    ],
+    "semantic": [
+      "mem_2f610af4aaa3"
+    ]
   }
 }
