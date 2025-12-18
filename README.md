@@ -112,6 +112,11 @@ Disable terminal auto-launch:
 - `jq` (required for `bin/memory-ops` and `bin/orchestrate`)
 - At least one engine installed: `codex` and/or `claude`
 
+**First-time engine auth (recommended):**
+```bash
+./hivemind --setup
+```
+
 ---
 
 ## Quick Setup (Prompt/Policy Mode)

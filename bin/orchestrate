@@ -97,11 +97,10 @@ Synthesize these into a single, coherent response. Use first person singular (â€
 
 SYN_ENGINE="${HIVEMIND_ENGINE:-$(load_engine_config "hivemind")}"
 
-if ! command -v "$(get_engine_command "$SYN_ENGINE")" >/dev/null 2>&1; then
+if ! engine_is_available "$SYN_ENGINE"; then
   echo "Error: synthesis engine '$SYN_ENGINE' not available. See: $ORCHESTRATION_DIR/combined.md" >&2
   exit 1
 fi
 
 run_engine "$SYN_ENGINE" "$SYNTHESIS_PROMPT" "Synthesize into one unified response" "print" > "$ORCHESTRATION_DIR/synthesis.md"
 cat "$ORCHESTRATION_DIR/synthesis.md"
-

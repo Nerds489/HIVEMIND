@@ -19,14 +19,12 @@ run_claude_code_background() {
     local task="$2"
     local output_dir="$3"
 
-    claude --print \
-           --system-prompt "$system_prompt" \
-           "$task" \
-           > "$output_dir/stdout.log" 2>&1 &
-
+    (
+      set -euo pipefail
+      run_engine "claude-code" "$system_prompt" "$task" "print" > "$output_dir/stdout.log" 2>&1
+    ) &
     echo $!
 }
 
 export -f run_claude_code
 export -f run_claude_code_background
-

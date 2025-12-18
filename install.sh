@@ -5,6 +5,7 @@
 set -euo pipefail
 
 HIVEMIND_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$HIVEMIND_ROOT/engines/engine.sh"
 
 echo "Installing HIVEMIND..."
 
@@ -22,9 +23,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 check_dep() {
-    if ! command -v "$1" &> /dev/null; then
-        echo "Warning: $1 not found. Install it for $2 support."
-        return 1
+    local exe
+    exe="$(find_executable "$1" 2>/dev/null || true)"
+    if [[ -z "$exe" ]]; then
+      echo "Warning: $1 not found. Install it for $2 support."
+      return 1
     fi
     return 0
 }
@@ -114,24 +117,28 @@ auto_launch_engines() {
     return 0
   fi
 
-  local launched=0
-  local base_cmd="cd \"$HIVEMIND_ROOT\""
+	  local launched=0
+	  local base_cmd="cd \"$HIVEMIND_ROOT\""
 
-  if command -v codex >/dev/null 2>&1; then
-    if ! is_running codex; then
-      if launch_terminal "HIVEMIND (Codex)" "$base_cmd; exec codex"; then
-        launched=$((launched + 1))
-      fi
-    fi
-  fi
+	  local codex_cmd=""
+	  codex_cmd="$(resolve_engine_command codex 2>/dev/null || true)"
+	  if [[ -n "$codex_cmd" ]]; then
+	    if ! is_running codex; then
+	      if launch_terminal "HIVEMIND (Codex)" "$base_cmd; exec $(printf '%q' "$codex_cmd")"; then
+	        launched=$((launched + 1))
+	      fi
+	    fi
+	  fi
 
-  if command -v claude >/dev/null 2>&1; then
-    if ! is_running claude; then
-      if launch_terminal "HIVEMIND (Claude)" "$base_cmd; exec claude"; then
-        launched=$((launched + 1))
-      fi
-    fi
-  fi
+	  local claude_cmd=""
+	  claude_cmd="$(resolve_engine_command claude 2>/dev/null || true)"
+	  if [[ -n "$claude_cmd" ]]; then
+	    if ! is_running claude; then
+	      if launch_terminal "HIVEMIND (Claude)" "$base_cmd; exec $(printf '%q' "$claude_cmd")"; then
+	        launched=$((launched + 1))
+	      fi
+	    fi
+	  fi
 
   if [[ "$LAUNCH_MODE" == "yes" ]] && [[ "$launched" -eq 0 ]]; then
     echo "Note: No terminals launched (either engines already running or no supported terminal found)."

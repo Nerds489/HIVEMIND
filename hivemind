@@ -39,8 +39,24 @@ NC='\033[0m'
 
 HIVEMIND_ENGINE="${HIVEMIND_ENGINE:-}"
 AGENT_ENGINE="${AGENT_ENGINE:-}"
-HIVEMIND_MODEL="${HIVEMIND_MODEL:-claude-sonnet-4-20250514}"
+HIVEMIND_MODEL="${HIVEMIND_MODEL:-}"
 AUTO_ORCHESTRATE="${HIVEMIND_AUTO_ORCHESTRATE:-auto}"  # auto|on|off
+
+term_cols() {
+    local cols
+    cols="$(tput cols 2>/dev/null || true)"
+    if [[ -z "${cols:-}" || "$cols" -lt 60 ]]; then
+        echo 80
+    else
+        echo "$cols"
+    fi
+}
+
+repeat_char() {
+    local ch="$1"
+    local count="$2"
+    printf '%*s' "$count" '' | tr ' ' "$ch"
+}
 
 load_defaults() {
     if [[ -z "$HIVEMIND_ENGINE" ]]; then
@@ -52,18 +68,23 @@ load_defaults() {
 }
 
 show_banner() {
-    echo -e "${CYAN}"
-    cat << 'EOF'
-    ██╗  ██╗██╗██╗   ██╗███████╗███╗   ███╗██╗███╗   ██╗██████╗ 
-    ██║  ██║██║██║   ██║██╔════╝████╗ ████║██║████╗  ██║██╔══██╗
-    ███████║██║██║   ██║█████╗  ██╔████╔██║██║██╔██╗ ██║██║  ██║
-    ██╔══██║██║╚██╗ ██╔╝██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║  ██║
-    ██║  ██║██║ ╚████╔╝ ███████╗██║ ╚═╝ ██║██║██║ ╚████║██████╔╝
-    ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝ 
-EOF
-    echo -e "${NC}"
-    echo -e "${PURPLE}         Neural Multi-Agent Orchestration System${NC}"
-    echo -e "${BLUE}            24 Agents • 4 Teams • Any Engine${NC}"
+    local cols w inner version pad
+    cols="$(term_cols)"
+    w=$(( cols > 96 ? 96 : cols ))
+    inner=$(( w - 2 ))
+
+    version="$(awk -F: '/version:/ {gsub(/[[:space:]\"]/, "", $2); print $2; exit}' "$HIVEMIND_ROOT/config/hivemind.yaml" 2>/dev/null || true)"
+    [[ -n "$version" ]] || version="dev"
+    pad=$(( inner - 11 - ${#version} ))
+    [[ "$pad" -lt 0 ]] && pad=0
+
+    echo -e "${CYAN}┌$(repeat_char "─" "$inner")┐${NC}"
+    printf "${CYAN}│${NC} ${BOLD}HIVEMIND${NC} ${BLUE}v%s${NC}%*s${CYAN}│${NC}\n" "$version" "$pad" ""
+    echo -e "${CYAN}├$(repeat_char "─" "$inner")┤${NC}"
+    printf "${CYAN}│${NC} ${YELLOW}Tips:${NC}%*s${CYAN}│${NC}\n" $(( inner - 6 )) ""
+    printf "${CYAN}│${NC} - Run ${BOLD}hivemind --setup${NC} to authenticate engines%*s${CYAN}│${NC}\n" $(( inner - 56 )) ""
+    printf "${CYAN}│${NC} - Type ${BOLD}help${NC}, ${BOLD}config${NC}, ${BOLD}status${NC}, or ${BOLD}exit${NC} in interactive mode%*s${CYAN}│${NC}\n" $(( inner - 78 )) ""
+    echo -e "${CYAN}└$(repeat_char "─" "$inner")┘${NC}"
     echo ""
 }
 
@@ -75,7 +96,11 @@ show_config() {
     echo -e "${YELLOW}Engines:${NC}"
     echo -e "  HIVEMIND runs on:  ${GREEN}$HIVEMIND_ENGINE${NC}"
     echo -e "  Agents run on:     ${GREEN}$AGENT_ENGINE${NC}"
-    echo -e "  Model:             ${BLUE}$HIVEMIND_MODEL${NC}"
+    if [[ -n "${HIVEMIND_MODEL:-}" ]]; then
+      echo -e "  Model override:    ${BLUE}$HIVEMIND_MODEL${NC}"
+    else
+      echo -e "  Model override:    ${BLUE}(default)${NC}"
+    fi
     echo ""
     echo -e "${YELLOW}Available Presets:${NC}"
     echo -e "  ${BOLD}recommended${NC}   - codex + claude (default)"
@@ -285,6 +310,9 @@ show_help() {
     echo "  hivemind                              Interactive mode"
     echo "  hivemind \"task\"                       Direct task execution"
     echo ""
+    echo -e "${YELLOW}SETUP:${NC}"
+    echo "  --setup                               Authenticate engines (browser/API key)"
+    echo ""
     echo -e "${YELLOW}ENGINE OPTIONS:${NC}"
     echo "  --engine <engine>                     Set HIVEMIND engine (codex|claude)"
     echo "  --agents <engine>                     Set agent engine (codex|claude)"
@@ -311,6 +339,77 @@ show_help() {
     echo "  hivemind \"Design a secure authentication system\""
 }
 
+setup_wizard() {
+    load_defaults
+
+    local codex_cmd claude_cmd codex_status claude_status
+    codex_cmd="$(resolve_engine_command codex 2>/dev/null || true)"
+    claude_cmd="$(resolve_engine_command claude 2>/dev/null || true)"
+
+    codex_status="missing"
+    if [[ -n "$codex_cmd" ]]; then
+        if "$codex_cmd" login status >/dev/null 2>&1; then
+            codex_status="ready"
+        else
+            codex_status="needs login"
+        fi
+    fi
+
+    claude_status="missing"
+    if [[ -n "$claude_cmd" ]]; then
+        if [[ -n "${ANTHROPIC_API_KEY:-}" || -n "${CLAUDE_API_KEY:-}" || -f "$HOME/.claude/.credentials.json" ]]; then
+            claude_status="ready"
+        else
+            claude_status="needs login"
+        fi
+    fi
+
+    show_banner
+    echo -e "${CYAN}Engine Setup${NC}"
+    echo ""
+    echo -e "${YELLOW}Detected:${NC}"
+    echo -e "  Codex:  ${GREEN}${codex_cmd:-<not found>}${NC}  (${BLUE}${codex_status}${NC})"
+    echo -e "  Claude: ${GREEN}${claude_cmd:-<not found>}${NC}  (${BLUE}${claude_status}${NC})"
+    echo ""
+    cat <<'EOF'
+Choose an action:
+  1) Codex: login via browser (device auth)
+  2) Codex: login via API key
+  3) Claude: setup-token (browser/token)
+  q) Quit
+EOF
+    printf "Selection: "
+    local choice
+    read -r choice
+
+    case "$choice" in
+        1)
+            [[ -n "$codex_cmd" ]] || { echo "Codex not found. Install Codex CLI first." >&2; return 1; }
+            "$codex_cmd" login --device-auth
+            ;;
+        2)
+            [[ -n "$codex_cmd" ]] || { echo "Codex not found. Install Codex CLI first." >&2; return 1; }
+            printf "OPENAI_API_KEY: "
+            local key
+            IFS= read -rs key
+            echo ""
+            printf '%s' "$key" | "$codex_cmd" login --with-api-key >/dev/null
+            echo "Codex login complete."
+            ;;
+        3)
+            [[ -n "$claude_cmd" ]] || { echo "Claude not found. Install Claude Code CLI first." >&2; return 1; }
+            "$claude_cmd" setup-token
+            ;;
+        q|Q)
+            return 0
+            ;;
+        *)
+            echo "Invalid selection." >&2
+            return 1
+            ;;
+    esac
+}
+
 interactive_mode() {
     show_banner
     load_defaults
@@ -319,7 +418,7 @@ interactive_mode() {
     echo -e "${BLUE}Engine: HIVEMIND=${GREEN}$HIVEMIND_ENGINE${BLUE} | Agents=${GREEN}$AGENT_ENGINE${NC}"
     echo ""
     echo -e "${GREEN}HIVEMIND ready. All teams standing by.${NC}"
-    echo -e "${BLUE}Type your request, 'config' to see settings, or 'exit' to quit.${NC}"
+    echo -e "${BLUE}Type your request, 'setup' for auth, 'config' for settings, or 'exit' to quit.${NC}"
     echo ""
 
     while true; do
@@ -340,6 +439,9 @@ interactive_mode() {
                 ;;
             help)
                 show_help
+                ;;
+            setup)
+                setup_wizard || true
                 ;;
             "")
                 continue
@@ -385,6 +487,10 @@ while [[ $# -gt 0 ]]; do
         --status|-s)
             load_defaults
             show_status
+            exit 0
+            ;;
+        --setup)
+            setup_wizard
             exit 0
             ;;
         --auto)

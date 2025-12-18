@@ -127,8 +127,8 @@ if [[ "$bad_ids" == "0" ]]; then pass; else fail "$bad_ids"; fi
 
 echo -n "13. Engines available (codex/claude): "
 eng=0
-command -v codex >/dev/null 2>&1 && eng=$((eng + 1))
-command -v claude >/dev/null 2>&1 && eng=$((eng + 1))
+engine_is_available codex && eng=$((eng + 1))
+engine_is_available claude && eng=$((eng + 1))
 if [[ "$eng" -ge 1 ]]; then pass; else warn "no engines detected"; fi
 
 echo ""
