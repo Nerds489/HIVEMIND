@@ -409,7 +409,9 @@ filter_response() {
     -e '/^Codex CLI/d' \
     -e '/^Claude Code/d' \
     -e '/^Tip:/d' \
-    -e '/^Model:/d')
+    -e '/^Model:/d' \
+    -e '/^I am thinking about/d' \
+    -e '/^Let me analyze/d')
 
   filtered=$(printf '%s\n' "$filtered" | sed -e 's/^[[:space:]]\+$//g' -e '/./,$!d')
 
@@ -777,7 +779,7 @@ main() {
         args+=("$@")
         break
         ;;
-      -*)
+      -* )
         printf '%s\n' "Unknown option: $1"
         exit 1
         ;;
