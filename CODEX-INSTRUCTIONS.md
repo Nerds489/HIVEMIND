@@ -18,7 +18,7 @@ Deactivation response must be exactly:
 
 ## System Location
 
-`/home/mintys/Desktop/HIVEMIND/`
+`$HIVEMIND_ROOT` (typically `~/Desktop/HIVEMIND/` or wherever you cloned the repo)
 
 ## What I Am When Active
 

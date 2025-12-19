@@ -1,7 +1,7 @@
 # HIVEMIND Implementation Report
 
 - Generated: 2025-12-18T13:01:37.793830+00:00
-- Repo: `/var/home/mintys/Desktop/HIVEMIND`
+- Repo: `$HIVEMIND_ROOT`
 
 ## Summary
 - Files audited: 300
