@@ -1,549 +1,833 @@
-#!/bin/bash
-#
-# ██╗  ██╗██╗██╗   ██╗███████╗███╗   ███╗██╗███╗   ██╗██████╗ 
-# ██║  ██║██║██║   ██║██╔════╝████╗ ████║██║████╗  ██║██╔══██╗
-# ███████║██║██║   ██║█████╗  ██╔████╔██║██║██╔██╗ ██║██║  ██║
-# ██╔══██║██║╚██╗ ██╔╝██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║  ██║
-# ██║  ██║██║ ╚████╔╝ ███████╗██║ ╚═╝ ██║██║██║ ╚████║██████╔╝
-# ╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝ 
-#
-# Neural Multi-Agent Orchestration System
-# Engine-Agnostic Architecture
-#
-# Usage:
-#   hivemind                           Interactive mode
-#   hivemind "task"                    Direct task
-#   hivemind --engine codex "task"     Use specific engine for HIVEMIND
-#   hivemind --agents claude "task"    Use specific engine for agents
-#   hivemind --preset full-codex       Use preset configuration
-#   hivemind --config                  Show current configuration
-#   hivemind --set-hivemind codex      Set HIVEMIND engine permanently
-#   hivemind --set-agents claude       Set agent engine permanently
+#!/usr/bin/env bash
+# ============================================================
+# HIVEMIND - Unified Orchestration CLI
+# Version: 1.0.0
+# ============================================================
 
 set -euo pipefail
+IFS=$' \t\n'
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# SYMLINK RESOLUTION
-# ═══════════════════════════════════════════════════════════════════════════════
-# Resolves the ACTUAL location of this script, even when called via symlink
-# Without this: ~/.local/bin/hivemind breaks because it looks for engines/ there
+trap 'printf "\n"; exit 130' INT
 
-SOURCE="${BASH_SOURCE[0]}"
-while [ -L "$SOURCE" ]; do
-    DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-    SOURCE="$(readlink "$SOURCE")"
-    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
-HIVEMIND_ROOT="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-export HIVEMIND_ROOT
+VERSION="1.0.0"
+VERSION_LABEL="v1.0.0 GENESIS"
+TAGLINE="24 Agents • 4 Teams • 1 Unified Intelligence"
 
-# Sanity check
-if [ ! -f "$HIVEMIND_ROOT/engines/engine.sh" ]; then
-    echo "FATAL: engines/engine.sh not found at $HIVEMIND_ROOT" >&2
-    exit 1
-fi
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/hivemind"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+HISTORY_FILE="$CONFIG_DIR/history"
 
-source "$HIVEMIND_ROOT/engines/engine.sh"
-source "$HIVEMIND_ROOT/core/router.sh"
+CLAUDE_MODEL_DEFAULT="claude-sonnet-4-20250514"
+OPENAI_MODEL_DEFAULT="gpt-4o"
+ENGINE_PREFERRED=""
+ENGINE_FALLBACK=""
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-YELLOW='\033[1;33m'
-PURPLE='\033[0;35m'
-BOLD='\033[1m'
-NC='\033[0m'
+SYSTEM_PROMPT=$(cat <<'PROMPT'
+You are HIVEMIND - a unified neural orchestration system. You speak as ONE mind, ONE voice, ONE expert. You coordinate 24 specialized agents across 4 teams internally, but the user only sees unified responses. Never reference internal agents or teams in your responses. Never say "let me check with" or "the team suggests". Just provide expert answers directly.
+PROMPT
+)
 
-HIVEMIND_ENGINE="${HIVEMIND_ENGINE:-}"
-AGENT_ENGINE="${AGENT_ENGINE:-}"
-HIVEMIND_MODEL="${HIVEMIND_MODEL:-}"
-AUTO_ORCHESTRATE="${HIVEMIND_AUTO_ORCHESTRATE:-auto}"  # auto|on|off
+ACTIVE_ENGINE=""
+ENGINE_MODEL=""
+ENGINE_OVERRIDE=""
+MODEL_OVERRIDE=""
+COLOR_ENABLED="true"
+COMPACT_MODE="false"
+
+MAG=""; PNK=""; PUR=""; BLU=""; CYN=""; WHT=""; DIM=""; RST=""
+RED=""; GRN=""; YLW=""; BLU2=""; CYN2=""
+
+TEAMS=("DEV" "SEC" "INF" "QA")
+TEAM_COLORS=()
+TEAM_AGENT_IDS=(
+  "DEV-001 DEV-002 DEV-003 DEV-004 DEV-005 DEV-006"
+  "SEC-001 SEC-002 SEC-003 SEC-004 SEC-005 SEC-006"
+  "INF-001 INF-002 INF-003 INF-004 INF-005 INF-006"
+  "QA-001 QA-002 QA-003 QA-004 QA-005 QA-006"
+)
+TEAM_AGENT_LABELS=(
+  "Architect|Backend Dev|Frontend Dev|Reviewer|Writer|DevOps"
+  "Security Arch|Pentester|Malware|Wireless|Compliance|Incident"
+  "Infra Arch|SysAdmin|Network|DBA|SRE|Automation"
+  "QA Arch|Test Auto|Perf Test|Sec Test|Manual QA|Test Data"
+)
+
+ALL_AGENT_IDS=()
+
+declare -A AGENT_STATUS
+
+declare -A AGENT_TASK
+
+supports_color() {
+  [[ -t 1 ]] || return 1
+  local colors
+  colors=$(tput colors 2>/dev/null || echo 0)
+  [[ "$colors" -ge 256 ]]
+}
+
+init_colors() {
+  if [[ -n "${NO_COLOR:-}" ]]; then
+    COLOR_ENABLED="false"
+  fi
+
+  if [[ "$COLOR_ENABLED" == "true" ]] && supports_color; then
+    MAG=$'\033[38;5;201m'
+    PNK=$'\033[38;5;199m'
+    PUR=$'\033[38;5;165m'
+    BLU=$'\033[38;5;135m'
+    CYN=$'\033[38;5;51m'
+    WHT=$'\033[1;97m'
+    DIM=$'\033[2m'
+    RST=$'\033[0m'
+
+    RED=$'\033[1;31m'
+    GRN=$'\033[1;32m'
+    YLW=$'\033[1;33m'
+    BLU2=$'\033[1;34m'
+    CYN2=$'\033[1;36m'
+  else
+    MAG=""; PNK=""; PUR=""; BLU=""; CYN=""; WHT=""; DIM=""; RST=""
+    RED=""; GRN=""; YLW=""; BLU2=""; CYN2=""
+  fi
+
+  TEAM_COLORS=("$CYN2" "$RED" "$GRN" "$YLW")
+}
 
 term_cols() {
-    local cols
-    cols="$(tput cols 2>/dev/null || true)"
-    if [[ -z "${cols:-}" || "$cols" -lt 60 ]]; then
-        echo 80
-    else
-        echo "$cols"
-    fi
+  local cols
+  cols=$(tput cols 2>/dev/null || echo 80)
+  if [[ -z "$cols" || "$cols" -lt 60 ]]; then
+    echo 80
+  else
+    echo "$cols"
+  fi
 }
 
-repeat_char() {
-    local ch="$1"
-    local count="$2"
-    printf '%*s' "$count" '' | tr ' ' "$ch"
-}
+load_config() {
+  if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
+    local colors
+    local compact
+    local claude_model
+    local openai_model
 
-load_defaults() {
-    if [[ -z "$HIVEMIND_ENGINE" ]]; then
-        HIVEMIND_ENGINE=$(load_engine_config "hivemind")
+    ENGINE_PREFERRED=$(jq -r '.engine.preferred // empty' "$CONFIG_FILE")
+    ENGINE_FALLBACK=$(jq -r '.engine.fallback // empty' "$CONFIG_FILE")
+
+    claude_model=$(jq -r '.engine.model.claude // empty' "$CONFIG_FILE")
+    openai_model=$(jq -r '.engine.model.openai // empty' "$CONFIG_FILE")
+    if [[ -n "$claude_model" && "$claude_model" != "null" ]]; then
+      CLAUDE_MODEL_DEFAULT="$claude_model"
     fi
-    if [[ -z "$AGENT_ENGINE" ]]; then
-        AGENT_ENGINE=$(load_engine_config "agents")
+    if [[ -n "$openai_model" && "$openai_model" != "null" ]]; then
+      OPENAI_MODEL_DEFAULT="$openai_model"
     fi
+
+    colors=$(jq -r '.display.colors // "true"' "$CONFIG_FILE")
+    compact=$(jq -r '.display.compact_mode // "false"' "$CONFIG_FILE")
+
+    if [[ "$colors" == "false" ]]; then
+      COLOR_ENABLED="false"
+    fi
+    if [[ "$compact" == "true" ]]; then
+      COMPACT_MODE="true"
+    fi
+  fi
 }
 
 show_banner() {
-    local cols w inner version pad
-    cols="$(term_cols)"
-    w=$(( cols > 96 ? 96 : cols ))
-    inner=$(( w - 2 ))
+  if [[ -t 1 ]]; then
+    clear || printf '\033c'
+  fi
 
-    version="$(awk -F: '/version:/ {gsub(/[[:space:]\"]/, "", $2); print $2; exit}' "$HIVEMIND_ROOT/config/hivemind.yaml" 2>/dev/null || true)"
-    [[ -n "$version" ]] || version="dev"
-    pad=$(( inner - 11 - ${#version} ))
-    [[ "$pad" -lt 0 ]] && pad=0
+  local term_width
+  local banner_width
+  local pad
+  local spacer
 
-    echo -e "${CYAN}┌$(repeat_char "─" "$inner")┐${NC}"
-    printf "${CYAN}│${NC} ${BOLD}HIVEMIND${NC} ${BLUE}v%s${NC}%*s${CYAN}│${NC}\n" "$version" "$pad" ""
-    echo -e "${CYAN}├$(repeat_char "─" "$inner")┤${NC}"
-    printf "${CYAN}│${NC} ${YELLOW}Tips:${NC}%*s${CYAN}│${NC}\n" $(( inner - 6 )) ""
-    printf "${CYAN}│${NC} - Run ${BOLD}hivemind --setup${NC} to authenticate engines%*s${CYAN}│${NC}\n" $(( inner - 56 )) ""
-    printf "${CYAN}│${NC} - Type ${BOLD}help${NC}, ${BOLD}config${NC}, ${BOLD}status${NC}, or ${BOLD}exit${NC} in interactive mode%*s${CYAN}│${NC}\n" $(( inner - 78 )) ""
-    echo -e "${CYAN}└$(repeat_char "─" "$inner")┘${NC}"
-    echo ""
+  term_width=$(term_cols)
+  banner_width=74
+  pad=$(( (term_width - banner_width) / 2 ))
+  if (( pad < 0 )); then
+    pad=0
+  fi
+  spacer=$(printf '%*s' "$pad" '')
+
+  printf '\n'
+  printf '%b\n' "${spacer}${MAG}╔══════════════════════════════════════════════════════════════════════╗${RST}"
+  printf '%b\n' "${spacer}${MAG}║${RST}  ${MAG}██╗  ██╗${CYN}██╗${MAG}██╗   ██╗${CYN}███████╗${MAG}███╗   ███╗${CYN}██╗${MAG}███╗   ██╗${CYN}██████╗${RST}   ${MAG}║${RST}"
+  printf '%b\n' "${spacer}${PNK}║${RST}  ${MAG}██║  ██║${CYN}██║${MAG}██║   ██║${CYN}██╔════╝${MAG}████╗ ████║${CYN}██║${MAG}████╗  ██║${CYN}██╔══██╗${RST}  ${PNK}║${RST}"
+  printf '%b\n' "${spacer}${PUR}║${RST}  ${MAG}███████║${CYN}██║${MAG}██║   ██║${CYN}█████╗  ${MAG}██╔████╔██║${CYN}██║${MAG}██╔██╗ ██║${CYN}██║  ██║${RST}  ${PUR}║${RST}"
+  printf '%b\n' "${spacer}${BLU}║${RST}  ${MAG}██╔══██║${CYN}██║${MAG}╚██╗ ██╔╝${CYN}██╔══╝  ${MAG}██║╚██╔╝██║${CYN}██║${MAG}██║╚██╗██║${CYN}██║  ██║${RST}  ${BLU}║${RST}"
+  printf '%b\n' "${spacer}${CYN}║${RST}  ${MAG}██║  ██║${CYN}██║${MAG} ╚████╔╝ ${CYN}███████╗${MAG}██║ ╚═╝ ██║${CYN}██║${MAG}██║ ╚████║${CYN}██████╔╝${RST}  ${CYN}║${RST}"
+  printf '%b\n' "${spacer}${CYN}║${RST}  ${MAG}╚═╝  ╚═╝${CYN}╚═╝${MAG}  ╚═══╝  ${CYN}╚══════╝${MAG}╚═╝     ╚═╝${CYN}╚═╝${MAG}╚═╝  ╚═══╝${CYN}╚═════╝${RST}   ${CYN}║${RST}"
+  printf '%b\n' "${spacer}${CYN}║${RST}                                                                      ${CYN}║${RST}"
+  printf '%b\n' "${spacer}${CYN}║${RST}        ${WHT}24 Agents${RST} ${DIM}•${RST} ${WHT}4 Teams${RST} ${DIM}•${RST} ${WHT}1 Unified Intelligence${RST}              ${CYN}║${RST}"
+  printf '%b\n' "${spacer}${CYN}╚══════════════════════════════════════════════════════════════════════╝${RST}"
+  printf '%b\n' "${spacer}                         ${DIM}${VERSION_LABEL}${RST}"
+  printf '\n'
 }
 
-show_config() {
-    echo -e "${CYAN}═══════════════════════════════════════════${NC}"
-    echo -e "${CYAN}         HIVEMIND CONFIGURATION            ${NC}"
-    echo -e "${CYAN}═══════════════════════════════════════════${NC}"
-    echo ""
-    echo -e "${YELLOW}Engines:${NC}"
-    echo -e "  HIVEMIND runs on:  ${GREEN}$HIVEMIND_ENGINE${NC}"
-    echo -e "  Agents run on:     ${GREEN}$AGENT_ENGINE${NC}"
-    if [[ -n "${HIVEMIND_MODEL:-}" ]]; then
-      echo -e "  Model override:    ${BLUE}$HIVEMIND_MODEL${NC}"
-    else
-      echo -e "  Model override:    ${BLUE}(default)${NC}"
-    fi
-    echo ""
-    echo -e "${YELLOW}Available Presets:${NC}"
-    echo -e "  ${BOLD}recommended${NC}   - codex + claude (default)"
-    echo -e "  ${BOLD}full-codex${NC}    - codex + codex"
-    echo -e "  ${BOLD}full-claude${NC}   - claude + claude"
-    echo -e "  ${BOLD}inverse${NC}       - claude + codex"
-    echo ""
-    echo -e "${YELLOW}Switch with:${NC}"
-    echo -e "  hivemind --preset full-codex"
-    echo -e "  hivemind --set-hivemind codex --set-agents claude-code"
+init_agents() {
+  ALL_AGENT_IDS=()
+  for ids in "${TEAM_AGENT_IDS[@]}"; do
+    for id in $ids; do
+      ALL_AGENT_IDS+=("$id")
+    done
+  done
+
+  for id in "${ALL_AGENT_IDS[@]}"; do
+    AGENT_STATUS["$id"]="standby"
+    AGENT_TASK["$id"]="—"
+  done
 }
 
-apply_preset() {
-    local preset="$1"
-
-    case "$preset" in
-        recommended)
-            HIVEMIND_ENGINE="codex"
-            AGENT_ENGINE="claude"
-            ;;
-        full-codex)
-            HIVEMIND_ENGINE="codex"
-            AGENT_ENGINE="codex"
-            ;;
-        full-claude)
-            HIVEMIND_ENGINE="claude"
-            AGENT_ENGINE="claude"
-            ;;
-        inverse)
-            HIVEMIND_ENGINE="claude"
-            AGENT_ENGINE="codex"
-            ;;
-        *)
-            echo -e "${RED}Unknown preset: $preset${NC}"
-            echo "Available: recommended, full-codex, full-claude, inverse"
-            exit 1
-            ;;
-    esac
-
-    echo -e "${GREEN}Applied preset: $preset${NC}"
-    echo -e "  HIVEMIND: $HIVEMIND_ENGINE"
-    echo -e "  Agents:   $AGENT_ENGINE"
+reset_agent_status() {
+  for id in "${ALL_AGENT_IDS[@]}"; do
+    AGENT_STATUS["$id"]="standby"
+    AGENT_TASK["$id"]="—"
+  done
 }
 
-save_config() {
-    local key="$1"
-    local value="$2"
+set_agent() {
+  local id="$1"
+  local status="$2"
+  local task="$3"
+  AGENT_STATUS["$id"]="$status"
+  AGENT_TASK["$id"]="$task"
+}
 
-    if command -v yq &> /dev/null; then
-        yq -i ".active.$key = \"$value\"" "$HIVEMIND_ROOT/config/engines.yaml"
-    else
-        sed -i "s/^  $key:.*$/  $key: $value/" "$HIVEMIND_ROOT/config/engines.yaml"
+activate_agents() {
+  local request
+  request="${1,,}"
+
+  reset_agent_status
+
+  if [[ "$request" =~ (code|develop|build|api|backend|frontend|implement|create|function|class) ]]; then
+    set_agent "DEV-001" "active" "Analyzing requirements"
+
+    if [[ "$request" =~ (backend|api|server|database|endpoint) ]]; then
+      set_agent "DEV-002" "active" "Backend implementation"
     fi
 
-    echo -e "${GREEN}Saved: $key = $value${NC}"
-}
-
-init_session() {
-    export HIVEMIND_SESSION="$(date +%Y%m%d_%H%M%S)_$$"
-    mkdir -p "$HIVEMIND_ROOT/memory/sessions/$HIVEMIND_SESSION"
-    mkdir -p "$HIVEMIND_ROOT/workspace"
-    mkdir -p "$HIVEMIND_ROOT/logs"
-
-    mkdir -p "$HIVEMIND_ROOT/memory/short-term"
-    [[ -f "$HIVEMIND_ROOT/memory/short-term/context.json" ]] || echo '{}' > "$HIVEMIND_ROOT/memory/short-term/context.json"
-    [[ -f "$HIVEMIND_ROOT/memory/short-term/working.json" ]] || echo '{}' > "$HIVEMIND_ROOT/memory/short-term/working.json"
-    [[ -f "$HIVEMIND_ROOT/memory/short-term/project-context.json" ]] || echo '{}' > "$HIVEMIND_ROOT/memory/short-term/project-context.json"
-    [[ -f "$HIVEMIND_ROOT/memory/short-term/decisions.json" ]] || echo '{}' > "$HIVEMIND_ROOT/memory/short-term/decisions.json"
-}
-
-maybe_store_trigger() {
-    local task="$1"
-    local mem="$HIVEMIND_ROOT/bin/memory-ops"
-    [[ -x "$mem" ]] || return 0
-
-    shopt -s nocasematch
-    if [[ "$task" =~ ^remember[[:space:]]+that[[:space:]]+(.+) ]]; then
-        "$mem" store fact "${BASH_REMATCH[1]}" trigger remember || true
-    elif [[ "$task" =~ ^we[[:space:]]+decided[[:space:]]+(.+) ]]; then
-        "$mem" store decision "${BASH_REMATCH[1]}" trigger decision || true
-    elif [[ "$task" =~ ^i[[:space:]]+prefer[[:space:]]+(.+) ]]; then
-        "$mem" store preference "${BASH_REMATCH[1]}" trigger preference || true
-    elif [[ "$task" =~ ^always[[:space:]]+(.+) ]]; then
-        "$mem" store rule "${BASH_REMATCH[1]}" trigger rule || true
-    elif [[ "$task" =~ ^never[[:space:]]+(.+) ]]; then
-        "$mem" store rule "${BASH_REMATCH[1]}" trigger rule || true
+    if [[ "$request" =~ (frontend|ui|interface|component|react|vue) ]]; then
+      set_agent "DEV-003" "active" "UI development"
     fi
-    shopt -u nocasematch
-}
+  fi
 
-build_memory_context() {
-    local task="$1"
-    local mem="$HIVEMIND_ROOT/bin/memory-ops"
-    [[ -x "$mem" ]] || return 0
+  if [[ "$request" =~ (security|secure|vulnerability|pentest|audit|exploit|attack|hack) ]]; then
+    set_agent "SEC-001" "active" "Security analysis"
 
-    local prefs="$HIVEMIND_ROOT/memory/long-term/preferences.json"
-    local proj="$HIVEMIND_ROOT/memory/long-term/project.json"
-    local user="$HIVEMIND_ROOT/memory/long-term/user-profile.json"
-
-    echo "## MEMORY (AUTO-LOADED)"
-    [[ -f "$prefs" ]] && echo "- preferences: $prefs"
-    [[ -f "$proj" ]] && echo "- project: $proj"
-    [[ -f "$user" ]] && echo "- user-profile: $user"
-    echo ""
-    echo "## RELEVANT MEMORIES (STRING MATCH)"
-    "$mem" recall "$task" | head -n 40 || true
-    echo ""
-}
-
-build_hivemind_prompt() {
-    cat << EOF
-$(cat "$HIVEMIND_ROOT/IDENTITY.md")
-
-## ENGINE CONFIGURATION
-
-You are running on: $HIVEMIND_ENGINE
-Sub-agents run on: $AGENT_ENGINE
-
-To spawn a sub-agent, use:
-\$HIVEMIND_ROOT/bin/spawn-agent <agent-type> "<task>"
-
-The spawn-agent script will use the configured agent engine ($AGENT_ENGINE).
-
-## AGENT TYPES AVAILABLE
-
-Development: architect, backend, frontend, reviewer, writer, devops
-Security: security-architect, pentester, malware, wireless, compliance, incident
-Infrastructure: infra-architect, sysadmin, network, dba, sre, automation
-QA: qa-architect, test-auto, performance, security-test, manual-qa, test-data
-
-## WORKSPACE
-
-Agent outputs go to: \$HIVEMIND_ROOT/workspace/<agent>/<task-id>/
-Read results from: workspace/<agent>/<task-id>/result.md
-
-## SESSION
-
-Current session: $HIVEMIND_SESSION
-Session memory: \$HIVEMIND_ROOT/memory/sessions/$HIVEMIND_SESSION/
-
-$(build_memory_context "${HIVEMIND_LAST_TASK:-}")
-EOF
-}
-
-run_hivemind() {
-    local task="$1"
-    local prompt
-
-    export HIVEMIND_LAST_TASK="$task"
-    maybe_store_trigger "$task"
-    prompt="$(build_hivemind_prompt)"
-
-    export AGENT_ENGINE
-
-    run_engine "$HIVEMIND_ENGINE" "$prompt" "$task" "interactive"
-}
-
-run_auto_orchestrate() {
-    local task="$1"
-    local orchestrate="$HIVEMIND_ROOT/bin/orchestrate"
-
-    if [[ ! -x "$orchestrate" ]] || ! command -v jq >/dev/null 2>&1; then
-        run_hivemind "$task"
-        return 0
+    if [[ "$request" =~ (pentest|exploit|vulnerability|attack) ]]; then
+      set_agent "SEC-002" "active" "Vulnerability assessment"
     fi
+  fi
 
-    mapfile -t agents < <(choose_agents_for_task "$task" || true)
-    if [[ "${#agents[@]}" -eq 0 ]]; then
-        run_hivemind "$task"
-        return 0
+  if [[ "$request" =~ (infrastructure|deploy|server|kubernetes|docker|cloud|aws|terraform) ]]; then
+    set_agent "INF-001" "active" "Infrastructure design"
+
+    if [[ "$request" =~ (kubernetes|docker|container) ]]; then
+      set_agent "INF-006" "active" "Container orchestration"
     fi
+  fi
 
-    if [[ "$AUTO_ORCHESTRATE" == "auto" && "${#agents[@]}" -lt 2 ]]; then
-        run_hivemind "$task"
-        return 0
+  if [[ "$request" =~ (test|quality|qa|coverage|regression|performance) ]]; then
+    set_agent "QA-001" "active" "Test planning"
+
+    if [[ "$request" =~ (performance|load|stress) ]]; then
+      set_agent "QA-003" "active" "Performance analysis"
     fi
-
-    "$orchestrate" "$task" "${agents[@]}"
+  fi
 }
 
-show_status() {
-    echo -e "${CYAN}═══════════════════════════════════════════${NC}"
-    echo -e "${CYAN}           HIVEMIND SYSTEM STATUS          ${NC}"
-    echo -e "${CYAN}═══════════════════════════════════════════${NC}"
-    echo ""
-    echo -e "${YELLOW}Engines:${NC}"
-    echo -e "  HIVEMIND: ${GREEN}$HIVEMIND_ENGINE${NC}"
-    echo -e "  Agents:   ${GREEN}$AGENT_ENGINE${NC}"
-    echo ""
+status_icon() {
+  local status="$1"
+  case "$status" in
+    active)
+      printf '%s●%s' "$GRN" "$RST"
+      ;;
+    working)
+      printf '%s◐%s' "$YLW" "$RST"
+      ;;
+    waiting)
+      printf '%s◌%s' "$CYN2" "$RST"
+      ;;
+    *)
+      printf '%s○%s' "$DIM" "$RST"
+      ;;
+  esac
+}
 
-    local active
-    active=$(pgrep -f "hivemind-agent" 2>/dev/null | wc -l)
-    echo -e "${YELLOW}Active Agents:${NC} ${GREEN}$active${NC}"
+show_agent_status_compact() {
+  local parts=()
+  local any=false
 
-    echo ""
-    echo -e "${YELLOW}Teams Ready:${NC}"
-    echo -e "  ${GREEN}●${NC} Development    (6 agents)"
-    echo -e "  ${GREEN}●${NC} Security       (6 agents)"
-    echo -e "  ${GREEN}●${NC} Infrastructure (6 agents)"
-    echo -e "  ${GREEN}●${NC} QA             (6 agents)"
+  for i in "${!TEAMS[@]}"; do
+    local team="${TEAMS[$i]}"
+    local ids_str="${TEAM_AGENT_IDS[$i]}"
+    local labels_str="${TEAM_AGENT_LABELS[$i]}"
+    local names=()
+    local ids=()
+
+    IFS=' ' read -r -a ids <<< "$ids_str"
+    IFS='|' read -r -a names <<< "$labels_str"
+
+    local active_names=()
+    for idx in "${!ids[@]}"; do
+      local id="${ids[$idx]}"
+      local status="${AGENT_STATUS[$id]}"
+      if [[ "$status" == "active" || "$status" == "working" || "$status" == "waiting" ]]; then
+        active_names+=("${names[$idx]}")
+      fi
+    done
+
+    if ((${#active_names[@]} > 0)); then
+      any=true
+      local joined
+      joined=$(IFS=','; echo "${active_names[*]}")
+      parts+=("${team}[${joined}]")
+    fi
+  done
+
+  if [[ "$any" == "true" ]]; then
+    printf '%b\n' "${MAG}◈${RST} ${WHT}ACTIVE:${RST} ${parts[*]} ${DIM}|${RST} Processing..."
+  else
+    printf '%b\n' "${MAG}◈${RST} ${WHT}ACTIVE:${RST} none ${DIM}|${RST} Processing..."
+  fi
+}
+
+show_agent_status() {
+  if [[ "$COMPACT_MODE" == "true" ]]; then
+    show_agent_status_compact
+    return
+  fi
+
+  printf '\n'
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+  printf '%b\n' " ${MAG}◈${RST} ${WHT}HIVEMIND PROCESSING${RST}"
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+
+  local any_active=false
+
+  for i in "${!TEAMS[@]}"; do
+    local team="${TEAMS[$i]}"
+    local color="${TEAM_COLORS[$i]}"
+    local ids_str="${TEAM_AGENT_IDS[$i]}"
+    local labels_str="${TEAM_AGENT_LABELS[$i]}"
+    local ids=()
+    local names=()
+
+    IFS=' ' read -r -a ids <<< "$ids_str"
+    IFS='|' read -r -a names <<< "$labels_str"
+
+    local team_active=false
+    for idx in "${!ids[@]}"; do
+      local id="${ids[$idx]}"
+      local status="${AGENT_STATUS[$id]}"
+      if [[ "$status" == "active" || "$status" == "working" || "$status" == "waiting" ]]; then
+        team_active=true
+        any_active=true
+        break
+      fi
+    done
+
+    if [[ "$team_active" == "true" ]]; then
+      local first=true
+      for idx in "${!ids[@]}"; do
+        local id="${ids[$idx]}"
+        local name="${names[$idx]}"
+        local status="${AGENT_STATUS[$id]}"
+        local task="${AGENT_TASK[$id]}"
+        if [[ "$status" == "active" || "$status" == "working" || "$status" == "waiting" ]]; then
+          local icon
+          icon=$(status_icon "$status")
+          if [[ "$first" == "true" ]]; then
+            printf ' %b%-3s%b │ %b %-13s │ %s\n' "$color" "$team" "$RST" "$icon" "$name" "$task"
+            first=false
+          else
+            printf '     │ %b %-13s │ %s\n' "$icon" "$name" "$task"
+          fi
+        fi
+      done
+    fi
+  done
+
+  if [[ "$any_active" == "false" ]]; then
+    printf ' %bNo active agents%b\n' "$DIM" "$RST"
+  fi
+
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+  printf '\n'
+}
+
+show_all_agents() {
+  printf '\n'
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+  printf '%b\n' " ${MAG}◈${RST} ${WHT}HIVEMIND STATUS${RST}"
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+
+  for i in "${!TEAMS[@]}"; do
+    local team="${TEAMS[$i]}"
+    local color="${TEAM_COLORS[$i]}"
+    local ids_str="${TEAM_AGENT_IDS[$i]}"
+    local labels_str="${TEAM_AGENT_LABELS[$i]}"
+    local ids=()
+    local names=()
+
+    IFS=' ' read -r -a ids <<< "$ids_str"
+    IFS='|' read -r -a names <<< "$labels_str"
+
+    local first=true
+    for idx in "${!ids[@]}"; do
+      local id="${ids[$idx]}"
+      local name="${names[$idx]}"
+      local status="${AGENT_STATUS[$id]}"
+      local task="${AGENT_TASK[$id]}"
+      local icon
+      icon=$(status_icon "$status")
+
+      if [[ "$first" == "true" ]]; then
+        printf ' %b%-3s%b │ %b %-13s │ %s\n' "$color" "$team" "$RST" "$icon" "$name" "$task"
+        first=false
+      else
+        printf '     │ %b %-13s │ %s\n' "$icon" "$name" "$task"
+      fi
+    done
+  done
+
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+  printf '\n'
+}
+
+filter_response() {
+  local raw="$1"
+  local filtered
+
+  filtered=$(printf '%s\n' "$raw" | sed \
+    -e '/<thinking>/,/<\/thinking>/d' \
+    -e '/<antThinking>/,/<\/antThinking>/d' \
+    -e '/^OpenAI Codex/d' \
+    -e '/^Codex CLI/d' \
+    -e '/^Claude Code/d' \
+    -e '/^Tip:/d' \
+    -e '/^Model:/d')
+
+  filtered=$(printf '%s\n' "$filtered" | sed -e 's/^[[:space:]]\+$//g' -e '/./,$!d')
+
+  printf '%s\n' "$filtered"
+}
+
+engine_available() {
+  case "$1" in
+    claude)
+      command -v claude >/dev/null 2>&1
+      ;;
+    codex)
+      command -v codex >/dev/null 2>&1
+      ;;
+    anthropic-api)
+      [[ -n "${ANTHROPIC_API_KEY:-}" ]]
+      ;;
+    openai-api)
+      [[ -n "${OPENAI_API_KEY:-}" ]]
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+detect_engine() {
+  if [[ -n "$ENGINE_OVERRIDE" ]]; then
+    if engine_available "$ENGINE_OVERRIDE"; then
+      ACTIVE_ENGINE="$ENGINE_OVERRIDE"
+      return 0
+    fi
+    ACTIVE_ENGINE=""
+    return 1
+  fi
+
+  if [[ -n "$ENGINE_PREFERRED" ]] && engine_available "$ENGINE_PREFERRED"; then
+    ACTIVE_ENGINE="$ENGINE_PREFERRED"
+  elif [[ -n "$ENGINE_FALLBACK" ]] && engine_available "$ENGINE_FALLBACK"; then
+    ACTIVE_ENGINE="$ENGINE_FALLBACK"
+  elif engine_available "claude"; then
+    ACTIVE_ENGINE="claude"
+  elif engine_available "codex"; then
+    ACTIVE_ENGINE="codex"
+  elif engine_available "anthropic-api"; then
+    ACTIVE_ENGINE="anthropic-api"
+  elif engine_available "openai-api"; then
+    ACTIVE_ENGINE="openai-api"
+  else
+    ACTIVE_ENGINE=""
+  fi
+}
+
+resolve_engine_model() {
+  case "$ACTIVE_ENGINE" in
+    claude|anthropic-api)
+      echo "${MODEL_OVERRIDE:-$CLAUDE_MODEL_DEFAULT}"
+      ;;
+    codex|openai-api)
+      echo "${MODEL_OVERRIDE:-$OPENAI_MODEL_DEFAULT}"
+      ;;
+    *)
+      echo "${MODEL_OVERRIDE:-}"
+      ;;
+  esac
+}
+
+show_engine_info() {
+  local model
+  model="$ENGINE_MODEL"
+  if [[ -z "$model" ]]; then
+    model="default"
+  fi
+  printf '%b\n' "${WHT}Engine:${RST} ${BLU2}${ACTIVE_ENGINE:-none}${RST} ${DIM}|${RST} ${WHT}Model:${RST} ${BLU2}${model}${RST}"
+}
+
+show_no_engine() {
+  printf '\n'
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+  printf '%b\n' " ${RED}✗${RST} ${WHT}No AI engine detected${RST}"
+  printf '\n'
+  printf '%b\n' " Install one of:"
+  printf '%b\n' "   • Claude Code CLI: npm install -g @anthropic-ai/claude-code"
+  printf '%b\n' "   • OpenAI Codex:    pip install openai-codex"
+  printf '%b\n' "   • Set API key:     export ANTHROPIC_API_KEY=..."
+  printf '%b\n' "                      export OPENAI_API_KEY=..."
+  printf '\n'
+  printf '%b\n' " Then run: hivemind --setup"
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+  printf '\n'
+}
+
+show_engine_error() {
+  local message="$1"
+  printf '\n'
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+  printf '%b\n' " ${RED}✗${RST} ${WHT}Engine error:${RST} ${message}"
+  printf '\n'
+  printf '%b\n' " Try:"
+  printf '%b\n' "   • Check your API key is valid"
+  printf '%b\n' "   • Check network connectivity"
+  printf '%b\n' "   • Run: hivemind --setup"
+  printf '%b\n' "${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+  printf '\n'
+}
+
+call_anthropic_api() {
+  local system_prompt="$1"
+  local user_message="$2"
+
+  if ! command -v jq >/dev/null 2>&1; then
+    printf '%s\n' "jq is required for API calls."
+    return 1
+  fi
+
+  curl -s https://api.anthropic.com/v1/messages \
+    -H "Content-Type: application/json" \
+    -H "x-api-key: $ANTHROPIC_API_KEY" \
+    -H "anthropic-version: 2023-06-01" \
+    -d "{\n      \"model\": \"$ENGINE_MODEL\",\n      \"max_tokens\": 8192,\n      \"system\": $(printf '%s' "$system_prompt" | jq -Rs .),\n      \"messages\": [{\n        \"role\": \"user\",\n        \"content\": $(printf '%s' "$user_message" | jq -Rs .)\n      }]\n    }" | jq -r '.content[0].text'
+}
+
+call_openai_api() {
+  local system_prompt="$1"
+  local user_message="$2"
+
+  if ! command -v jq >/dev/null 2>&1; then
+    printf '%s\n' "jq is required for API calls."
+    return 1
+  fi
+
+  curl -s https://api.openai.com/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d "{\n      \"model\": \"$ENGINE_MODEL\",\n      \"messages\": [\n        {\"role\": \"system\", \"content\": $(printf '%s' "$system_prompt" | jq -Rs .)},\n        {\"role\": \"user\", \"content\": $(printf '%s' "$user_message" | jq -Rs .)}\n      ]\n    }" | jq -r '.choices[0].message.content'
+}
+
+execute_request() {
+  local request="$1"
+  local response
+  local status
+
+  activate_agents "$request"
+  show_agent_status
+
+  set +e
+  case "$ACTIVE_ENGINE" in
+    claude)
+      if [[ -n "$ENGINE_MODEL" ]]; then
+        response=$(printf '%s\n' "$request" | claude --print --system-prompt "$SYSTEM_PROMPT" --model "$ENGINE_MODEL" 2>&1)
+      else
+        response=$(printf '%s\n' "$request" | claude --print --system-prompt "$SYSTEM_PROMPT" 2>&1)
+      fi
+      status=$?
+      ;;
+    codex)
+      if [[ -n "$ENGINE_MODEL" ]]; then
+        response=$(codex --full-auto --quiet -m "$ENGINE_MODEL" "$request" 2>&1)
+      else
+        response=$(codex --full-auto --quiet "$request" 2>&1)
+      fi
+      status=$?
+      ;;
+    anthropic-api)
+      response=$(call_anthropic_api "$SYSTEM_PROMPT" "$request" 2>&1)
+      status=$?
+      ;;
+    openai-api)
+      response=$(call_openai_api "$SYSTEM_PROMPT" "$request" 2>&1)
+      status=$?
+      ;;
+    *)
+      response="No engine selected."
+      status=1
+      ;;
+  esac
+  set -e
+
+  if (( status != 0 )); then
+    show_engine_error "$response"
+    reset_agent_status
+    return 1
+  fi
+
+  response=$(filter_response "$response")
+  printf '\n'
+  printf '%b\n' "${WHT}${response}${RST}"
+  printf '\n'
+
+  reset_agent_status
 }
 
 show_help() {
-    echo -e "${BOLD}HIVEMIND${NC} - Neural Multi-Agent Orchestration System"
-    echo ""
-    echo -e "${YELLOW}USAGE:${NC}"
-    echo "  hivemind                              Interactive mode"
-    echo "  hivemind \"task\"                       Direct task execution"
-    echo ""
-    echo -e "${YELLOW}SETUP:${NC}"
-    echo "  --setup                               Authenticate engines (browser/API key)"
-    echo ""
-    echo -e "${YELLOW}ENGINE OPTIONS:${NC}"
-    echo "  --engine <engine>                     Set HIVEMIND engine (codex|claude)"
-    echo "  --agents <engine>                     Set agent engine (codex|claude)"
-    echo "  --preset <name>                       Apply preset configuration"
-    echo "  --set-hivemind <engine>               Save HIVEMIND engine to config"
-    echo "  --set-agents <engine>                 Save agent engine to config"
-    echo ""
-    echo -e "${YELLOW}PRESETS:${NC}"
-    echo "  recommended                           codex + claude (default)"
-    echo "  full-codex                            codex + codex"
-    echo "  full-claude                           claude + claude"
-    echo "  inverse                               claude + codex"
-    echo ""
-    echo -e "${YELLOW}OTHER OPTIONS:${NC}"
-    echo "  --config                              Show current configuration"
-    echo "  --status                              Show system status"
-    echo "  --auto                                Enable auto-orchestration for direct tasks"
-    echo "  --no-auto                             Disable auto-orchestration for direct tasks"
-    echo "  --help                                Show this help"
-    echo ""
-    echo -e "${YELLOW}EXAMPLES:${NC}"
-    echo "  hivemind --preset full-claude"
-    echo "  hivemind --engine codex --agents codex \"Build an API\""
-    echo "  hivemind \"Design a secure authentication system\""
+  printf '%b\n' "${WHT}Commands:${RST}"
+  printf '%b\n' "  help      Show available commands"
+  printf '%b\n' "  status    Show all agents"
+  printf '%b\n' "  teams     Show team overview"
+  printf '%b\n' "  engine    Show active engine"
+  printf '%b\n' "  config    Show configuration"
+  printf '%b\n' "  clear     Clear screen and redraw banner"
+  printf '%b\n' "  exit      Exit HIVEMIND"
+  printf '\n'
+  printf '%b\n' "${WHT}CLI:${RST}"
+  printf '%b\n' "  hivemind \"request\"           Execute single request and exit"
+  printf '%b\n' "  hivemind --engine claude      Use specific engine"
+  printf '%b\n' "  hivemind --model gpt-4o        Use specific model"
+  printf '%b\n' "  hivemind --status             Show status and exit"
+  printf '%b\n' "  hivemind --help               Show help"
+  printf '%b\n' "  hivemind --version            Show version"
 }
 
-setup_wizard() {
-    load_defaults
-
-    local codex_cmd claude_cmd codex_status claude_status
-    codex_cmd="$(resolve_engine_command codex 2>/dev/null || true)"
-    claude_cmd="$(resolve_engine_command claude 2>/dev/null || true)"
-
-    codex_status="missing"
-    if [[ -n "$codex_cmd" ]]; then
-        if "$codex_cmd" login status >/dev/null 2>&1; then
-            codex_status="ready"
-        else
-            codex_status="needs login"
-        fi
-    fi
-
-    claude_status="missing"
-    if [[ -n "$claude_cmd" ]]; then
-        if [[ -n "${ANTHROPIC_API_KEY:-}" || -n "${CLAUDE_API_KEY:-}" || -f "$HOME/.claude/.credentials.json" ]]; then
-            claude_status="ready"
-        else
-            claude_status="needs login"
-        fi
-    fi
-
-    show_banner
-    echo -e "${CYAN}Engine Setup${NC}"
-    echo ""
-    echo -e "${YELLOW}Detected:${NC}"
-    echo -e "  Codex:  ${GREEN}${codex_cmd:-<not found>}${NC}  (${BLUE}${codex_status}${NC})"
-    echo -e "  Claude: ${GREEN}${claude_cmd:-<not found>}${NC}  (${BLUE}${claude_status}${NC})"
-    echo ""
-    cat <<'EOF'
-Choose an action:
-  1) Codex: login via browser (device auth)
-  2) Codex: login via API key
-  3) Claude: setup-token (browser/token)
-  q) Quit
-EOF
-    printf "Selection: "
-    local choice
-    read -r choice
-
-    case "$choice" in
-        1)
-            [[ -n "$codex_cmd" ]] || { echo "Codex not found. Install Codex CLI first." >&2; return 1; }
-            "$codex_cmd" login --device-auth
-            ;;
-        2)
-            [[ -n "$codex_cmd" ]] || { echo "Codex not found. Install Codex CLI first." >&2; return 1; }
-            printf "OPENAI_API_KEY: "
-            local key
-            IFS= read -rs key
-            echo ""
-            printf '%s' "$key" | "$codex_cmd" login --with-api-key >/dev/null
-            echo "Codex login complete."
-            ;;
-        3)
-            [[ -n "$claude_cmd" ]] || { echo "Claude not found. Install Claude Code CLI first." >&2; return 1; }
-            "$claude_cmd" setup-token
-            ;;
-        q|Q)
-            return 0
-            ;;
-        *)
-            echo "Invalid selection." >&2
-            return 1
-            ;;
-    esac
+show_teams() {
+  printf '%b\n' "${WHT}Teams:${RST}"
+  printf '%b\n' "  DEV  Development"
+  printf '%b\n' "  SEC  Security"
+  printf '%b\n' "  INF  Infrastructure"
+  printf '%b\n' "  QA   Quality Assurance"
 }
 
-interactive_mode() {
-    show_banner
-    load_defaults
-    init_session
-
-    echo -e "${BLUE}Engine: HIVEMIND=${GREEN}$HIVEMIND_ENGINE${BLUE} | Agents=${GREEN}$AGENT_ENGINE${NC}"
-    echo ""
-    echo -e "${GREEN}HIVEMIND ready. All teams standing by.${NC}"
-    echo -e "${BLUE}Type your request, 'setup' for auth, 'config' for settings, or 'exit' to quit.${NC}"
-    echo ""
-
-    while true; do
-        echo -ne "${PURPLE}HIVEMIND>${NC} "
-        read -r input
-
-        case "$input" in
-            exit|quit|q)
-                echo -e "${CYAN}HIVEMIND shutting down.${NC}"
-                "$HIVEMIND_ROOT/bin/kill-agents" 2>/dev/null || true
-                exit 0
-                ;;
-            config)
-                show_config
-                ;;
-            status)
-                show_status
-                ;;
-            help)
-                show_help
-                ;;
-            setup)
-                setup_wizard || true
-                ;;
-            "")
-                continue
-                ;;
-            *)
-                echo ""
-                run_hivemind "$input"
-                echo ""
-                ;;
-        esac
-    done
+show_config() {
+  printf '%b\n' "${WHT}Configuration:${RST}"
+  printf '%b\n' "  Config file: $CONFIG_FILE"
+  printf '%b\n' "  Colors:      ${COLOR_ENABLED}"
+  printf '%b\n' "  Compact:     ${COMPACT_MODE}"
+  printf '%b\n' "  Engine:      ${ACTIVE_ENGINE:-none}"
+  printf '%b\n' "  Model:       ${ENGINE_MODEL:-default}"
 }
 
-TASK=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --engine|-e)
-            HIVEMIND_ENGINE="$2"
-            shift 2
-            ;;
-        --agents|-a)
-            AGENT_ENGINE="$2"
-            shift 2
-            ;;
-        --preset|-p)
-            load_defaults
-            apply_preset "$2"
-            shift 2
-            ;;
-        --set-hivemind)
-            save_config "hivemind" "$2"
-            shift 2
-            ;;
-        --set-agents)
-            save_config "agents" "$2"
-            shift 2
-            ;;
-        --config|-c)
-            load_defaults
-            show_config
-            exit 0
-            ;;
-        --status|-s)
-            load_defaults
-            show_status
-            exit 0
-            ;;
-        --setup)
-            setup_wizard
-            exit 0
-            ;;
-        --auto)
-            AUTO_ORCHESTRATE="on"
-            shift
-            ;;
-        --no-auto)
-            AUTO_ORCHESTRATE="off"
-            shift
-            ;;
-        --help|-h)
-            show_help
-            exit 0
-            ;;
-        *)
-            TASK="$TASK $1"
-            shift
-            ;;
-    esac
-done
+show_setup() {
+  printf '%b\n' "${WHT}Setup:${RST}"
+  printf '%b\n' "  Install Claude Code CLI: npm install -g @anthropic-ai/claude-code"
+  printf '%b\n' "  Install OpenAI Codex:    pip install openai-codex"
+  printf '%b\n' "  Set API keys:            export ANTHROPIC_API_KEY=..."
+  printf '%b\n' "                          export OPENAI_API_KEY=..."
+}
 
-load_defaults
+handle_command() {
+  local cmd="$1"
+  case "$cmd" in
+    help)
+      show_help
+      return 0
+      ;;
+    status)
+      show_all_agents
+      return 0
+      ;;
+    teams)
+      show_teams
+      return 0
+      ;;
+    engine)
+      show_engine_info
+      return 0
+      ;;
+    config)
+      show_config
+      return 0
+      ;;
+    clear)
+      show_banner
+      return 0
+      ;;
+    exit|quit)
+      exit 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
 
-TASK=$(echo "$TASK" | xargs)
+init_history() {
+  mkdir -p "$CONFIG_DIR"
+  touch "$HISTORY_FILE"
+  HISTFILE="$HISTORY_FILE"
+  HISTSIZE=2000
+  HISTFILESIZE=2000
+  history -r "$HISTORY_FILE" 2>/dev/null || true
+}
 
-if [[ -z "$TASK" ]]; then
-    interactive_mode
-else
-    show_banner
-    init_session
-    echo -e "${BLUE}Engine: HIVEMIND=${GREEN}$HIVEMIND_ENGINE${BLUE} | Agents=${GREEN}$AGENT_ENGINE${NC}"
-    echo ""
-    if [[ "$AUTO_ORCHESTRATE" == "off" ]]; then
-        run_hivemind "$TASK"
+run_interactive() {
+  init_history
+
+  shopt -s histappend 2>/dev/null || true
+
+  printf '%b\n' "${WHT}HIVEMIND ready.${RST} All teams standing by."
+
+  while true; do
+    local input
+    if [[ -t 0 ]]; then
+      if ! read -er -p "HIVEMIND> " input; then
+        printf '\n'
+        break
+      fi
     else
-        run_auto_orchestrate "$TASK"
+      if ! read -r input; then
+        printf '\n'
+        break
+      fi
     fi
-fi
+    if [[ -z "${input:-}" ]]; then
+      continue
+    fi
+    input="${input#"${input%%[![:space:]]*}"}"
+    if [[ -z "$input" ]]; then
+      continue
+    fi
+
+    history -s "$input" 2>/dev/null || true
+    history -a 2>/dev/null || true
+
+    if handle_command "$input"; then
+      continue
+    fi
+
+    execute_request "$input" || true
+  done
+}
+
+run_single_request() {
+  local request="$1"
+  execute_request "$request"
+}
+
+main() {
+  load_config
+  init_colors
+  init_agents
+
+  local show_help_flag=false
+  local show_version_flag=false
+  local show_status_flag=false
+  local show_setup_flag=false
+  local args=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --help|-h)
+        show_help_flag=true
+        shift
+        ;;
+      --version)
+        show_version_flag=true
+        shift
+        ;;
+      --status)
+        show_status_flag=true
+        shift
+        ;;
+      --setup)
+        show_setup_flag=true
+        shift
+        ;;
+      --engine)
+        ENGINE_OVERRIDE="${2:-}"
+        shift 2
+        ;;
+      --model)
+        MODEL_OVERRIDE="${2:-}"
+        shift 2
+        ;;
+      --)
+        shift
+        args+=("$@")
+        break
+        ;;
+      -*)
+        printf '%s\n' "Unknown option: $1"
+        exit 1
+        ;;
+      *)
+        args+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  if [[ "$show_help_flag" == "true" ]]; then
+    show_help
+    return 0
+  fi
+
+  if [[ "$show_version_flag" == "true" ]]; then
+    printf '%s\n' "$VERSION"
+    return 0
+  fi
+
+  show_banner
+
+  if [[ "$show_setup_flag" == "true" ]]; then
+    show_setup
+    return 0
+  fi
+
+  detect_engine
+  ENGINE_MODEL=$(resolve_engine_model)
+
+  if [[ -z "$ACTIVE_ENGINE" ]]; then
+    show_no_engine
+    exit 1
+  fi
+
+  show_engine_info
+
+  if [[ "$show_status_flag" == "true" ]]; then
+    show_all_agents
+    return 0
+  fi
+
+  if ((${#args[@]} > 0)); then
+    local request
+    request=$(printf '%s ' "${args[@]}")
+    request="${request% }"
+    run_single_request "$request"
+  else
+    run_interactive
+  fi
+}
+
+main "$@"
