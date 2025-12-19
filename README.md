@@ -65,7 +65,7 @@ All of this happens invisibly - you interact with one unified AI that has the co
 ### One-Command Install
 
 ```bash
-git clone https://github.com/USERNAME/HIVEMIND.git
+git clone https://github.com/Nerds489/HIVEMIND.git
 cd HIVEMIND
 ./setup.sh
 ```
