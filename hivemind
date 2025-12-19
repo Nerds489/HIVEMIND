@@ -22,8 +22,26 @@
 
 set -euo pipefail
 
-HIVEMIND_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ═══════════════════════════════════════════════════════════════════════════════
+# SYMLINK RESOLUTION
+# ═══════════════════════════════════════════════════════════════════════════════
+# Resolves the ACTUAL location of this script, even when called via symlink
+# Without this: ~/.local/bin/hivemind breaks because it looks for engines/ there
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+    DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+HIVEMIND_ROOT="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 export HIVEMIND_ROOT
+
+# Sanity check
+if [ ! -f "$HIVEMIND_ROOT/engines/engine.sh" ]; then
+    echo "FATAL: engines/engine.sh not found at $HIVEMIND_ROOT" >&2
+    exit 1
+fi
 
 source "$HIVEMIND_ROOT/engines/engine.sh"
 source "$HIVEMIND_ROOT/core/router.sh"
