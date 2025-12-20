@@ -1,0 +1,191 @@
+/* HIVEMIND TUI Styles */
+
+/* Global Styles */
+Screen {
+    background: $background;
+}
+
+#main-container {
+    height: 100%;
+    background: $background;
+}
+
+#content-area {
+    height: 100%;
+}
+
+/* Panel Styles */
+.panel {
+    border: solid $primary;
+    background: $surface;
+    margin: 1;
+    padding: 1;
+}
+
+.panel-title {
+    background: $primary;
+    color: $text;
+    padding: 0 1;
+    margin-bottom: 1;
+    text-align: center;
+    text-style: bold;
+}
+
+/* Agent Panel */
+#agent-panel {
+    width: 30%;
+    min-width: 30;
+}
+
+#agent-scroll {
+    height: 100%;
+    scrollbar-gutter: stable;
+}
+
+.team-header {
+    background: $boost;
+    padding: 1 2;
+    margin-top: 1;
+    margin-bottom: 0;
+}
+
+AgentItem {
+    padding: 1 2;
+    margin: 0 0 1 0;
+    background: $surface;
+    border: none;
+}
+
+AgentItem:hover {
+    background: $boost;
+}
+
+AgentItem.selected {
+    background: $primary;
+    border: solid $accent;
+}
+
+/* Chat Panel */
+#chat-panel {
+    width: 50%;
+}
+
+#message-scroll {
+    height: 100%;
+    scrollbar-gutter: stable;
+}
+
+MessageItem {
+    padding: 1 2;
+    margin-bottom: 1;
+}
+
+.message-user {
+    background: $boost;
+    border-left: thick $accent;
+}
+
+.message-assistant {
+    background: $surface;
+    border-left: thick $success;
+}
+
+.message-system {
+    background: $panel;
+    border-left: thick $warning;
+}
+
+.streaming {
+    border-right: thick $accent;
+}
+
+/* Status Panel */
+#status-panel {
+    width: 20%;
+    min-width: 25;
+}
+
+#status-display {
+    height: 100%;
+    padding: 1;
+}
+
+/* Chat Screen Styles */
+#chat-container {
+    height: 100%;
+    padding: 1;
+}
+
+#chat-area {
+    height: 100%;
+}
+
+#chat-messages {
+    height: 1fr;
+    border: solid $primary;
+    margin-bottom: 1;
+}
+
+.input-label {
+    background: $boost;
+    padding: 0 1;
+    margin-bottom: 0;
+    text-style: bold;
+}
+
+#chat-input {
+    height: 8;
+    border: solid $accent;
+    background: $surface;
+}
+
+#chat-input:focus {
+    border: solid $success;
+}
+
+/* Input Box Styles */
+InputBox {
+    min-height: 5;
+    max-height: 15;
+}
+
+/* Scrollbar Styles */
+ScrollView > .scrollbar {
+    background: $panel;
+}
+
+ScrollView > .scrollbar:hover {
+    background: $boost;
+}
+
+ScrollView > .scrollbar--thumb {
+    background: $primary;
+}
+
+/* Footer Styles */
+Footer {
+    background: $boost;
+}
+
+Footer > .footer--key {
+    background: $primary;
+}
+
+/* Header Styles */
+Header {
+    background: $boost;
+}
+
+Header .header--title {
+    color: $accent;
+    text-style: bold;
+}
+
+/* Color Theme Overrides */
+App.-dark-mode {
+    background: #0a0e14;
+}
+
+App.-light-mode {
+    background: #fafafa;
+}

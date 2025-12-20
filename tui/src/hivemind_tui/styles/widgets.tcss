@@ -1,0 +1,412 @@
+/* Widget-specific styles for HIVEMIND TUI */
+
+/* AgentList styling */
+AgentList {
+    background: $panel;
+    border: solid $panel-lighten-1;
+    padding: 1;
+}
+
+AgentList:focus {
+    border: tall $primary;
+}
+
+.agent-item {
+    background: transparent;
+    height: auto;
+    padding: 1;
+    margin: 0 0 1 0;
+}
+
+.agent-item:hover {
+    background: $panel-lighten-1;
+}
+
+.agent-item.selected {
+    background: $primary-background;
+    border-left: thick $primary;
+}
+
+.agent-item.selected:focus {
+    background: $primary;
+    color: $background;
+}
+
+.agent-name {
+    color: $text;
+    text-style: bold;
+}
+
+.agent-team {
+    color: $text-muted;
+    padding: 0 0 0 2;
+}
+
+.agent-team.dev {
+    color: #89b4fa;
+}
+
+.agent-team.sec {
+    color: #f38ba8;
+}
+
+.agent-team.inf {
+    color: #a6e3a1;
+}
+
+.agent-team.qa {
+    color: #cba6f7;
+}
+
+.agent-status {
+    color: $text-muted;
+    padding: 0 0 0 2;
+}
+
+.agent-status.active {
+    color: $success;
+}
+
+.agent-status.idle {
+    color: $text-disabled;
+}
+
+.agent-status.error {
+    color: $error;
+}
+
+.agent-metrics {
+    color: $text-muted;
+    padding: 0 0 0 2;
+}
+
+/* MessageView styling */
+MessageView {
+    background: $background;
+    border: solid $panel-lighten-1;
+    padding: 1;
+}
+
+MessageView:focus {
+    border: tall $primary;
+}
+
+.message-container {
+    background: transparent;
+    padding: 1 0;
+}
+
+.message-header {
+    height: 1;
+    padding: 0 1;
+}
+
+.message-role {
+    text-style: bold;
+}
+
+.message-role.user {
+    color: $primary;
+}
+
+.message-role.assistant {
+    color: $accent;
+}
+
+.message-role.system {
+    color: $text-muted;
+}
+
+.message-timestamp {
+    color: $text-disabled;
+    padding: 0 0 0 2;
+}
+
+.message-content {
+    padding: 1;
+    margin: 1 0;
+}
+
+.message-bubble {
+    border-left: thick $panel-lighten-1;
+    padding: 1 2;
+}
+
+.message-bubble.user {
+    background: $panel;
+    border-left: thick $primary;
+}
+
+.message-bubble.assistant {
+    background: $panel-darken-1;
+    border-left: thick $accent;
+}
+
+.message-bubble.system {
+    background: transparent;
+    border-left: thick $text-disabled;
+    color: $text-muted;
+}
+
+.message-code {
+    background: $panel-darken-1;
+    border: solid $panel-lighten-1;
+    padding: 1;
+    margin: 1 0;
+}
+
+.message-code-header {
+    color: $text-muted;
+    text-style: italic;
+    padding: 0 1;
+}
+
+.message-code-content {
+    color: $text;
+}
+
+/* InputBox styling */
+InputBox {
+    background: $panel;
+    border: solid $panel-lighten-1;
+    height: auto;
+    min-height: 5;
+    max-height: 20;
+}
+
+InputBox:focus {
+    border: tall $primary;
+}
+
+.input-header {
+    dock: top;
+    height: 1;
+    background: $panel-darken-1;
+    padding: 0 1;
+}
+
+.input-prompt {
+    color: $text-muted;
+}
+
+.input-area {
+    background: $panel;
+    color: $text;
+    padding: 1;
+    min-height: 3;
+}
+
+.input-area:focus {
+    background: $panel-lighten-1;
+}
+
+.input-footer {
+    dock: bottom;
+    height: 1;
+    background: $panel-darken-1;
+    padding: 0 1;
+}
+
+.input-help {
+    color: $text-disabled;
+    text-style: italic;
+}
+
+/* StatusBar styling */
+StatusBar {
+    dock: bottom;
+    height: 1;
+    background: $panel-darken-1;
+    border-top: solid $panel-lighten-1;
+}
+
+.status-left {
+    color: $text;
+    padding: 0 1;
+}
+
+.status-center {
+    color: $text-muted;
+    text-align: center;
+}
+
+.status-right {
+    color: $text-muted;
+    padding: 0 1;
+    text-align: right;
+}
+
+.status-mode {
+    color: $primary;
+    text-style: bold;
+}
+
+.status-agent-count {
+    color: $accent;
+}
+
+.status-message-count {
+    color: $success;
+}
+
+.status-error {
+    color: $error;
+    text-style: bold;
+}
+
+.status-keybind {
+    color: $text-disabled;
+}
+
+.status-keybind-key {
+    color: $primary;
+    text-style: bold;
+}
+
+/* TeamPanel styling */
+.team-panel {
+    background: $panel;
+    border: solid $panel-lighten-1;
+    padding: 1;
+}
+
+.team-header {
+    dock: top;
+    height: 3;
+    padding: 1;
+}
+
+.team-name {
+    text-style: bold;
+}
+
+.team-name.dev {
+    color: #89b4fa;
+}
+
+.team-name.sec {
+    color: #f38ba8;
+}
+
+.team-name.inf {
+    color: #a6e3a1;
+}
+
+.team-name.qa {
+    color: #cba6f7;
+}
+
+.team-agent-count {
+    color: $text-muted;
+    padding: 0 0 0 2;
+}
+
+.team-agents {
+    background: transparent;
+    padding: 1;
+}
+
+/* MetricsPanel styling */
+.metrics-panel {
+    background: $panel;
+    border: solid $panel-lighten-1;
+    padding: 1;
+}
+
+.metric-row {
+    height: 1;
+    padding: 0 1;
+}
+
+.metric-label {
+    color: $text-muted;
+    width: 20;
+}
+
+.metric-value {
+    color: $text;
+    text-style: bold;
+}
+
+.metric-value.good {
+    color: $success;
+}
+
+.metric-value.warning {
+    color: $warning;
+}
+
+.metric-value.error {
+    color: $error;
+}
+
+.metric-bar {
+    background: $panel-darken-1;
+    height: 1;
+    margin: 0 1;
+}
+
+.metric-bar-fill {
+    background: $primary;
+    height: 1;
+}
+
+.metric-bar-fill.success {
+    background: $success;
+}
+
+.metric-bar-fill.warning {
+    background: $warning;
+}
+
+.metric-bar-fill.error {
+    background: $error;
+}
+
+/* ToolOutput styling */
+.tool-output {
+    background: $panel-darken-1;
+    border: solid $panel-lighten-1;
+    padding: 1;
+    margin: 1 0;
+}
+
+.tool-header {
+    color: $accent;
+    text-style: bold;
+    padding: 0 1 1 1;
+}
+
+.tool-name {
+    color: $primary;
+}
+
+.tool-content {
+    color: $text;
+}
+
+.tool-error {
+    color: $error;
+    text-style: bold;
+}
+
+/* ThinkingIndicator styling */
+.thinking {
+    color: $text-muted;
+    text-style: italic;
+}
+
+.thinking-dots {
+    color: $primary;
+}
+
+/* Separator styling */
+.separator {
+    background: $panel-lighten-1;
+    height: 1;
+}
+
+.separator-vertical {
+    background: $panel-lighten-1;
+    width: 1;
+}

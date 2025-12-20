@@ -1,0 +1,427 @@
+/* Main application styles for HIVEMIND TUI */
+
+/* Screen layouts */
+Screen {
+    background: $background;
+    color: $text;
+}
+
+/* Base widget styles */
+Widget {
+    border: none;
+    background: transparent;
+}
+
+/* Container styling */
+Container {
+    background: $background;
+    border: none;
+}
+
+Vertical {
+    background: transparent;
+}
+
+Horizontal {
+    background: transparent;
+}
+
+/* Scrollbar styling */
+ScrollBar {
+    background: $panel;
+    color: $primary;
+}
+
+ScrollBar:horizontal {
+    height: 1;
+    background: $panel;
+}
+
+ScrollBar:vertical {
+    width: 1;
+    background: $panel;
+}
+
+ScrollBar > .scrollbar--thumb {
+    background: $primary-background;
+    color: $primary;
+}
+
+ScrollBar > .scrollbar--track {
+    background: $panel;
+}
+
+/* Focus indicators */
+*:focus {
+    border: tall $primary;
+}
+
+*:focus-within {
+    border: tall $primary-background;
+}
+
+/* Header styling */
+Header {
+    dock: top;
+    height: 3;
+    background: $panel-darken-1;
+    color: $text;
+    border: solid $panel-lighten-1;
+}
+
+Header .title {
+    color: $primary;
+    text-style: bold;
+}
+
+Header .subtitle {
+    color: $text-muted;
+}
+
+/* Footer styling */
+Footer {
+    dock: bottom;
+    height: 1;
+    background: $panel-darken-1;
+    color: $text-muted;
+}
+
+/* Content area */
+#content {
+    width: 100%;
+    height: 100%;
+    background: $background;
+}
+
+/* Sidebar */
+#sidebar {
+    width: 30;
+    height: 100%;
+    background: $panel;
+    border-right: solid $panel-lighten-1;
+}
+
+#sidebar:focus-within {
+    border-right: tall $primary;
+}
+
+/* Main area */
+#main {
+    width: 1fr;
+    height: 100%;
+    background: $background;
+}
+
+/* Panel styling */
+.panel {
+    background: $panel;
+    border: solid $panel-lighten-1;
+    padding: 1;
+}
+
+.panel-title {
+    color: $primary;
+    text-style: bold;
+    padding: 0 1;
+}
+
+.panel-header {
+    dock: top;
+    height: 3;
+    background: $panel-darken-1;
+    border-bottom: solid $panel-lighten-1;
+}
+
+.panel-content {
+    background: $panel;
+    padding: 1;
+}
+
+.panel-footer {
+    dock: bottom;
+    height: 3;
+    background: $panel-darken-1;
+    border-top: solid $panel-lighten-1;
+}
+
+/* Loading indicator */
+LoadingIndicator {
+    background: $boost;
+    color: $primary;
+    border: heavy $primary;
+}
+
+/* Static text styling */
+Static {
+    background: transparent;
+    color: $text;
+}
+
+Static.dim {
+    color: $text-muted;
+}
+
+Static.highlight {
+    color: $primary;
+    text-style: bold;
+}
+
+Static.success {
+    color: $success;
+}
+
+Static.error {
+    color: $error;
+}
+
+Static.warning {
+    color: $warning;
+}
+
+/* Label styling */
+Label {
+    background: transparent;
+    color: $text;
+    width: auto;
+}
+
+Label.title {
+    color: $primary;
+    text-style: bold;
+}
+
+Label.subtitle {
+    color: $text-muted;
+}
+
+Label.team-dev {
+    color: #89b4fa;
+    text-style: bold;
+}
+
+Label.team-sec {
+    color: #f38ba8;
+    text-style: bold;
+}
+
+Label.team-inf {
+    color: #a6e3a1;
+    text-style: bold;
+}
+
+Label.team-qa {
+    color: #cba6f7;
+    text-style: bold;
+}
+
+/* Button styling */
+Button {
+    background: $panel;
+    color: $text;
+    border: solid $panel-lighten-1;
+    height: 3;
+    min-width: 12;
+    text-align: center;
+}
+
+Button:hover {
+    background: $panel-lighten-1;
+    border: solid $primary-background;
+}
+
+Button:focus {
+    background: $panel-lighten-1;
+    border: tall $primary;
+}
+
+Button.-primary {
+    background: $primary;
+    color: $background;
+    border: solid $primary-darken-1;
+}
+
+Button.-primary:hover {
+    background: $primary-lighten-1;
+}
+
+Button.-primary:focus {
+    background: $primary-lighten-1;
+    border: tall $accent;
+}
+
+/* Input styling */
+Input {
+    background: $panel;
+    color: $text;
+    border: solid $panel-lighten-1;
+    padding: 0 1;
+}
+
+Input:focus {
+    border: tall $primary;
+}
+
+Input.-error {
+    border: solid $error;
+}
+
+Input > .input--placeholder {
+    color: $text-disabled;
+}
+
+Input > .input--cursor {
+    background: $primary;
+    color: $background;
+}
+
+/* Tabs styling */
+Tabs {
+    background: transparent;
+}
+
+Tabs > TabPane {
+    background: $background;
+}
+
+Tab {
+    background: $panel;
+    color: $text-muted;
+    border: solid $panel-lighten-1;
+    height: 3;
+    min-width: 12;
+    text-align: center;
+}
+
+Tab.-active {
+    background: $background;
+    color: $primary;
+    border-bottom: none;
+}
+
+Tab:hover {
+    background: $panel-lighten-1;
+    color: $text;
+}
+
+Tab:focus {
+    border: tall $primary;
+}
+
+/* DataTable styling */
+DataTable {
+    background: $panel;
+    border: solid $panel-lighten-1;
+}
+
+DataTable > .datatable--header {
+    background: $panel-darken-1;
+    color: $text;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: $primary-background;
+    color: $text;
+}
+
+DataTable:focus > .datatable--cursor {
+    background: $primary;
+    color: $background;
+}
+
+/* ListView styling */
+ListView {
+    background: $panel;
+    border: solid $panel-lighten-1;
+}
+
+ListView > .list-item {
+    background: transparent;
+    color: $text;
+    padding: 0 1;
+}
+
+ListView > .list-item.-hover {
+    background: $panel-lighten-1;
+}
+
+ListView > .list-item.-selected {
+    background: $primary-background;
+    color: $text;
+}
+
+ListView:focus > .list-item.-selected {
+    background: $primary;
+    color: $background;
+}
+
+/* Tree styling */
+Tree {
+    background: $panel;
+    border: solid $panel-lighten-1;
+}
+
+Tree > .tree--cursor {
+    background: $primary-background;
+    color: $text;
+}
+
+Tree:focus > .tree--cursor {
+    background: $primary;
+    color: $background;
+}
+
+/* RichLog styling */
+RichLog {
+    background: $panel;
+    border: solid $panel-lighten-1;
+}
+
+/* Pretty styling */
+Pretty {
+    background: $panel;
+    border: solid $panel-lighten-1;
+}
+
+/* Markdown styling */
+Markdown {
+    background: transparent;
+}
+
+MarkdownH1 {
+    color: $primary;
+    text-style: bold;
+}
+
+MarkdownH2 {
+    color: $secondary;
+    text-style: bold;
+}
+
+MarkdownH3 {
+    color: $accent;
+    text-style: bold;
+}
+
+MarkdownBlockQuote {
+    background: $panel;
+    border-left: thick $primary;
+    padding: 0 1;
+}
+
+MarkdownFence {
+    background: $panel-darken-1;
+    border: solid $panel-lighten-1;
+    padding: 1;
+}
+
+/* Placeholder styling */
+Placeholder {
+    background: $panel;
+    color: $text-muted;
+    border: dashed $panel-lighten-1;
+}
+
+Placeholder:focus {
+    border: dashed $primary;
+}

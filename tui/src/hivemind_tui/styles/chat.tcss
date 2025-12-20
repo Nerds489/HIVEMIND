@@ -1,0 +1,484 @@
+/* Chat-specific styles for HIVEMIND TUI */
+
+/* Chat container */
+#chat-container {
+    background: $background;
+    padding: 1;
+}
+
+/* User messages */
+.chat-message-user {
+    background: #313244;
+    border-left: thick #89b4fa;
+    padding: 1 2;
+    margin: 1 0 1 4;
+}
+
+.chat-message-user .message-header {
+    color: #89b4fa;
+    text-style: bold;
+    padding: 0 0 1 0;
+}
+
+.chat-message-user .message-author {
+    color: #89b4fa;
+    text-style: bold;
+}
+
+.chat-message-user .message-time {
+    color: #585b70;
+    padding: 0 0 0 2;
+}
+
+.chat-message-user .message-content {
+    color: #cdd6f4;
+}
+
+/* Assistant messages */
+.chat-message-assistant {
+    background: #181825;
+    border-left: thick #a6e3a1;
+    padding: 1 2;
+    margin: 1 4 1 0;
+}
+
+.chat-message-assistant .message-header {
+    color: #a6e3a1;
+    text-style: bold;
+    padding: 0 0 1 0;
+}
+
+.chat-message-assistant .message-author {
+    color: #a6e3a1;
+    text-style: bold;
+}
+
+.chat-message-assistant .message-agent-name {
+    color: #89dceb;
+    padding: 0 0 0 1;
+}
+
+.chat-message-assistant .message-time {
+    color: #585b70;
+    padding: 0 0 0 2;
+}
+
+.chat-message-assistant .message-content {
+    color: #cdd6f4;
+}
+
+/* System messages */
+.chat-message-system {
+    background: transparent;
+    border-left: thick #45475a;
+    padding: 1 2;
+    margin: 1 8;
+}
+
+.chat-message-system .message-header {
+    color: #585b70;
+    text-style: italic;
+}
+
+.chat-message-system .message-content {
+    color: #a6adc8;
+    text-style: italic;
+}
+
+/* Thinking messages */
+.chat-message-thinking {
+    background: #11111b;
+    border-left: thick #cba6f7;
+    padding: 1 2;
+    margin: 1 4 1 0;
+}
+
+.chat-message-thinking .message-header {
+    color: #cba6f7;
+    text-style: italic;
+}
+
+.chat-message-thinking .message-content {
+    color: #a6adc8;
+    text-style: italic;
+}
+
+/* Code blocks */
+.chat-code-block {
+    background: #11111b;
+    border: solid #45475a;
+    padding: 1;
+    margin: 1 0;
+}
+
+.chat-code-header {
+    color: #585b70;
+    text-style: italic;
+    padding: 0 1 1 1;
+}
+
+.chat-code-language {
+    color: #89b4fa;
+    text-style: bold;
+}
+
+.chat-code-content {
+    color: #cdd6f4;
+}
+
+/* Inline code */
+.chat-code-inline {
+    background: #313244;
+    color: #f5c2e7;
+    padding: 0 1;
+}
+
+/* Markdown elements */
+.chat-heading1 {
+    color: #89b4fa;
+    text-style: bold;
+    padding: 1 0;
+}
+
+.chat-heading2 {
+    color: #cba6f7;
+    text-style: bold;
+    padding: 1 0;
+}
+
+.chat-heading3 {
+    color: #f9e2af;
+    text-style: bold;
+}
+
+.chat-heading4 {
+    color: #a6e3a1;
+    text-style: bold;
+}
+
+.chat-bold {
+    color: #cdd6f4;
+    text-style: bold;
+}
+
+.chat-italic {
+    color: #a6adc8;
+    text-style: italic;
+}
+
+.chat-link {
+    color: #89dceb;
+    text-style: underline;
+}
+
+.chat-link:hover {
+    color: #b4defe;
+}
+
+/* Quote blocks */
+.chat-quote {
+    background: #181825;
+    border-left: thick #585b70;
+    padding: 1 2;
+    margin: 1 0;
+}
+
+.chat-quote .quote-content {
+    color: #a6adc8;
+    text-style: italic;
+}
+
+/* Lists */
+.chat-list {
+    padding: 0 2;
+}
+
+.chat-list-item {
+    color: #cdd6f4;
+    padding: 0 0 0 2;
+}
+
+.chat-list-bullet {
+    color: #89b4fa;
+}
+
+.chat-list-number {
+    color: #cba6f7;
+}
+
+/* Tool output */
+.chat-tool-output {
+    background: #11111b;
+    border: solid #45475a;
+    padding: 1;
+    margin: 1 0;
+}
+
+.chat-tool-header {
+    color: #f9e2af;
+    text-style: bold;
+    padding: 0 1 1 1;
+}
+
+.chat-tool-name {
+    color: #89dceb;
+}
+
+.chat-tool-status {
+    color: #a6e3a1;
+    padding: 0 0 0 2;
+}
+
+.chat-tool-status.error {
+    color: #f38ba8;
+}
+
+.chat-tool-content {
+    color: #cdd6f4;
+}
+
+/* Syntax highlighting */
+.syntax-keyword {
+    color: #f5c2e7;
+    text-style: bold;
+}
+
+.syntax-string {
+    color: #a6e3a1;
+}
+
+.syntax-number {
+    color: #fab387;
+}
+
+.syntax-boolean {
+    color: #fab387;
+}
+
+.syntax-comment {
+    color: #6c7086;
+    text-style: italic;
+}
+
+.syntax-function {
+    color: #89dceb;
+}
+
+.syntax-class {
+    color: #f9e2af;
+    text-style: bold;
+}
+
+.syntax-variable {
+    color: #cdd6f4;
+}
+
+.syntax-operator {
+    color: #89b4fa;
+}
+
+.syntax-builtin {
+    color: #cba6f7;
+}
+
+.syntax-regex {
+    color: #f38ba8;
+}
+
+/* Diff highlighting */
+.diff-added {
+    color: #a6e3a1;
+    background: #213920;
+}
+
+.diff-removed {
+    color: #f38ba8;
+    background: #3d2028;
+}
+
+.diff-modified {
+    color: #f9e2af;
+    background: #3d3520;
+}
+
+/* Horizontal rule */
+.chat-hr {
+    background: #45475a;
+    height: 1;
+    margin: 1 0;
+}
+
+/* Table styling */
+.chat-table {
+    background: transparent;
+    border: solid #45475a;
+    margin: 1 0;
+}
+
+.chat-table-header {
+    background: #181825;
+    color: #89b4fa;
+    text-style: bold;
+    border-bottom: solid #45475a;
+}
+
+.chat-table-row {
+    background: transparent;
+    border-bottom: solid #313244;
+}
+
+.chat-table-row:hover {
+    background: #181825;
+}
+
+.chat-table-cell {
+    color: #cdd6f4;
+    padding: 0 1;
+}
+
+/* Task lists */
+.chat-task-list {
+    padding: 0 2;
+}
+
+.chat-task-item {
+    color: #cdd6f4;
+    padding: 0 0 0 2;
+}
+
+.chat-task-checkbox {
+    color: #585b70;
+}
+
+.chat-task-checkbox.checked {
+    color: #a6e3a1;
+}
+
+/* Collapsible sections */
+.chat-collapsible {
+    background: #181825;
+    border: solid #45475a;
+    padding: 1;
+    margin: 1 0;
+}
+
+.chat-collapsible-header {
+    color: #89b4fa;
+    text-style: bold;
+    padding: 0 1;
+}
+
+.chat-collapsible-header:hover {
+    background: #313244;
+}
+
+.chat-collapsible-content {
+    color: #cdd6f4;
+    padding: 1;
+}
+
+.chat-collapsible-content.collapsed {
+    display: none;
+}
+
+/* Alerts and callouts */
+.chat-alert {
+    border-left: thick $panel-lighten-1;
+    padding: 1 2;
+    margin: 1 0;
+}
+
+.chat-alert.info {
+    background: #1f3540;
+    border-left: thick #89dceb;
+}
+
+.chat-alert.info .alert-icon {
+    color: #89dceb;
+}
+
+.chat-alert.success {
+    background: #213920;
+    border-left: thick #a6e3a1;
+}
+
+.chat-alert.success .alert-icon {
+    color: #a6e3a1;
+}
+
+.chat-alert.warning {
+    background: #3d3520;
+    border-left: thick #f9e2af;
+}
+
+.chat-alert.warning .alert-icon {
+    color: #f9e2af;
+}
+
+.chat-alert.error {
+    background: #3d2028;
+    border-left: thick #f38ba8;
+}
+
+.chat-alert.error .alert-icon {
+    color: #f38ba8;
+}
+
+.chat-alert-content {
+    color: #cdd6f4;
+}
+
+/* Badges */
+.chat-badge {
+    background: #313244;
+    color: #89b4fa;
+    padding: 0 1;
+    text-style: bold;
+}
+
+.chat-badge.team-dev {
+    background: #1f2d40;
+    color: #89b4fa;
+}
+
+.chat-badge.team-sec {
+    background: #3d2028;
+    color: #f38ba8;
+}
+
+.chat-badge.team-inf {
+    background: #213920;
+    color: #a6e3a1;
+}
+
+.chat-badge.team-qa {
+    background: #2d2040;
+    color: #cba6f7;
+}
+
+/* Timestamps */
+.chat-timestamp {
+    color: #585b70;
+    text-style: italic;
+}
+
+/* Agent names with team colors */
+.agent-name-dev {
+    color: #89b4fa;
+    text-style: bold;
+}
+
+.agent-name-sec {
+    color: #f38ba8;
+    text-style: bold;
+}
+
+.agent-name-inf {
+    color: #a6e3a1;
+    text-style: bold;
+}
+
+.agent-name-qa {
+    color: #cba6f7;
+    text-style: bold;
+}

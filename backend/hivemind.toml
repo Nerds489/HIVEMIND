@@ -1,0 +1,75 @@
+# =============================================================================
+# HIVEMIND Backend Configuration
+# =============================================================================
+
+[general]
+env = "development"
+debug = true
+
+# =============================================================================
+# Claude CLI Configuration
+# =============================================================================
+[claude]
+enabled = true
+model = "claude-sonnet-4-20250514"
+max_tokens = 8192
+timeout_seconds = 300.0
+cli_path = "claude"
+output_format = "stream-json"
+
+# =============================================================================
+# Codex CLI Configuration
+# =============================================================================
+[codex]
+enabled = true
+model = "o4-mini"
+max_tokens = 8192
+timeout_seconds = 300.0
+cli_path = "codex"
+
+# =============================================================================
+# Concurrency Control
+# =============================================================================
+[concurrency]
+max_global_concurrent = 10
+max_per_team = 5
+max_per_agent = 1
+task_queue_size = 1000
+default_task_timeout = 300.0
+
+# =============================================================================
+# Resilience Settings
+# =============================================================================
+[resilience]
+max_retries = 3
+retry_base_delay = 1.0
+retry_max_delay = 60.0
+retry_exponential_base = 2.0
+retry_jitter = true
+
+circuit_failure_threshold = 5
+circuit_recovery_timeout = 30.0
+
+checkpoint_enabled = true
+checkpoint_interval = 60
+
+# =============================================================================
+# API Server
+# =============================================================================
+[api]
+host = "0.0.0.0"
+port = 8000
+workers = 4
+grpc_port = 50051
+cors_enabled = true
+cors_origins = ["*"]
+
+# =============================================================================
+# Observability
+# =============================================================================
+[observability]
+log_level = "INFO"
+log_format = "console"  # "json" for production
+metrics_enabled = true
+tracing_enabled = true
+service_name = "hivemind"
