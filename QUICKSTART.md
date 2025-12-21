@@ -1,227 +1,443 @@
 # HIVEMIND Quick Start Guide
 
-Start here:
-- `BOOTSTRAP.md` (single entry point + load sequence)
-- `CLAUDE.md` (canonical operating rules)
+Get up and running in minutes.
 
-## 30-Second Start
+---
+
+## Installation Options
+
+### Option 1: CLI Only (Fastest)
 
 ```bash
-# Navigate to HIVEMIND directory
-cd /path/to/HIVEMIND
-
-# Claude Code will auto-load CLAUDE.md and become HIVEMIND
+git clone https://github.com/Nerds489/HIVEMIND.git
+cd HIVEMIND
+./setup.sh
 ```
 
-## Basic Invocation Patterns
+This installs:
+- Codex CLI (OpenAI)
+- Claude Code CLI (Anthropic)
+- `hm` command shortcut
+
+### Option 2: Full Stack (Docker)
+
+```bash
+git clone https://github.com/Nerds489/HIVEMIND.git
+cd HIVEMIND
+make up
+```
+
+This starts:
+- HIVEMIND Backend API (port 8000)
+- PostgreSQL database
+- Redis cache
+- Qdrant vector DB
+- RabbitMQ message queue
+
+### Option 3: TUI (Terminal UI)
+
+```bash
+cd tui
+pip install -e .
+hivemind-tui
+```
+
+---
+
+## Basic Usage
+
+### CLI Mode
+
+```bash
+# Interactive mode
+./hivemind
+
+# Direct task
+./hivemind "Design a REST API for user authentication"
+
+# Shorthand
+hm "Review this code for security vulnerabilities"
+```
+
+### Slash Commands (Claude Code)
+
+In Claude Code, use these commands:
+
+| Command | Description |
+|---------|-------------|
+| `/hivemind` | Activate HIVEMIND orchestration |
+| `/architect` | System architecture and design |
+| `/dev` | Development team tasks |
+| `/sec` | Security team tasks |
+| `/infra` | Infrastructure team tasks |
+| `/qa` | QA and testing tasks |
+| `/pentest` | Penetration testing |
+| `/reviewer` | Code review |
+| `/sre` | Site reliability engineering |
+| `/incident` | Incident response |
+| `/sdlc` | Full development lifecycle |
+
+### Docker Commands
+
+```bash
+make up              # Start all services
+make down            # Stop all services
+make logs            # View logs
+make logs-backend    # View backend logs only
+make health          # Check service health
+make shell           # Shell into backend container
+make migrate         # Run database migrations
+make test            # Run tests
+```
+
+---
+
+## Task Examples
 
 ### Single Agent Tasks
 
 ```
 "Design a REST API for user management"
-→ Routes to DEV-001 (Architect)
+→ Routes to Architect
 
 "Review this pull request for security issues"
-→ Routes to DEV-004 (Code Reviewer) + QA-004 (Security Tester)
+→ Routes to Code Reviewer + Security Tester
 
 "Run a penetration test on the login endpoint"
-→ Routes to SEC-002 (Penetration Tester)
+→ Routes to Penetration Tester
 
 "Set up monitoring for the new microservice"
-→ Routes to INF-005 (Site Reliability Engineer)
+→ Routes to SRE
 
 "Create automated tests for the checkout flow"
-→ Routes to QA-002 (Test Automation Engineer)
+→ Routes to Test Automation Engineer
 ```
 
 ### Team Tasks
 
 ```
 "I need the development team to build a new feature"
-→ Activates Development Team coordination
+→ Activates Development Team (6 agents)
 
 "Security team, assess our cloud infrastructure"
-→ Activates Security Team coordination
+→ Activates Security Team (6 agents)
 
 "Infrastructure team, prepare for production deployment"
-→ Activates Infrastructure Team coordination
+→ Activates Infrastructure Team (6 agents)
 
 "QA team, run full regression testing"
-→ Activates QA Team coordination
+→ Activates QA Team (6 agents)
 ```
 
 ### Workflow Tasks
 
 ```
 "Full SDLC for implementing OAuth authentication"
-→ Activates full-sdlc.md workflow
+→ Runs: Design → Build → Review → Test → Deploy
 
 "Security assessment of the payment API"
-→ Activates security-assessment.md workflow
+→ Runs: Threat Model → Pentest → Report
 
 "We have a production incident - database is down"
-→ Activates incident-response.md workflow
+→ Runs: Detect → Contain → Recover → Report
 
 "Code review pipeline for PR #1234"
-→ Activates code-review.md workflow
+→ Runs: Static Analysis → Security Scan → Quality Check
 
 "Deploy version 2.0 to production"
-→ Activates infrastructure-deploy.md workflow
-
-"Compliance audit for SOC2 certification"
-→ Activates compliance-audit.md workflow
+→ Runs: Validate → Provision → Deploy → Monitor
 ```
 
 ---
 
-## Agent Quick Reference
+## Agent Reference
 
-| ID | Agent | Keywords |
-|----|-------|----------|
-| **Development Team** |||
-| DEV-001 | Architect | design, architecture, system, blueprint |
-| DEV-002 | Backend Developer | api, backend, server, database, python, node |
+### Development Team (DEV)
+
+| ID | Role | Keywords |
+|----|------|----------|
+| DEV-001 | Architect | design, architecture, system, blueprint, patterns |
+| DEV-002 | Backend Developer | api, backend, server, python, node, go |
 | DEV-003 | Frontend Developer | ui, frontend, react, vue, css, component |
-| DEV-004 | Code Reviewer | review, pr, quality, standards |
-| DEV-005 | Technical Writer | docs, documentation, readme, guide |
-| DEV-006 | DevOps Liaison | ci/cd, pipeline, deploy, build |
-| **Security Team** |||
-| SEC-001 | Security Architect | threat model, security design, defense |
-| SEC-002 | Penetration Tester | pentest, hack, exploit, vulnerability |
-| SEC-003 | Malware Analyst | malware, reverse engineer, binary |
-| SEC-004 | Wireless Security | wifi, bluetooth, wireless, rf |
-| SEC-005 | Compliance Auditor | compliance, audit, gdpr, soc2, pci |
+| DEV-004 | Code Reviewer | review, pr, quality, standards, best practices |
+| DEV-005 | Technical Writer | docs, documentation, readme, guide, tutorial |
+| DEV-006 | DevOps Liaison | ci/cd, pipeline, deploy, build, github actions |
+
+### Security Team (SEC)
+
+| ID | Role | Keywords |
+|----|------|----------|
+| SEC-001 | Security Architect | threat model, security design, zero trust |
+| SEC-002 | Penetration Tester | pentest, hack, exploit, vulnerability, owasp |
+| SEC-003 | Malware Analyst | malware, reverse engineer, binary, ioc |
+| SEC-004 | Wireless Security | wifi, bluetooth, wireless, rf, iot |
+| SEC-005 | Compliance Auditor | compliance, audit, gdpr, soc2, pci, hipaa |
 | SEC-006 | Incident Responder | incident, breach, forensics, emergency |
-| **Infrastructure Team** |||
-| INF-001 | Infrastructure Architect | cloud, aws, azure, infrastructure |
-| INF-002 | Systems Administrator | linux, server, sysadmin, configuration |
-| INF-003 | Network Engineer | network, firewall, dns, routing |
-| INF-004 | Database Administrator | database, sql, optimization, backup |
-| INF-005 | Site Reliability Engineer | sre, monitoring, slo, reliability |
+
+### Infrastructure Team (INF)
+
+| ID | Role | Keywords |
+|----|------|----------|
+| INF-001 | Infrastructure Architect | cloud, aws, azure, gcp, kubernetes |
+| INF-002 | Systems Administrator | linux, server, sysadmin, hardening |
+| INF-003 | Network Engineer | network, firewall, dns, routing, vpn |
+| INF-004 | Database Administrator | database, sql, postgres, mongodb, optimization |
+| INF-005 | Site Reliability Engineer | sre, monitoring, slo, reliability, uptime |
 | INF-006 | Automation Engineer | terraform, ansible, automation, iac |
-| **QA Team** |||
-| QA-001 | QA Architect | test strategy, quality, coverage |
-| QA-002 | Test Automation Engineer | selenium, playwright, automated test |
-| QA-003 | Performance Tester | load test, performance, benchmark |
-| QA-004 | Security Tester | sast, dast, security scan |
-| QA-005 | Manual QA Tester | exploratory, manual test, uat |
-| QA-006 | Test Data Manager | test data, fixtures, environment |
+
+### QA Team (QA)
+
+| ID | Role | Keywords |
+|----|------|----------|
+| QA-001 | QA Architect | test strategy, quality, coverage, process |
+| QA-002 | Test Automation | selenium, playwright, pytest, jest, cypress |
+| QA-003 | Performance Tester | load test, performance, benchmark, k6 |
+| QA-004 | Security Tester | sast, dast, security scan, devsecops |
+| QA-005 | Manual QA | exploratory, manual test, uat, usability |
+| QA-006 | Test Data Manager | test data, fixtures, environment, mock |
 
 ---
 
-## Common Scenarios
+## Configuration
 
-### Scenario 1: New Feature Development
-```
-User: "Build a user notification system with email and push notifications"
+### Engine Presets
 
-HIVEMIND response:
-1. Routes to DEV-001 (Architect) for system design
-2. Hands off to DEV-002 (Backend) for API implementation
-3. Parallel: DEV-003 (Frontend) for UI components
-4. DEV-004 (Code Reviewer) reviews all code
-5. QA-002 (Test Automation) creates tests
-6. SEC-002 (Penetration Tester) validates security
-7. DEV-006 (DevOps) deploys to staging
-8. QA-005 (Manual QA) performs UAT
-9. INF-005 (SRE) deploys to production
+```bash
+./hivemind --preset recommended   # Codex orchestrator + Claude agents (default)
+./hivemind --preset full-claude   # All Claude
+./hivemind --preset full-codex    # All Codex
 ```
 
-### Scenario 2: Security Incident
-```
-User: "We detected suspicious activity - possible data breach"
+### Environment Variables
 
-HIVEMIND response:
-1. IMMEDIATELY routes to SEC-006 (Incident Responder)
-2. Parallel activation: INF-005 (SRE) for system isolation
-3. SEC-003 (Malware Analyst) examines suspicious files
-4. SEC-002 (Penetration Tester) identifies attack vector
-5. INF-002 (SysAdmin) implements containment
-6. SEC-005 (Compliance) assesses regulatory impact
-7. Full incident report generated
+```bash
+# API Keys (optional if using browser auth)
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Backend (for Docker deployment)
+export POSTGRES_PASSWORD="your-password"
+export RABBITMQ_PASSWORD="your-password"
 ```
 
-### Scenario 3: Production Deployment
-```
-User: "Deploy v3.0 to production this weekend"
+### View Current Config
 
-HIVEMIND response:
-1. QA-001 (QA Architect) verifies all tests pass
-2. SEC-001 (Security Architect) approves security posture
-3. INF-001 (Infrastructure Architect) reviews deployment plan
-4. INF-005 (SRE) prepares monitoring
-5. DEV-006 (DevOps) executes deployment
-6. INF-002 (SysAdmin) validates system health
-7. QA-005 (Manual QA) performs smoke tests
+```bash
+./hivemind --config
+./hivemind --status
 ```
 
 ---
 
-## Output Formats
+## API Endpoints (Docker Mode)
 
-All HIVEMIND outputs follow standards:
+When running with Docker (`make up`):
 
-| Output Type | Format | Template |
-|-------------|--------|----------|
-| Security Report | Markdown | `/templates/security-report.md` |
-| Architecture Decision | Markdown | `/templates/architecture-decision-record.md` |
-| Incident Report | Markdown | `/templates/incident-report.md` |
-| Code Review | Markdown | `/templates/code-review-findings.md` |
-| Test Results | Markdown | `/templates/test-results.md` |
-| Deployment Checklist | Markdown | `/templates/deployment-checklist.md` |
+| Endpoint | Description |
+|----------|-------------|
+| `http://localhost:8000/` | API info |
+| `http://localhost:8000/docs` | Swagger UI |
+| `http://localhost:8000/health` | Health check |
+| `http://localhost:8000/ready` | Readiness check |
+| `ws://localhost:8000/ws` | WebSocket |
+| `http://localhost:15672` | RabbitMQ UI |
+| `http://localhost:6333` | Qdrant UI |
 
----
+### With Monitoring Stack
 
-## Escalation Levels
+```bash
+make monitoring-up
+```
 
-| Level | Scope | Timeout |
-|-------|-------|---------|
-| 1 | Peer consultation | 5 min |
-| 2 | Team lead escalation | 15 min |
-| 3 | Cross-team coordination | 30 min |
-| 4 | COORDINATOR intervention | 1 hour |
-| 5 | Human escalation | As needed |
-
----
-
-## Priority Levels
-
-| Priority | SLA | Use Case |
-|----------|-----|----------|
-| P0 | 15 min | Production down, active breach |
-| P1 | 1 hour | Major functionality broken |
-| P2 | 4 hours | Significant issue, workaround exists |
-| P3 | 24 hours | Minor issue |
-| P4 | Best effort | Enhancement, documentation |
+| Endpoint | Description |
+|----------|-------------|
+| `http://localhost:3000` | Grafana (admin/admin) |
+| `http://localhost:9090` | Prometheus |
+| `http://localhost:16686` | Jaeger tracing |
 
 ---
 
-## Tips for Best Results
+## Memory System
 
-1. **Be specific** - "Review auth code for SQL injection" > "Review code"
-2. **Mention urgency** - Include priority if time-sensitive
-3. **Provide context** - Reference files, PRs, or systems involved
-4. **Name the workflow** - "Run full SDLC" triggers the complete pipeline
-5. **Multi-agent tasks** - HIVEMIND auto-coordinates, just describe the goal
+HIVEMIND remembers across sessions:
+
+### Auto-Store Triggers
+
+| You Say | What Gets Stored |
+|---------|------------------|
+| "Remember that..." | Learning/fact |
+| "We decided..." | Decision |
+| "I prefer..." | Preference |
+| "Always..." / "Never..." | Rule |
+| "Our stack is..." | Tech stack |
+| "We use..." | Tool |
+
+### Memory Locations
+
+```
+memory/
+├── short-term/     # Current session
+├── long-term/      # Persistent storage
+│   ├── learnings.json
+│   ├── preferences.json
+│   ├── decisions.json
+│   └── project.json
+├── episodic/       # Events & incidents
+└── agents/         # Per-agent memory
+```
+
+### Memory Commands
+
+```bash
+# CLI memory operations
+bin/memory-ops store "key" "value"
+bin/memory-ops recall "query"
+bin/memory-ops list
+```
 
 ---
 
-## File Locations
+## Workflows
+
+### Full SDLC Pipeline
+
+```
+Design → Implement → Review → Test → Deploy → Validate
+```
+
+Invoke: `"Run full SDLC for [feature]"` or `/sdlc`
+
+### Security Assessment
+
+```
+Scope → Threat Model → Pentest → Report → Remediation
+```
+
+Invoke: `"Security assessment of [target]"` or `/sec`
+
+### Incident Response
+
+```
+Detect → Contain → Eradicate → Recover → Report
+```
+
+Invoke: `"Incident response for [issue]"` or `/incident`
+
+### Code Review Pipeline
+
+```
+Static Analysis → Security Scan → Quality Check → Findings Report
+```
+
+Invoke: `"Code review for [PR/file]"` or `/reviewer`
+
+---
+
+## Project Structure
 
 ```
 HIVEMIND/
-├── CLAUDE.md           ← Auto-loaded by Claude Code
-├── HIVEMIND.md         ← Full system documentation
-├── QUICKSTART.md       ← This file
-├── agents/             ← 24 agent definitions
-├── orchestration/      ← Coordinator and routing
-├── protocols/          ← Communication rules
-├── workflows/          ← Multi-agent pipelines
-├── teams/              ← Team configurations
-├── templates/          ← Output templates
-└── config/             ← System settings
+├── hivemind              # Main CLI
+├── setup.sh              # Installer
+├── Makefile              # Docker commands
+├── docker-compose.yml    # Full stack
+│
+├── backend/              # Python API
+│   ├── src/hivemind/     # Source code
+│   ├── migrations/       # Database
+│   └── Dockerfile
+│
+├── tui/                  # Terminal UI
+│   └── src/hivemind_tui/
+│
+├── agents/               # 24 agent definitions
+│   ├── dev/
+│   ├── security/
+│   ├── infrastructure/
+│   ├── qa/
+│   └── registry/         # Agent IDs
+│
+├── .claude/commands/     # Slash commands
+│
+├── workflows/            # Pipelines
+│   ├── full-sdlc.md
+│   ├── security-assessment.md
+│   ├── incident-response.md
+│   ├── code-review.md
+│   ├── infrastructure-deploy.md
+│   └── compliance-audit.md
+│
+├── memory/               # Persistent storage
+├── config/               # Configuration
+├── bin/                  # Utilities
+└── templates/            # Output templates
 ```
 
 ---
 
-*HIVEMIND - Route intelligently. Execute completely.*
+## Troubleshooting
+
+### CLI Issues
+
+```bash
+# Check installation
+./hivemind --status
+
+# Re-run setup
+./setup.sh
+
+# Check engine availability
+which codex
+which claude
+```
+
+### Docker Issues
+
+```bash
+# Check service status
+make status
+make health
+
+# View logs
+make logs
+
+# Restart services
+make restart
+
+# Full reset
+make down-volumes
+make up-build
+```
+
+### Common Fixes
+
+| Problem | Solution |
+|---------|----------|
+| "codex not found" | Run `./setup.sh` or install manually |
+| "claude not found" | Run `npm install -g @anthropic-ai/claude-code` |
+| Docker services unhealthy | `make down && make up-build` |
+| Database connection failed | Check `POSTGRES_PASSWORD` in `.env` |
+| API key errors | Set `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` |
+
+---
+
+## Tips
+
+1. **Be specific** - "Review auth code for SQL injection" > "Review code"
+2. **Use slash commands** - Faster than typing full prompts
+3. **Check `/hivemind`** - Verify HIVEMIND is active
+4. **Use Docker for production** - Full observability stack
+5. **Memory persists** - HIVEMIND learns your preferences
+
+---
+
+## Next Steps
+
+- Read [DEPLOYMENT.md](DEPLOYMENT.md) for production setup
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) to contribute
+- Explore [workflows/](workflows/) for automation pipelines
+- Check [agents/](agents/) for detailed agent capabilities
+
+---
+
+*HIVEMIND - Route intelligently. Execute completely. Learn continuously.*

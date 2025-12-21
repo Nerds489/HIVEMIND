@@ -11,7 +11,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Web UI dashboard for monitoring agents
 - Custom agent creation wizard
 - Memory export/import functionality
-- Docker containerization support
+- Kubernetes deployment manifests
+
+---
+
+## [2.0.0] - 2024-12-20
+
+### Added
+
+#### Python Backend
+- **FastAPI REST API** with full OpenAPI documentation
+- **WebSocket support** for real-time streaming responses
+- **gRPC API** for high-performance inter-process communication
+- **PostgreSQL database** with Alembic migrations
+- **Qdrant vector database** for semantic memory search
+- **Redis caching** and pub/sub messaging
+- **RabbitMQ message queue** for agent coordination
+- Multi-stage **Dockerfile** for optimized production builds
+
+#### Observability Stack
+- **Prometheus metrics** collection
+- **Grafana dashboards** for visualization
+- **Jaeger distributed tracing**
+- **OpenTelemetry** instrumentation
+- **Structured logging** with structlog
+- Health check endpoints (`/health`, `/ready`)
+
+#### Terminal User Interface (TUI)
+- **Textual-based TUI** for terminal interaction
+- Three-panel layout (Agents, Chat, Status)
+- Real-time agent status monitoring
+- Markdown rendering in chat
+- Keyboard-driven navigation
+- Dark/light mode toggle
+
+#### Slash Commands
+- `/hivemind` - Activate HIVEMIND orchestration
+- `/architect` - System architecture agent
+- `/dev` - Development team coordination
+- `/sec` - Security team coordination
+- `/infra` - Infrastructure team coordination
+- `/qa` - QA team coordination
+- `/pentest` - Penetration testing
+- `/reviewer` - Code review
+- `/sre` - Site reliability engineering
+- `/incident` - Incident response
+- `/sdlc` - Full SDLC pipeline
+
+#### Docker Deployment
+- Complete **docker-compose.yml** for full stack
+- Service health checks with dependency ordering
+- Persistent volumes for all data stores
+- Optional monitoring profile (`--profile monitoring`)
+- Production-ready configuration
+
+#### Makefile Commands
+- `make up` / `make down` - Start/stop services
+- `make logs` - View logs
+- `make health` - Check service health
+- `make migrate` - Run database migrations
+- `make test` - Run test suite
+- `make monitoring-up` - Start with monitoring stack
+- `make backup-db` / `make restore-db` - Database backup
+
+#### API Middleware
+- Rate limiting with configurable limits
+- Request validation and sanitization
+- CORS configuration
+- Distributed tracing headers
+- Request/response logging
+
+#### Resilience Patterns
+- Circuit breakers with pybreaker
+- Retry logic with tenacity
+- Dead letter queues for failed messages
+- Graceful degradation
+
+### Changed
+- Upgraded from CLI-only to full backend architecture
+- Memory system now supports vector search via Qdrant
+- Agent coordination via message queues instead of direct calls
+- Configuration via environment variables and TOML files
+
+### Security
+- JWT-based API authentication
+- Request validation middleware
+- Rate limiting per endpoint
+- CORS origin restrictions
+- Secrets management via environment variables
 
 ---
 
@@ -107,16 +194,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Patch (0.0.X)**: Bug fixes, documentation updates, minor improvements
 
 ### Upgrade Guide
-When upgrading between versions:
+
+#### From 1.x to 2.x
 1. Backup your `memory/` directory
 2. Backup your `.env` file
 3. Pull the new version
-4. Run `./setup.sh` to update dependencies
-5. Restore your `.env` file
-6. Memory files are forward-compatible
+4. Install Docker and Docker Compose (required for backend)
+5. Run `make up` to start the full stack
+6. Your CLI will continue to work as before
+7. Optionally install the TUI: `cd tui && pip install -e .`
+
+#### From 0.x to 1.x
+1. Backup your `memory/` directory
+2. Pull the new version
+3. Run `./setup.sh` to update dependencies
+4. Memory files are forward-compatible
 
 ---
 
-[Unreleased]: https://github.com/USERNAME/HIVEMIND/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/USERNAME/HIVEMIND/releases/tag/v1.0.0
-[0.1.0]: https://github.com/USERNAME/HIVEMIND/releases/tag/v0.1.0
+## Migration Notes
+
+### Memory System (1.x → 2.x)
+- Existing JSON memory files remain compatible
+- New vector search requires Qdrant (auto-started with Docker)
+- Memory operations now go through the API when using backend
+
+### Configuration (1.x → 2.x)
+- YAML configs remain in `config/`
+- New environment variables for Docker services
+- Copy `.env.production` to `.env` for Docker deployment
+
+---
+
+[Unreleased]: https://github.com/Nerds489/HIVEMIND/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/Nerds489/HIVEMIND/releases/tag/v2.0.0
+[1.0.0]: https://github.com/Nerds489/HIVEMIND/releases/tag/v1.0.0
+[0.1.0]: https://github.com/Nerds489/HIVEMIND/releases/tag/v0.1.0
