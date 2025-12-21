@@ -1,1 +1,31 @@
-{"version":"1.0","entries":[]}
+{
+  "version": "1.0",
+  "entries": [
+    {
+      "id": "mem_1ae6a4e3f77b",
+      "type": "fact",
+      "content": "Test memory",
+      "tags": [
+        "test"
+      ],
+      "confidence": 0.5,
+      "created_at": "2025-12-22T05:47:38+08:00",
+      "updated_at": "2025-12-22T05:47:38+08:00",
+      "access_count": 0,
+      "source": "observation"
+    },
+    {
+      "id": "mem_ed94c019ccde",
+      "type": "fact",
+      "content": "Test memory",
+      "tags": [
+        "test"
+      ],
+      "confidence": 0.5,
+      "created_at": "2025-12-22T05:49:00+08:00",
+      "updated_at": "2025-12-22T05:49:00+08:00",
+      "access_count": 0,
+      "source": "observation"
+    }
+  ]
+}

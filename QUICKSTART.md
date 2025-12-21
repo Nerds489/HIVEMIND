@@ -39,8 +39,16 @@ This starts:
 ```bash
 cd tui
 pip install -e .
-hivemind-tui
+./run-tui.sh
 ```
+
+The TUI features:
+- **Quick Chat Bar** - Type and press Enter at the top of the screen
+- **Full Chat Mode** - Press `C` for dedicated chat with history
+- **Live Claude Integration** - Connects directly to Claude Code CLI
+- **No Backend Required** - Works immediately after install
+
+**Keyboard shortcuts:** `Enter` chat, `C` full chat, `Q` quit, `?` help, `D` dark mode
 
 ---
 
@@ -409,12 +417,27 @@ make down-volumes
 make up-build
 ```
 
+### TUI Issues
+
+```bash
+# Reinstall TUI dependencies
+cd tui && pip install -e . --force-reinstall
+
+# Check Python version (needs 3.11+)
+python --version
+
+# Run TUI manually
+python -m hivemind_tui
+```
+
 ### Common Fixes
 
 | Problem | Solution |
 |---------|----------|
 | "codex not found" | Run `./setup.sh` or install manually |
 | "claude not found" | Run `npm install -g @anthropic-ai/claude-code` |
+| TUI "Claude CLI not found" | Ensure `claude` is in PATH |
+| TUI won't start | Reinstall: `pip install -e . --force-reinstall` |
 | Docker services unhealthy | `make down && make up-build` |
 | Database connection failed | Check `POSTGRES_PASSWORD` in `.env` |
 | API key errors | Set `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` |

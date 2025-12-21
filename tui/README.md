@@ -4,159 +4,212 @@ A Textual-based Terminal User Interface for the HIVEMIND multi-agent system.
 
 ## Features
 
-- **Three-Panel Layout**: Agents, Chat, and Status panels for complete system overview
-- **24 AI Agents**: Organized across 6 specialized teams (Strategy, Engineering, Research, Documentation, Security, Communication)
-- **Interactive Chat**: Real-time messaging with markdown support and streaming responses
-- **Agent Management**: Monitor agent status, current tasks, and team organization
-- **Keyboard-Driven**: Efficient navigation with comprehensive keyboard shortcuts
-- **Rich Formatting**: Syntax highlighting, markdown rendering, and beautiful UI components
+- **Quick Chat Bar** - Chat input at the top of the main screen, just type and press Enter
+- **Full Chat Mode** - Dedicated chat screen with message history
+- **Live Claude Integration** - Connects directly to Claude Code CLI (no backend required)
+- **Three-Panel Layout** - Agents, Response, and Help panels
+- **24 AI Agents** - Organized across 4 specialized teams
+- **Keyboard-Driven** - Efficient navigation with comprehensive shortcuts
+- **Rich Formatting** - Markdown rendering and syntax highlighting
 
 ## Installation
-
-Install in development mode:
 
 ```bash
 cd /var/home/mintys/HIVEMIND/tui
 pip install -e .
 ```
 
-Or install with development dependencies:
-
-```bash
-pip install -e ".[dev]"
-```
-
 ## Usage
 
-### Starting the TUI
-
-Run the application:
+### Quick Start
 
 ```bash
+# Using the launcher script (recommended)
+./run-tui.sh
+
+# Or directly via Python
+python -m hivemind_tui
+
+# Or via the installed command
 hivemind-tui
 ```
 
-With custom API endpoint:
+### Main Screen
 
-```bash
-hivemind-tui --api-url http://localhost:8000 --ws-url ws://localhost:8000
+The main screen has three sections:
+
+```
++------------------------------------------------------------------+
+|  [Type here and press Enter to chat...]  [Send] [Full Chat]     |
++------------------------------------------------------------------+
+|  AGENTS      |  RESPONSE              |  QUICK HELP             |
+|              |                        |                         |
+|  DEV Team    |  HIVEMIND ready...     |  Enter - Focus chat    |
+|  - Architect |                        |  C - Full chat screen  |
+|  - Backend   |  Your message here     |  Q - Quit              |
+|  - Frontend  |                        |  D - Toggle dark mode  |
+|  ...         |  Response appears...   |  ? - Help              |
+|              |                        |                         |
+|  SEC Team    |                        |  STATUS                 |
+|  - Security  |                        |  Claude: Ready          |
+|  ...         |                        |  Agents: 24             |
++------------------------------------------------------------------+
+|  Q Quit | C Chat | ? Help | D Dark Mode                          |
++------------------------------------------------------------------+
 ```
 
 ### Keyboard Shortcuts
 
-- `q` - Quit application
-- `?` - Show help
-- `d` - Toggle dark/light mode
-- `c` - Switch to Chat view
-- `m` - Switch to Main view
-- `Ctrl+R` - Refresh screen
-- `Ctrl+Enter` - Send message (in chat)
-- `Ctrl+L` - Clear messages (in chat)
-- `Esc` - Go back/close screen
+| Key | Action |
+|-----|--------|
+| `Enter` | Focus chat input / Send message |
+| `C` | Open full chat screen |
+| `Q` | Quit application |
+| `?` | Show help |
+| `D` | Toggle dark/light mode |
+| `M` | Return to main view |
+| `Esc` | Go back |
+| `Ctrl+R` | Refresh screen |
+
+### Chat Screen Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+Enter` | Send message |
+| `Ctrl+L` | Clear messages |
+| `Ctrl+Up` | Previous message in history |
+| `Ctrl+Down` | Next message in history |
+| `Esc` | Return to main screen |
+
+## How It Works
+
+The TUI connects directly to Claude Code CLI:
+
+1. You type a message in the chat input
+2. TUI calls `claude --print "your message"`
+3. Response streams back and displays in the message view
+4. No backend server required - works out of the box
 
 ## Architecture
 
 ```
 src/hivemind_tui/
-├── __init__.py           # Package initialization
 ├── app.py                # Main Textual application
 ├── styles.css            # Global CSS styles
-├── screens/              # Screen definitions
-│   ├── __init__.py
-│   ├── main.py          # Main three-panel view
-│   └── chat.py          # Interactive chat screen
-└── widgets/              # Reusable widgets
-    ├── __init__.py
-    ├── agent_list.py    # Agent list with team grouping
-    ├── message_view.py  # Message history display
-    ├── input_box.py     # Multi-line input with history
-    └── status_bar.py    # System status display
+├── screens/
+│   ├── main.py          # Main screen with quick chat
+│   └── chat.py          # Full chat screen
+├── widgets/
+│   ├── agent_list.py    # Agent list by team
+│   ├── message_view.py  # Message history display
+│   ├── input_box.py     # Multi-line input with history
+│   └── status_bar.py    # System status display
+├── engine/
+│   ├── client.py        # HTTP API client
+│   └── websocket.py     # WebSocket client
+└── models/
+    └── agents.py        # Agent data models
 ```
 
 ## The 24 Agents
 
-### Strategy Team (4 agents)
-- Strategist Alpha - Lead Strategy
-- Planner Beta - Planning
-- Analyst Gamma - Analysis
-- Coordinator Delta - Coordination
+### Development Team (6 agents)
+- DEV-001: Architect
+- DEV-002: Backend Developer
+- DEV-003: Frontend Developer
+- DEV-004: Code Reviewer
+- DEV-005: Technical Writer
+- DEV-006: DevOps Engineer
 
-### Engineering Team (4 agents)
-- Architect Prime - System Architecture
-- Developer Apex - Implementation
-- DevOps Sigma - Operations
-- QA Validator - Quality Assurance
+### Security Team (6 agents)
+- SEC-001: Security Architect
+- SEC-002: Penetration Tester
+- SEC-003: Malware Analyst
+- SEC-004: Wireless Security
+- SEC-005: Compliance Auditor
+- SEC-006: Incident Responder
 
-### Research Team (4 agents)
-- Researcher Omega - Lead Research
-- Data Scientist - Data Analysis
-- ML Specialist - Machine Learning
-- Knowledge Curator - Knowledge Management
+### Infrastructure Team (6 agents)
+- INF-001: Cloud Architect
+- INF-002: Systems Admin
+- INF-003: Network Engineer
+- INF-004: Database Admin
+- INF-005: SRE
+- INF-006: Automation Engineer
 
-### Documentation Team (4 agents)
-- Doc Master - Lead Documentation
-- Technical Writer - Technical Writing
-- API Documenter - API Documentation
-- Tutorial Creator - Tutorial Creation
-
-### Security Team (4 agents)
-- Security Chief - Lead Security
-- Penetration Tester - Security Testing
-- Code Auditor - Code Security
-- Compliance Officer - Compliance
-
-### Communication Team (4 agents)
-- Comm Director - Lead Communication
-- UX Specialist - User Experience
-- Support Agent - User Support
-- Community Manager - Community
+### QA Team (6 agents)
+- QA-001: QA Architect
+- QA-002: Test Automation
+- QA-003: Performance Tester
+- QA-004: Security Tester
+- QA-005: Manual QA
+- QA-006: Test Data Manager
 
 ## Configuration
 
-Set environment variables in `.env`:
+Environment variables (optional):
 
 ```bash
+# For backend API mode (not required for CLI mode)
 HIVEMIND_API_URL=http://localhost:8000
 HIVEMIND_WS_URL=ws://localhost:8000
-```
-
-## Development
-
-### Running in Development Mode
-
-Enable CSS hot-reloading:
-
-```bash
-hivemind-tui --watch-css
-```
-
-### Code Style
-
-Format code with Black:
-
-```bash
-black src/
-```
-
-Lint with Ruff:
-
-```bash
-ruff check src/
-```
-
-Type check with MyPy:
-
-```bash
-mypy src/
 ```
 
 ## Requirements
 
 - Python 3.11+
+- Claude Code CLI installed (`claude` command available)
 - textual >= 0.40.0
 - rich >= 13.0.0
 - httpx >= 0.24.0
 - websockets >= 12.0
+- pydantic >= 2.0.0
+- python-dotenv >= 1.0.0
+
+## Development
+
+### CSS Hot Reload
+
+```bash
+./run-tui.sh --watch-css
+# or
+hivemind-tui --watch-css
+```
+
+### Code Style
+
+```bash
+black src/
+ruff check src/
+mypy src/
+```
+
+## Troubleshooting
+
+### "Claude Code CLI not found"
+
+Make sure Claude Code is installed and in your PATH:
+
+```bash
+# Check if claude is available
+which claude
+
+# If not found, install it
+npm install -g @anthropic-ai/claude-code
+
+# Or add to PATH
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### TUI won't start
+
+```bash
+# Reinstall dependencies
+pip install -e . --force-reinstall
+
+# Check Python version (needs 3.11+)
+python --version
+```
 
 ## License
 

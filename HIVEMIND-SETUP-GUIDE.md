@@ -438,6 +438,53 @@ HIVEMIND/
 
 ---
 
+## Part 11: Terminal User Interface (TUI)
+
+HIVEMIND includes a Textual-based TUI for a graphical terminal experience.
+
+### Installing the TUI
+
+```bash
+cd tui
+pip install -e .
+```
+
+### Running the TUI
+
+```bash
+# Using the launcher script (recommended)
+./run-tui.sh
+
+# Or directly
+python -m hivemind_tui
+
+# Or via the installed command
+hivemind-tui
+```
+
+### TUI Features
+
+- **Quick Chat Bar** - Chat input at the top, just type and press Enter
+- **Full Chat Mode** - Press `C` for dedicated chat with history
+- **Live Claude Integration** - Connects directly to Claude Code CLI
+- **No Backend Required** - Works immediately after install
+
+### TUI Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Focus chat / Send message |
+| `C` | Open full chat screen |
+| `Q` | Quit |
+| `?` | Show help |
+| `D` | Toggle dark/light mode |
+| `M` | Return to main view |
+| `Esc` | Go back |
+| `Ctrl+Enter` | Send message (chat screen) |
+| `Ctrl+L` | Clear messages |
+
+---
+
 ## Quick Start Checklist
 
 - [ ] Install Codex CLI: `npm install -g @openai/codex`
@@ -447,6 +494,7 @@ HIVEMIND/
 - [ ] Run installer: `./install.sh`
 - [ ] Verify setup: `./hivemind --setup`
 - [ ] Test run: `./hivemind "Hello, are you ready?"`
+- [ ] (Optional) Install TUI: `cd tui && pip install -e .`
 
 ---
 

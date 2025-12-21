@@ -81,8 +81,24 @@ class HivemindApp(App):
 
     def action_help(self) -> None:
         """Show help information."""
-        # TODO: Implement help modal
-        self.notify("Help: Use 'q' to quit, 'c' for chat, 'm' for main view", title="Help")
+        help_text = """
+HIVEMIND Keyboard Shortcuts:
+
+  Q     - Quit application
+  C     - Open full chat screen
+  M     - Return to main view
+  D     - Toggle dark/light mode
+  Enter - Focus chat input
+  Esc   - Go back
+  ?     - Show this help
+
+Chat Shortcuts:
+  Ctrl+Enter - Send message
+  Ctrl+L     - Clear messages
+  Ctrl+Up    - Previous message
+  Ctrl+Down  - Next message
+"""
+        self.notify(help_text, title="HIVEMIND Help", timeout=10)
 
 
 def main() -> None:

@@ -746,6 +746,7 @@ main() {
   local show_version_flag=false
   local show_status_flag=false
   local show_setup_flag=false
+  local show_config_flag=false
   local args=()
 
   while [[ $# -gt 0 ]]; do
@@ -764,6 +765,10 @@ main() {
         ;;
       --setup)
         show_setup_flag=true
+        shift
+        ;;
+      --config)
+        show_config_flag=true
         shift
         ;;
       --engine)
@@ -804,6 +809,19 @@ main() {
 
   if [[ "$show_setup_flag" == "true" ]]; then
     show_setup
+    return 0
+  fi
+
+  if [[ "$show_config_flag" == "true" ]]; then
+    printf '%s\n' "HIVEMIND Configuration"
+    printf '%s\n' "======================"
+    printf '%s\n' "Config dir: $CONFIG_DIR"
+    printf '%s\n' "Config file: $CONFIG_FILE"
+    if [[ -f "$CONFIG_FILE" ]]; then
+      cat "$CONFIG_FILE"
+    else
+      printf '%s\n' "(no config file found - using defaults)"
+    fi
     return 0
   fi
 

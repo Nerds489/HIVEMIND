@@ -109,8 +109,15 @@ make health
 ```bash
 cd tui
 pip install -e .
-hivemind-tui
+./run-tui.sh
 ```
+
+The TUI provides:
+- **Quick Chat Bar** - Chat input right at the top, just type and press Enter
+- **Full Chat Mode** - Press `C` for dedicated chat screen
+- **Live Claude Integration** - Connects directly to Claude Code CLI
+- **Agent Overview** - See all 24 agents organized by team
+- **Keyboard-Driven** - `Q` quit, `C` chat, `?` help, `D` dark mode
 
 ---
 
