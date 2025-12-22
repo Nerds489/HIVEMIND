@@ -63,6 +63,7 @@ dependencies = [
     "hvac>=2.1.0",
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
+    "bleach>=6.0.0",
 
     # Observability
     "structlog>=24.1.0",

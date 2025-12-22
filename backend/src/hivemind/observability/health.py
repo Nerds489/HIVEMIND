@@ -15,7 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from hivemind.config import get_settings
-from hivemind.observability import get_logger
+from hivemind.observability.logging import get_logger
 
 logger = get_logger(__name__)
 
