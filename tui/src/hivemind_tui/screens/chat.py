@@ -136,8 +136,7 @@ class ChatScreen(Screen):
             stdout, stderr = await process.communicate()
 
             # Remove the "Processing..." message
-            if message_view._messages:
-                message_view._messages.pop()
+            message_view.remove_last_message()
 
             if process.returncode == 0:
                 response = stdout.decode("utf-8", errors="replace").strip()

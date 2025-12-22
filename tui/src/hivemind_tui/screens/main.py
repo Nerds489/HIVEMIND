@@ -165,8 +165,7 @@ Enter to send.[/dim]"""
             stdout, stderr = await process.communicate()
 
             # Remove thinking message
-            if message_view._messages:
-                message_view._messages.pop()
+            message_view.remove_last_message()
 
             if process.returncode == 0:
                 response = stdout.decode("utf-8", errors="replace").strip()

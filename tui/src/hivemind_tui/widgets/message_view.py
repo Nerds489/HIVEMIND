@@ -106,6 +106,20 @@ class MessageView(Widget):
         scroll.remove_children()
         self.message_count = 0
 
+    def remove_last_message(self) -> bool:
+        """Remove the last message from the view.
+
+        Returns:
+            True if a message was removed, False if no messages exist
+        """
+        scroll = self.query_one("#message-scroll", VerticalScroll)
+        children = list(scroll.children)
+        if children:
+            children[-1].remove()
+            self.message_count -= 1
+            return True
+        return False
+
     def _scroll_to_bottom(self) -> None:
         """Scroll to the bottom of the message view."""
         scroll = self.query_one("#message-scroll", VerticalScroll)

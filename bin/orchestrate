@@ -80,11 +80,17 @@ for agent in "${AGENTS[@]}"; do
   workspace="${WORKSPACES[$agent]}"
   log "Waiting -> $workspace"
   result="$("$HIVEMIND_ROOT/bin/wait-agent" "$workspace" "$TIMEOUT_SECONDS")"
-  RESULTS_LABELED="${RESULTS_LABELED}\n\n## ${agent}\n${result}"
-  RESULTS_ANON="${RESULTS_ANON}\n\n## Specialist ${idx}\n${result}"
+  RESULTS_LABELED="${RESULTS_LABELED}
+
+## ${agent}
+${result}"
+  RESULTS_ANON="${RESULTS_ANON}
+
+## Specialist ${idx}
+${result}"
 done
 
-echo -e "$RESULTS_LABELED" > "$ORCHESTRATION_DIR/combined.md"
+printf '%s\n' "$RESULTS_LABELED" > "$ORCHESTRATION_DIR/combined.md"
 
 SYNTHESIS_PROMPT="You are synthesizing outputs from multiple specialists into ONE unified response.
 

@@ -40,7 +40,6 @@ class HivemindApp(App):
         Args:
             driver_class: Optional Textual driver class
             css_path: Optional path to CSS file
-            css_path: Optional path to CSS file
             watch_css: Whether to watch CSS file for changes
             api_base_url: Base URL for HTTP API
             ws_base_url: Base URL for WebSocket connections

@@ -8,7 +8,7 @@ and capability analysis.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from hivemind.agents.base import Agent
 from hivemind.agents.teams import Team, TeamID, TEAM_CONFIGS
@@ -388,7 +388,7 @@ class Router(LoggerMixin):
     def get_routing_summary(
         self,
         keywords: list[str] | str,
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Get a summary of routing options for keywords.
 

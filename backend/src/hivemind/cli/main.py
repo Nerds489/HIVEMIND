@@ -46,7 +46,7 @@ def run(
     settings = get_settings()
     configure_logging(
         level="DEBUG" if verbose else settings.observability.log_level,
-        format_type=settings.observability.log_format
+        format_=settings.observability.log_format
     )
 
     console.print(f"[bold cyan]HIVEMIND[/bold cyan] Running agent [yellow]{agent_id}[/yellow]")

@@ -61,7 +61,7 @@ EOF
       exec "$HIVEMIND_ROOT/bin/kill-agents"
       ;;
     *)
-      exec "$HIVEMIND_ROOT/hivemind" "$*"
+      exec "$HIVEMIND_ROOT/hivemind" "$@"
       ;;
   esac
 }

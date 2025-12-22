@@ -90,7 +90,7 @@ def get_coordinator_singleton() -> Coordinator:
     return coordinator
 
 
-def get_agent_pool() -> AgentPool:
+def get_agent_pool_dependency() -> AgentPool:
     """
     Dependency for getting the AgentPool.
 

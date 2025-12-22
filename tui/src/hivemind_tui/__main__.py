@@ -182,7 +182,9 @@ def main() -> int:
         logger.debug(f"Configuration: {config}")
 
         # Create and run app
-        app = HivemindApp(config=config)
+        app = HivemindApp(
+            api_base_url=config.backend_url,
+        )
         app.run()
 
         logger.info("HIVEMIND TUI stopped")
