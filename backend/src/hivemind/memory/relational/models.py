@@ -47,7 +47,8 @@ class Session(Base):
         DateTime(timezone=True),
         nullable=True,
     )
-    metadata: Mapped[dict | None] = mapped_column(
+    session_metadata: Mapped[dict | None] = mapped_column(
+        "metadata",  # Keep DB column name for compatibility
         JSONB,
         nullable=True,
         default=dict,

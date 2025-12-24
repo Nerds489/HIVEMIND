@@ -372,13 +372,37 @@ class Settings(BaseSettings):
 
     # Agent settings
     agents_config_path: Path = Field(
-        default=Path("config/agents.json"),
+        default=None,
         description="Path to agents configuration file"
     )
     routing_config_path: Path = Field(
-        default=Path("config/routing.json"),
+        default=None,
         description="Path to routing configuration file"
     )
+
+    @field_validator("agents_config_path", "routing_config_path", mode="before")
+    @classmethod
+    def resolve_config_paths(cls, v: Any, info) -> Path:
+        """Resolve config paths, checking multiple locations."""
+        filename = "agents.json" if info.field_name == "agents_config_path" else "routing.json"
+
+        if v is not None:
+            return Path(v) if isinstance(v, str) else v
+
+        # Check multiple locations in order of priority
+        search_paths = [
+            Path.cwd() / "config" / filename,
+            Path(__file__).parent.parent.parent.parent.parent / "config" / filename,  # HIVEMIND/config
+            Path.home() / "HIVEMIND" / "config" / filename,
+            Path("/var/home") / os.getenv("USER", "user") / "HIVEMIND" / "config" / filename,
+        ]
+
+        for path in search_paths:
+            if path.exists():
+                return path
+
+        # Return default relative path if nothing found
+        return Path("config") / filename
 
     @field_validator("config_file", mode="before")
     @classmethod

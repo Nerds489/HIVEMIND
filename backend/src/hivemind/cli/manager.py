@@ -27,6 +27,41 @@ class ExecutionStatus(str, Enum):
     TIMEOUT = "timeout"
 
 
+class OutputType(str, Enum):
+    """CLI output event types."""
+    CONTENT = "content"
+    TOOL_USE = "tool_use"
+    TOOL_RESULT = "tool_result"
+    ERROR = "error"
+    DONE = "done"
+    METADATA = "metadata"
+
+
+@dataclass
+class CLIOutput:
+    """Parsed output from CLI execution."""
+    type: OutputType
+    data: dict[str, Any] = field(default_factory=dict)
+    raw: str = ""
+
+    @property
+    def is_error(self) -> bool:
+        """Check if this output is an error."""
+        return self.type == OutputType.ERROR
+
+    @property
+    def is_done(self) -> bool:
+        """Check if this output signals completion."""
+        return self.type == OutputType.DONE
+
+    @property
+    def content(self) -> Optional[str]:
+        """Get text content if this is a content output."""
+        if self.type == OutputType.CONTENT:
+            return self.data.get("content", "")
+        return None
+
+
 @dataclass
 class ExecutionResult:
     """Result of CLI execution."""

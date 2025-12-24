@@ -164,12 +164,35 @@ def agents(
         raise typer.Exit(1)
 
     with open(agents_config_path) as f:
-        agents_data = json.load(f)
+        raw_data = json.load(f)
 
+    # Flatten the nested structure to {agent_id: agent_info}
+    agents_data = {}
+    agents_by_team = raw_data.get("agents", raw_data)
+
+    # Map team names to prefixes
+    team_prefixes = {
+        "development": "DEV",
+        "security": "SEC",
+        "infrastructure": "INF",
+        "qa": "QA",
+    }
+
+    for team_name, agent_list in agents_by_team.items():
+        if isinstance(agent_list, list):
+            for agent in agent_list:
+                agent_id = agent.get("id", "")
+                agents_data[agent_id] = agent
+        elif isinstance(agent_list, dict):
+            # Already in flat format
+            agents_data[team_name] = agent_list
+
+    # Filter by team if specified
     if team:
+        team_upper = team.upper()
         agents_data = {
             aid: info for aid, info in agents_data.items()
-            if aid.startswith(team.upper())
+            if aid.startswith(team_upper)
         }
 
     if json_output:
