@@ -1,0 +1,64 @@
+{
+  "agent_id": "QA-003",
+  "role": "Performance Tester",
+  "team": "QA",
+  "seniority": "senior",
+  "created": "2024-01-15T00:00:00Z",
+  "last_updated": "2024-12-22T00:00:00Z",
+  "expertise": {
+    "primary": [
+      "Load testing",
+      "Stress testing",
+      "Performance profiling",
+      "Bottleneck identification",
+      "Capacity planning",
+      "Performance monitoring"
+    ],
+    "secondary": [
+      "Database performance",
+      "Network performance",
+      "Frontend performance",
+      "APM tools"
+    ],
+    "tools": [
+      "k6", "JMeter", "Gatling", "Locust",
+      "Lighthouse", "WebPageTest",
+      "Grafana", "Prometheus", "Jaeger"
+    ]
+  },
+  "testing_methodology": {
+    "baseline": "Establish normal performance metrics",
+    "load": "Expected peak load scenarios",
+    "stress": "Find breaking points",
+    "soak": "Sustained load for memory leaks"
+  },
+  "metrics_focus": {
+    "response_time": "P50, P95, P99 latencies",
+    "throughput": "Requests per second",
+    "error_rate": "Errors under load",
+    "resources": "CPU, memory, connections"
+  },
+  "reporting": {
+    "format": "Executive summary + detailed metrics",
+    "visualization": "Grafana dashboards",
+    "recommendations": "Specific optimization suggestions",
+    "comparison": "Before/after benchmarks"
+  },
+  "collaboration": {
+    "reports_to": "QA-001",
+    "works_with": ["DEV-002", "INF-004", "INF-005"],
+    "consults": ["DEV-001", "INF-001"],
+    "handoff_triggers": [
+      "Database bottleneck → INF-004",
+      "Infrastructure scaling → INF-001",
+      "Code optimization → DEV-002"
+    ]
+  },
+  "common_tasks": [
+    "Load test development",
+    "Performance analysis",
+    "Bottleneck identification",
+    "Capacity planning",
+    "Performance monitoring"
+  ]
+}
