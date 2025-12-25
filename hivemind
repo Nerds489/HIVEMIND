@@ -568,12 +568,18 @@ execute_request() {
       status=$?
       ;;
     codex)
+      local codex_output_file
+      codex_output_file=$(mktemp "${TMPDIR:-/tmp}/hivemind_codex.XXXXXX")
       if [[ -n "$ENGINE_MODEL" ]]; then
-        response=$(codex --full-auto --quiet -m "$ENGINE_MODEL" "$request" 2>&1)
+        codex exec --full-auto -m "$ENGINE_MODEL" -o "$codex_output_file" "$request" 2>&1
       else
-        response=$(codex --full-auto --quiet "$request" 2>&1)
+        codex exec --full-auto -o "$codex_output_file" "$request" 2>&1
       fi
       status=$?
+      if [[ -f "$codex_output_file" ]]; then
+        response=$(cat "$codex_output_file")
+        rm -f "$codex_output_file"
+      fi
       ;;
     anthropic-api)
       response=$(call_anthropic_api "$SYSTEM_PROMPT" "$request" 2>&1)

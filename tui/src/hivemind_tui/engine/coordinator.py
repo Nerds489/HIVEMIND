@@ -7,7 +7,9 @@ that decides whether to route to agents or respond directly.
 
 import asyncio
 import json
+import os
 import shutil
+import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -250,8 +252,9 @@ class Coordinator:
         if not codex_path:
             return False, "Codex CLI not found. Install with: npm install -g @openai/codex"
 
-        # Build command - codex uses different flags
-        cmd = [codex_path, "--full-auto", "--quiet", prompt]
+        # Build command - codex exec for non-interactive mode
+        output_file = tempfile.mktemp(suffix=".txt")
+        cmd = [codex_path, "exec", "--full-auto", "-o", output_file, prompt]
 
         try:
             process = await asyncio.create_subprocess_exec(
@@ -272,15 +275,37 @@ class Coordinator:
                 return False, f"Request timed out after {timeout}s"
 
             if process.returncode == 0:
-                response = stdout.decode("utf-8", errors="replace").strip()
+                # Read response from output file
+                try:
+                    if os.path.exists(output_file):
+                        with open(output_file, 'r') as f:
+                            response = f.read().strip()
+                        os.remove(output_file)
+                    else:
+                        response = stdout.decode("utf-8", errors="replace").strip()
+                except Exception:
+                    response = stdout.decode("utf-8", errors="replace").strip()
+
                 if not response:
                     return False, "No response received from Codex"
                 return True, response
             else:
+                # Clean up output file on error
+                try:
+                    if os.path.exists(output_file):
+                        os.remove(output_file)
+                except Exception:
+                    pass
                 error = stderr.decode("utf-8", errors="replace").strip()
                 return False, f"Codex error: {error or 'Unknown error'}"
 
         except Exception as e:
+            # Clean up output file on exception
+            try:
+                if os.path.exists(output_file):
+                    os.remove(output_file)
+            except Exception:
+                pass
             return False, f"Failed to call Codex: {str(e)}"
 
     async def _call_claude(
