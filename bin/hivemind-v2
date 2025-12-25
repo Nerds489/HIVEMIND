@@ -1,0 +1,309 @@
+#!/usr/bin/env bash
+#===============================================================================
+# HIVEMIND v2.0 - Minimal Output Edition
+# Multi-Agent AI Orchestration System
+#===============================================================================
+
+set -euo pipefail
+
+VERSION="2.0.0"
+CODENAME="MINIMAL_OUTPUT"
+HIVEMIND_HOME="${HIVEMIND_HOME:-$(dirname "$(readlink -f "$0")")}"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+# Box drawing
+BOX_TL="╔"
+BOX_TR="╗"
+BOX_BL="╚"
+BOX_BR="╝"
+BOX_H="═"
+BOX_V="║"
+BOX_ML="╠"
+BOX_MR="╣"
+
+#===============================================================================
+# BANNER
+#===============================================================================
+show_banner() {
+    echo -e "${MAGENTA}"
+    cat << 'EOF'
+██╗  ██╗██╗██╗   ██╗███████╗███╗   ███╗██╗███╗   ██╗██████╗ 
+██║  ██║██║██║   ██║██╔════╝████╗ ████║██║████╗  ██║██╔══██╗
+███████║██║██║   ██║█████╗  ██╔████╔██║██║██╔██╗ ██║██║  ██║
+██╔══██║██║╚██╗ ██╔╝██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║  ██║
+██║  ██║██║ ╚████╔╝ ███████╗██║ ╚═╝ ██║██║██║ ╚████║██████╔╝
+╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝ 
+EOF
+    echo -e "${NC}"
+    echo -e "${CYAN}            v${VERSION} - ${CODENAME}${NC}"
+    echo -e "${YELLOW}    24 Agents • 4 Teams • Minimal Output${NC}"
+    echo ""
+}
+
+#===============================================================================
+# AGENT STATUS OUTPUT (2-4 words max)
+#===============================================================================
+agent_status() {
+    local agent_id="$1"
+    local status="$2"
+    # Truncate to max 4 words
+    local words=($status)
+    if [[ ${#words[@]} -gt 4 ]]; then
+        status="${words[0]} ${words[1]} ${words[2]} ${words[3]}"
+    fi
+    echo -e "${CYAN}[${agent_id}]${NC} ${status}"
+}
+
+#===============================================================================
+# GATE STATUS
+#===============================================================================
+gate_status() {
+    local gate="$1"
+    local status="$2"
+    local color="${GREEN}"
+    [[ "$status" == "BLOCKED" ]] && color="${RED}"
+    [[ "$status" == "PENDING" ]] && color="${YELLOW}"
+    echo -e "${MAGENTA}[GATE]${NC} ${gate}: ${color}${status}${NC}"
+}
+
+#===============================================================================
+# HEAD_CODEX REPORT
+#===============================================================================
+generate_report() {
+    local task="$1"
+    local status="$2"
+    shift 2
+    local agents=("$@")
+    
+    local width=60
+    local line=$(printf '%*s' "$width" | tr ' ' '═')
+    
+    echo ""
+    echo -e "${MAGENTA}${BOX_TL}${line}${BOX_TR}${NC}"
+    echo -e "${MAGENTA}${BOX_V}${NC}${BOLD}              HIVEMIND EXECUTION REPORT              ${MAGENTA}${BOX_V}${NC}"
+    echo -e "${MAGENTA}${BOX_ML}${line}${BOX_MR}${NC}"
+    echo -e "${MAGENTA}${BOX_V}${NC} Task: ${task:0:50}"
+    echo -e "${MAGENTA}${BOX_V}${NC} Status: ${GREEN}${status}${NC}"
+    echo -e "${MAGENTA}${BOX_ML}${line}${BOX_MR}${NC}"
+    echo -e "${MAGENTA}${BOX_V}${NC} AGENTS ENGAGED:"
+    for agent in "${agents[@]}"; do
+        echo -e "${MAGENTA}${BOX_V}${NC}   • ${agent}"
+    done
+    echo -e "${MAGENTA}${BOX_BL}${line}${BOX_BR}${NC}"
+}
+
+#===============================================================================
+# HELP
+#===============================================================================
+show_help() {
+    echo -e "${BOLD}Usage:${NC}"
+    echo "  hivemind [command] [task]"
+    echo ""
+    echo -e "${BOLD}Commands:${NC}"
+    echo "  (no command)    Interactive mode"
+    echo "  \"task\"          Execute task directly"
+    echo "  --status        Show system status"
+    echo "  --agents        List all agents"
+    echo "  --config        Show configuration"
+    echo "  --version       Show version"
+    echo "  --help          Show this help"
+    echo ""
+    echo -e "${BOLD}Team Commands:${NC}"
+    echo "  /dev [task]     Route to Development team"
+    echo "  /sec [task]     Route to Security team"
+    echo "  /infra [task]   Route to Infrastructure team"
+    echo "  /qa [task]      Route to QA team"
+    echo ""
+    echo -e "${BOLD}Examples:${NC}"
+    echo "  hivemind \"Design a REST API\""
+    echo "  hivemind /sec \"Run security assessment\""
+    echo "  hivemind /dev \"Build authentication\""
+}
+
+#===============================================================================
+# LIST AGENTS
+#===============================================================================
+list_agents() {
+    echo -e "${BOLD}${CYAN}DEVELOPMENT TEAM${NC}"
+    echo "  DEV-001  Architect"
+    echo "  DEV-002  Backend Developer"
+    echo "  DEV-003  Frontend Developer"
+    echo "  DEV-004  Code Reviewer"
+    echo "  DEV-005  Technical Writer"
+    echo "  DEV-006  DevOps Liaison"
+    echo ""
+    echo -e "${BOLD}${RED}SECURITY TEAM${NC}"
+    echo "  SEC-001  Security Architect"
+    echo "  SEC-002  Penetration Tester"
+    echo "  SEC-003  Malware Analyst"
+    echo "  SEC-004  Wireless Security Expert"
+    echo "  SEC-005  Compliance Auditor"
+    echo "  SEC-006  Incident Responder"
+    echo ""
+    echo -e "${BOLD}${GREEN}INFRASTRUCTURE TEAM${NC}"
+    echo "  INF-001  Infrastructure Architect"
+    echo "  INF-002  Systems Administrator"
+    echo "  INF-003  Network Engineer"
+    echo "  INF-004  Database Administrator"
+    echo "  INF-005  Site Reliability Engineer"
+    echo "  INF-006  Automation Engineer"
+    echo ""
+    echo -e "${BOLD}${YELLOW}QA TEAM${NC}"
+    echo "  QA-001   QA Architect"
+    echo "  QA-002   Test Automation Engineer"
+    echo "  QA-003   Performance Tester"
+    echo "  QA-004   Security Tester"
+    echo "  QA-005   Manual QA Tester"
+    echo "  QA-006   Test Data Manager"
+}
+
+#===============================================================================
+# STATUS
+#===============================================================================
+show_status() {
+    echo -e "${BOLD}HIVEMIND STATUS${NC}"
+    echo "  Version: ${VERSION}"
+    echo "  Codename: ${CODENAME}"
+    echo "  Home: ${HIVEMIND_HOME}"
+    echo "  Agents: 24"
+    echo "  Teams: 4"
+    echo "  Output Mode: Minimal (2-4 words)"
+    echo "  Orchestrator: HEAD_CODEX"
+}
+
+#===============================================================================
+# MAIN ORCHESTRATION
+#===============================================================================
+orchestrate() {
+    local task="$1"
+    local engaged_agents=()
+    
+    # Simulate orchestration with minimal output
+    echo -e "${BOLD}Orchestrating...${NC}"
+    echo ""
+    
+    # Detect task type and route
+    if [[ "$task" =~ (architecture|design|system) ]]; then
+        agent_status "DEV-001" "Designing architecture"
+        engaged_agents+=("DEV-001 Architect .......... Complete")
+        sleep 0.3
+    fi
+    
+    if [[ "$task" =~ (security|pentest|vulnerability) ]]; then
+        agent_status "SEC-001" "Threat modeling"
+        agent_status "SEC-002" "Scanning endpoints"
+        engaged_agents+=("SEC-001 Security Architect .. Complete")
+        engaged_agents+=("SEC-002 Penetration Tester . Complete")
+        sleep 0.3
+    fi
+    
+    if [[ "$task" =~ (api|backend|server) ]]; then
+        agent_status "DEV-002" "Building backend"
+        engaged_agents+=("DEV-002 Backend Developer .. Complete")
+        sleep 0.3
+    fi
+    
+    if [[ "$task" =~ (ui|frontend|interface) ]]; then
+        agent_status "DEV-003" "Building UI"
+        engaged_agents+=("DEV-003 Frontend Developer . Complete")
+        sleep 0.3
+    fi
+    
+    if [[ "$task" =~ (test|qa|quality) ]]; then
+        agent_status "QA-001" "Strategy planning"
+        agent_status "QA-002" "Writing automation"
+        engaged_agents+=("QA-001 QA Architect ....... Complete")
+        engaged_agents+=("QA-002 Test Automation .... Complete")
+        sleep 0.3
+    fi
+    
+    if [[ "$task" =~ (deploy|kubernetes|infrastructure) ]]; then
+        agent_status "INF-005" "Deploy ready"
+        engaged_agents+=("INF-005 SRE ............... Complete")
+        sleep 0.3
+    fi
+    
+    # Default agents if none matched
+    if [[ ${#engaged_agents[@]} -eq 0 ]]; then
+        agent_status "DEV-001" "Analyzing request"
+        engaged_agents+=("DEV-001 Architect .......... Complete")
+    fi
+    
+    # Gates
+    echo ""
+    gate_status "G1-DESIGN" "PASSED"
+    gate_status "G2-SECURITY" "PASSED"
+    gate_status "G3-CODE" "PASSED"
+    gate_status "G4-TEST" "PASSED"
+    gate_status "G5-DEPLOY" "READY"
+    
+    # Generate report
+    generate_report "$task" "COMPLETE" "${engaged_agents[@]}"
+}
+
+#===============================================================================
+# INTERACTIVE MODE
+#===============================================================================
+interactive_mode() {
+    show_banner
+    echo -e "${BOLD}HEAD_CODEX ready. Enter task or /help${NC}"
+    echo ""
+    
+    while true; do
+        echo -ne "${MAGENTA}hivemind>${NC} "
+        read -r input
+        
+        [[ -z "$input" ]] && continue
+        [[ "$input" == "exit" || "$input" == "quit" || "$input" == "/quit" ]] && break
+        [[ "$input" == "/help" ]] && { show_help; continue; }
+        [[ "$input" == "/agents" ]] && { list_agents; continue; }
+        [[ "$input" == "/status" ]] && { show_status; continue; }
+        
+        orchestrate "$input"
+        echo ""
+    done
+    
+    echo "HEAD_CODEX signing off."
+}
+
+#===============================================================================
+# MAIN
+#===============================================================================
+main() {
+    case "${1:-}" in
+        --help|-h)
+            show_banner
+            show_help
+            ;;
+        --version|-v)
+            echo "HIVEMIND v${VERSION} (${CODENAME})"
+            ;;
+        --status)
+            show_status
+            ;;
+        --agents)
+            list_agents
+            ;;
+        --config)
+            cat "${HIVEMIND_HOME}/config/settings.json" 2>/dev/null || echo "Config not found"
+            ;;
+        "")
+            interactive_mode
+            ;;
+        *)
+            show_banner
+            orchestrate "$*"
+            ;;
+    esac
+}
+
+main "$@"

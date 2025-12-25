@@ -1,210 +1,162 @@
 {
-  "version": "1.0",
+  "version": "2.0.0",
   "system": {
     "name": "HIVEMIND",
-    "description": "Multi-Agent Orchestration System",
+    "codename": "MINIMAL_OUTPUT_EDITION",
+    "description": "Multi-Agent Orchestration System with Minimal Verbosity",
     "total_agents": 24,
-    "total_teams": 4
+    "total_teams": 4,
+    "orchestrator": "HEAD_CODEX"
+  },
+  "output_rules": {
+    "max_words_per_status": 4,
+    "min_words_per_status": 2,
+    "format": "[AGENT_ID] status",
+    "enforce_truncation": true,
+    "show_agent_reasoning": false,
+    "show_internal_handoffs": false,
+    "final_report_only": true
+  },
+  "display": {
+    "show_parallel_indicator": true,
+    "show_sequential_arrow": true,
+    "show_progress_percentage": false,
+    "show_gate_status": true,
+    "show_escalation": true,
+    "compact_mode": true
   },
   "paths": {
     "agents": "/agents",
     "teams": "/teams",
     "protocols": "/protocols",
     "workflows": "/workflows",
-    "orchestration": "/orchestration",
+    "core": "/core",
     "config": "/config",
     "commands": "/.claude/commands",
-    "artifacts": "/artifacts"
+    "reports": "/reports",
+    "memory": "/memory"
+  },
+  "head_codex": {
+    "generate_report_on_complete": true,
+    "report_format": "structured",
+    "include_agent_summary": true,
+    "include_deliverables": true,
+    "include_metrics": false,
+    "max_report_sections": 5
   },
   "defaults": {
     "message_priority": "P3",
-    "escalation_timeout_minutes": 60,
-    "handoff_acknowledgment_timeout_minutes": 30,
-    "status_update_interval_minutes": {
-      "P0": 15,
-      "P1": 30,
-      "P2": 60,
-      "P3": 240,
-      "P4": 480
-    }
+    "escalation_timeout_minutes": 30,
+    "agent_timeout_minutes": 15,
+    "parallel_execution": true,
+    "max_parallel_agents": 6
   },
   "quality_gates": {
-    "code_coverage_threshold": 80,
-    "test_pass_rate_threshold": 100,
-    "security_scan_threshold": "no_critical_high",
-    "review_approvals_required": {
-      "standard": 1,
-      "security_sensitive": 2,
-      "architecture": 2,
-      "critical_system": 3
+    "G1_DESIGN": {
+      "name": "Design Gate",
+      "required_agent": "DEV-001",
+      "auto_proceed": false
+    },
+    "G2_SECURITY": {
+      "name": "Security Gate",
+      "required_agents": ["SEC-001", "SEC-002"],
+      "blocking_findings": ["critical", "high"],
+      "auto_proceed": false
+    },
+    "G3_CODE": {
+      "name": "Code Review Gate",
+      "required_agent": "DEV-004",
+      "min_approvals": 1,
+      "auto_proceed": false
+    },
+    "G4_TEST": {
+      "name": "Testing Gate",
+      "required_agents": ["QA-001", "QA-002"],
+      "pass_threshold": 100,
+      "auto_proceed": false
+    },
+    "G5_DEPLOY": {
+      "name": "Deployment Gate",
+      "required_agent": "INF-005",
+      "auto_proceed": false
     }
   },
-  "security": {
-    "classification_levels": [
-      "restricted",
-      "confidential",
-      "internal",
-      "public"
-    ],
-    "default_classification": "internal",
-    "audit_retention_years": 7,
-    "bypass_requires_approval": true,
-    "bypass_followup_hours": 24
+  "escalation": {
+    "levels": {
+      "L1": {"name": "Self-Resolve", "timeout_minutes": 5},
+      "L2": {"name": "Team Lead", "timeout_minutes": 15},
+      "L3": {"name": "Cross-Team", "timeout_minutes": 30},
+      "L4": {"name": "Coordinator", "timeout_minutes": 60},
+      "L5": {"name": "Human", "timeout_minutes": 0}
+    },
+    "auto_escalate": true
   },
-  "incident_response": {
-    "severity_levels": [
-      "SEV1",
-      "SEV2",
-      "SEV3",
-      "SEV4"
-    ],
-    "response_time_targets_minutes": {
-      "SEV1": 5,
-      "SEV2": 15,
-      "SEV3": 60,
-      "SEV4": 480
-    },
-    "escalation_targets_minutes": {
-      "SEV1": 15,
-      "SEV2": 30,
-      "SEV3": 120,
-      "SEV4": 1440
-    }
-  },
-  "change_management": {
-    "change_windows": {
-      "production": {
-        "allowed_days": [
-          "Tuesday",
-          "Wednesday",
-          "Thursday"
-        ],
-        "allowed_hours_utc": "02:00-06:00",
-        "emergency_allowed": true
-      },
-      "staging": {
-        "allowed_days": [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday"
-        ],
-        "allowed_hours_utc": "08:00-18:00",
-        "emergency_allowed": true
-      },
-      "development": {
-        "allowed_days": "any",
-        "allowed_hours_utc": "any",
-        "emergency_allowed": false
-      }
-    },
-    "approval_requirements": {
-      "standard": [
-        "INF-001"
-      ],
-      "normal": [
-        "INF-001",
-        "team_lead"
-      ],
-      "security": [
-        "INF-001",
-        "SEC-001"
-      ],
-      "emergency": [
-        "INF-001"
-      ]
-    }
-  },
-  "metrics": {
-    "targets": {
-      "gate_pass_rate": 90,
-      "bypass_rate_max": 5,
-      "average_gate_time_hours": 4,
-      "handoff_acceptance_rate": 95,
-      "escalation_resolution_rate": 95,
-      "incident_response_sla_compliance": 99
-    },
-    "alerts": {
-      "gate_pass_rate_min": 80,
-      "bypass_rate_alert": 10,
-      "average_gate_time_max_hours": 8,
-      "handoff_rejection_rate_max": 10
-    }
-  },
-  "integrations": {
-    "version_control": {
-      "platform": "github",
-      "branch_protection": true,
-      "required_reviews": true,
-      "required_status_checks": true
-    },
-    "ci_cd": {
-      "platform": "github_actions",
-      "automated_testing": true,
-      "automated_scanning": true
-    },
-    "monitoring": {
-      "metrics": "prometheus",
-      "logging": "elk",
-      "tracing": "jaeger",
-      "alerting": "pagerduty"
-    },
-    "security_tools": {
-      "sast": "semgrep",
-      "dast": "owasp_zap",
-      "sca": "snyk",
-      "secrets": "trufflehog"
-    }
-  },
-  "team_settings": {
+  "teams": {
     "development": {
+      "id": "DEV",
       "lead": "DEV-001",
-      "members": [
-        "DEV-001",
-        "DEV-002",
-        "DEV-003",
-        "DEV-004",
-        "DEV-005",
-        "DEV-006"
-      ],
-      "primary_channel": "#dev-team"
+      "members": ["DEV-001", "DEV-002", "DEV-003", "DEV-004", "DEV-005", "DEV-006"]
     },
     "security": {
+      "id": "SEC",
       "lead": "SEC-001",
-      "members": [
-        "SEC-001",
-        "SEC-002",
-        "SEC-003",
-        "SEC-004",
-        "SEC-005",
-        "SEC-006"
-      ],
-      "primary_channel": "#security-team"
+      "members": ["SEC-001", "SEC-002", "SEC-003", "SEC-004", "SEC-005", "SEC-006"]
     },
     "infrastructure": {
+      "id": "INF",
       "lead": "INF-001",
-      "members": [
-        "INF-001",
-        "INF-002",
-        "INF-003",
-        "INF-004",
-        "INF-005",
-        "INF-006"
-      ],
-      "primary_channel": "#infra-team"
+      "members": ["INF-001", "INF-002", "INF-003", "INF-004", "INF-005", "INF-006"]
     },
     "qa": {
+      "id": "QA",
       "lead": "QA-001",
-      "members": [
-        "QA-001",
-        "QA-002",
-        "QA-003",
-        "QA-004",
-        "QA-005",
-        "QA-006"
-      ],
-      "primary_channel": "#qa-team"
+      "members": ["QA-001", "QA-002", "QA-003", "QA-004", "QA-005", "QA-006"]
+    }
+  },
+  "routing": {
+    "keywords": {
+      "architecture": ["DEV-001", "INF-001"],
+      "design": ["DEV-001"],
+      "api": ["DEV-002", "DEV-001"],
+      "backend": ["DEV-002"],
+      "frontend": ["DEV-003"],
+      "ui": ["DEV-003"],
+      "review": ["DEV-004"],
+      "documentation": ["DEV-005"],
+      "docs": ["DEV-005"],
+      "ci": ["DEV-006"],
+      "cd": ["DEV-006"],
+      "pipeline": ["DEV-006"],
+      "security": ["SEC-001", "SEC-002"],
+      "pentest": ["SEC-002"],
+      "vulnerability": ["SEC-002"],
+      "malware": ["SEC-003"],
+      "wireless": ["SEC-004"],
+      "wifi": ["SEC-004"],
+      "compliance": ["SEC-005"],
+      "audit": ["SEC-005"],
+      "incident": ["SEC-006"],
+      "cloud": ["INF-001"],
+      "infrastructure": ["INF-001"],
+      "server": ["INF-002"],
+      "network": ["INF-003"],
+      "firewall": ["INF-003"],
+      "database": ["INF-004"],
+      "sql": ["INF-004"],
+      "monitoring": ["INF-005"],
+      "sre": ["INF-005"],
+      "deploy": ["INF-005"],
+      "terraform": ["INF-006"],
+      "ansible": ["INF-006"],
+      "automation": ["INF-006"],
+      "test": ["QA-001", "QA-002"],
+      "testing": ["QA-001", "QA-002"],
+      "performance": ["QA-003"],
+      "load": ["QA-003"],
+      "security-test": ["QA-004"],
+      "manual": ["QA-005"],
+      "uat": ["QA-005"],
+      "data": ["QA-006"]
     }
   }
 }
