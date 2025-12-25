@@ -218,6 +218,45 @@ Header .header--title {
     text-style: bold;
 }
 
+/* Orchestration Panel */
+OrchestrationPanel {
+    height: auto;
+    min-height: 3;
+    border: solid $warning;
+    background: $boost;
+    margin-top: 1;
+    padding: 1;
+}
+
+#orchestration-display {
+    height: auto;
+}
+
+/* Active Agent Highlight */
+AgentItem.agent-active {
+    background: $warning-darken-2;
+    border-left: thick $warning;
+}
+
+/* Chat Layout */
+#chat-layout {
+    height: 100%;
+}
+
+#chat-side-panel {
+    width: 30%;
+    min-width: 25;
+    border-left: solid $primary;
+    padding: 1;
+}
+
+#chat-orchestration {
+    height: auto;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
 /* Color Theme Overrides */
 App.-dark-mode {
     background: #0a0e14;

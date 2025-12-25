@@ -1,7 +1,6 @@
-"""Main Screen - Three-panel layout for HIVEMIND with quick chat."""
+"""Main Screen - Three-panel layout for HIVEMIND with intelligent routing."""
 
 import asyncio
-import shutil
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -13,6 +12,8 @@ from textual.binding import Binding
 from ..widgets.agent_list import AgentListWidget
 from ..widgets.message_view import MessageView
 from ..widgets.status_bar import StatusBar
+from ..widgets.orchestration_panel import OrchestrationPanel
+from ..engine.coordinator import Coordinator, RouteType, AGENTS, GATES
 
 
 class MainScreen(Screen):
@@ -29,6 +30,11 @@ class MainScreen(Screen):
         super().__init__(*args, **kwargs)
         self._processing = False
         self._hivemind_dir = Path(__file__).parent.parent.parent.parent.parent.parent
+        self._coordinator = Coordinator(
+            working_dir=self._hivemind_dir,
+            on_status_update=self._on_coordinator_status,
+            on_agent_update=self._on_agent_update,
+        )
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the screen."""
@@ -50,10 +56,11 @@ class MainScreen(Screen):
                     yield Static("AGENTS", classes="panel-title")
                     yield AgentListWidget(id="agent-list")
 
-                # Center panel: Quick response view
+                # Center panel: Chat and orchestration
                 with Vertical(id="chat-panel", classes="panel"):
                     yield Static("RESPONSE", classes="panel-title")
                     yield MessageView(id="message-view")
+                    yield OrchestrationPanel(id="orchestration-panel")
 
                 # Right panel: Status and help
                 with Vertical(id="status-panel", classes="panel"):
@@ -75,7 +82,11 @@ class MainScreen(Screen):
 
 [dim]Type your message in the
 input bar above and press
-Enter to send.[/dim]"""
+Enter to send.
+
+Simple questions get direct
+answers. Work tasks route
+to specialized agents.[/dim]"""
 
     def on_mount(self) -> None:
         """Handle screen mount event."""
@@ -86,9 +97,44 @@ Enter to send.[/dim]"""
         message_view = self.query_one("#message-view", MessageView)
         message_view.add_message(
             role="assistant",
-            content="HIVEMIND ready. Type above to chat, or press [C] for full chat mode.",
-            agent_name="HIVEMIND"
+            content="""Welcome to HIVEMIND v2.0!
+
+I'm HEAD_CODEX, the master coordinator. I can:
+- **Answer questions directly** for simple queries
+- **Route to specialized agents** for technical work
+
+Just type your message above. Try "who are you" or ask me to design something!""",
+            agent_name="HEAD_CODEX"
         )
+
+        # Update status bar
+        status_bar = self.query_one("#status-bar", StatusBar)
+        status_bar.set_connection_status("connected")
+
+    def _on_coordinator_status(self, status: str, message: str) -> None:
+        """Handle coordinator status updates."""
+        # Update status bar
+        try:
+            status_bar = self.query_one("#status-bar", StatusBar)
+            if status == "analyzing":
+                status_bar.set_connection_status("connecting")
+            elif status == "workflow":
+                status_bar.set_connection_status("connected")
+        except Exception:
+            pass
+
+    def _on_agent_update(self, agent_id: str, status: str, message: str) -> None:
+        """Handle agent status updates."""
+        try:
+            # Update orchestration panel
+            orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
+            orch_panel.update_agent_status(agent_id, status, message)
+
+            # Update agent list widget
+            agent_list = self.query_one("#agent-list", AgentListWidget)
+            agent_list.update_agent_status(agent_id, status, message)
+        except Exception:
+            pass
 
     def action_focus_chat_input(self) -> None:
         """Focus the quick chat input."""
@@ -111,7 +157,7 @@ Enter to send.[/dim]"""
             await self._send_quick_message()
 
     async def _send_quick_message(self) -> None:
-        """Send message from quick chat input."""
+        """Send message from quick chat input using coordinator."""
         chat_input = self.query_one("#quick-chat-input", Input)
         message = chat_input.value.strip()
 
@@ -120,74 +166,123 @@ Enter to send.[/dim]"""
 
         self._processing = True
         message_view = self.query_one("#message-view", MessageView)
+        orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
+        status_bar = self.query_one("#status-bar", StatusBar)
 
         # Show user message
         message_view.add_message(role="user", content=message)
         chat_input.value = ""
 
-        # Call Claude
-        await self._call_claude(message, message_view)
-
-    async def _call_claude(self, message: str, message_view: MessageView) -> None:
-        """Call Claude Code CLI."""
-        claude_path = shutil.which("claude")
-        if not claude_path:
-            for path in [Path.home() / ".local/bin/claude", Path("/usr/local/bin/claude")]:
-                if path.exists():
-                    claude_path = str(path)
-                    break
-
-        if not claude_path:
-            message_view.add_message(
-                role="assistant",
-                content="[red]Claude Code CLI not found![/red]",
-                agent_name="HIVEMIND"
-            )
-            self._processing = False
-            return
-
-        cmd = [claude_path, "--dangerously-skip-permissions", "--print", message]
-
+        # Process through coordinator
         try:
-            message_view.add_message(
-                role="assistant",
-                content="[dim italic]Thinking...[/dim italic]",
-                agent_name="HIVEMIND"
-            )
-
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=str(self._hivemind_dir),
-            )
-
-            stdout, stderr = await process.communicate()
-
-            # Remove thinking message
-            message_view.remove_last_message()
-
-            if process.returncode == 0:
-                response = stdout.decode("utf-8", errors="replace").strip()
-                message_view.add_message(
-                    role="assistant",
-                    content=response or "[dim]No response[/dim]",
-                    agent_name="HIVEMIND"
-                )
-            else:
-                error = stderr.decode("utf-8", errors="replace").strip()
-                message_view.add_message(
-                    role="assistant",
-                    content=f"[red]Error: {error or 'Unknown error'}[/red]",
-                    agent_name="HIVEMIND"
-                )
-
+            await self._process_with_coordinator(message, message_view, orch_panel, status_bar)
         except Exception as e:
             message_view.add_message(
                 role="assistant",
                 content=f"[red]Error: {str(e)}[/red]",
-                agent_name="HIVEMIND"
+                agent_name="HEAD_CODEX"
             )
         finally:
             self._processing = False
-            message_view.refresh()
+
+    async def _process_with_coordinator(
+        self,
+        message: str,
+        message_view: MessageView,
+        orch_panel: OrchestrationPanel,
+        status_bar: StatusBar,
+    ) -> None:
+        """Process message through coordinator with proper UI updates."""
+
+        # Show thinking indicator
+        message_view.add_message(
+            role="assistant",
+            content="[dim italic]Analyzing...[/dim italic]",
+            agent_name="HEAD_CODEX"
+        )
+
+        # Get routing decision
+        result = await self._coordinator.process_input(message)
+
+        # Remove thinking message
+        message_view.remove_last_message()
+
+        # Handle based on route type
+        if result.route_decision.route_type == RouteType.DIRECT:
+            # Direct response - no orchestration UI needed
+            orch_panel.clear()
+            status_bar.set_active_agent(None)
+
+            if result.success:
+                message_view.add_message(
+                    role="assistant",
+                    content=result.response,
+                    agent_name="HEAD_CODEX"
+                )
+            else:
+                message_view.add_message(
+                    role="assistant",
+                    content=f"[red]{result.error or 'Unknown error'}[/red]",
+                    agent_name="HEAD_CODEX"
+                )
+
+        else:
+            # Agent or workflow execution - show orchestration UI
+            orch_panel.start_orchestration(
+                result.route_decision.task or message[:50]
+            )
+
+            # Add engaged agents to orchestration panel
+            for agent_result in result.agent_results:
+                agent_info = AGENTS.get(agent_result.agent_id, {})
+                orch_panel.add_agent(
+                    agent_result.agent_id,
+                    agent_info.get("name", agent_result.agent_name)
+                )
+                status_bar.set_active_agent(agent_result.agent_id)
+
+            # Update gates
+            for gate_id in result.gates_passed:
+                gate_info = GATES.get(gate_id, {})
+                orch_panel.set_gate_status(
+                    gate_id,
+                    gate_info.get("name", gate_id),
+                    "PASSED"
+                )
+
+            for gate_id in result.gates_blocked:
+                gate_info = GATES.get(gate_id, {})
+                orch_panel.set_gate_status(
+                    gate_id,
+                    gate_info.get("name", gate_id),
+                    "BLOCKED"
+                )
+
+            # Show the response
+            if result.success:
+                agent_name = "HEAD_CODEX"
+                if result.agent_results:
+                    agent_info = AGENTS.get(result.agent_results[0].agent_id, {})
+                    agent_name = agent_info.get("name", result.agent_results[0].agent_name)
+
+                message_view.add_message(
+                    role="assistant",
+                    content=result.response,
+                    agent_name=agent_name
+                )
+            else:
+                message_view.add_message(
+                    role="assistant",
+                    content=f"[red]{result.error or 'Agent execution failed'}[/red]",
+                    agent_name="HEAD_CODEX"
+                )
+
+            # Update status
+            status_bar.set_task_progress(
+                len([r for r in result.agent_results if r.status == "complete"]),
+                len(result.agent_results)
+            )
+
+        # Reset status
+        status_bar.set_connection_status("connected")
+        message_view.refresh()
