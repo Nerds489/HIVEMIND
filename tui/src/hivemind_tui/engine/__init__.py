@@ -1,22 +1,35 @@
-"""
-HIVEMIND TUI Engine Package
+"""HIVEMIND Engine Module - v3.0."""
 
-Provides the engine layer connecting TUI to backend services and AI coordination.
-"""
-
-from .client import APIClient
-from .state import AppState
-from .websocket import WebSocketClient
-from .coordinator import Coordinator, RouteType, RouteDecision, ExecutionResult, AGENTS, GATES
+from .auth import AuthManager, AuthStatus, AuthMethod, AuthState
+from .codex_head import CodexHead, CodexResponse, ResponseSource
+from .claude_agent import ClaudeAgent, AgentResult, AGENTS
+from .dialogue import CodexClaudeDialogue, DialogueResult
+from .coordinator import Coordinator, RouteType, RouteDecision, ExecutionResult
 
 __all__ = [
-    "APIClient",
-    "AppState",
-    "WebSocketClient",
+    # Auth
+    "AuthManager",
+    "AuthStatus",
+    "AuthMethod",
+    "AuthState",
+
+    # Codex Head
+    "CodexHead",
+    "CodexResponse",
+    "ResponseSource",
+
+    # Claude Agent
+    "ClaudeAgent",
+    "AgentResult",
+    "AGENTS",
+
+    # Dialogue
+    "CodexClaudeDialogue",
+    "DialogueResult",
+
+    # Coordinator (backward compatibility)
     "Coordinator",
     "RouteType",
     "RouteDecision",
     "ExecutionResult",
-    "AGENTS",
-    "GATES",
 ]

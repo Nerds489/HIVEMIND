@@ -1,14 +1,99 @@
-# Main HIVEMIND configuration (engine-agnostic)
+# DESTINATION: config/hivemind.yaml
+# REPLACE THE EXISTING FILE AT THIS PATH
+# DO NOT MODIFY THIS CODE
+
+# HIVEMIND v3.0 Configuration - TUI Only Mode
 
 hivemind:
   name: "HIVEMIND"
-  version: "0.1.0"
+  version: "3.0.0"
+  mode: "tui"  # TUI only - no CLI commands
+  
+  # Directory configuration (relative to HIVEMIND_HOME)
   session_dir: "memory/sessions"
+  dialogue_dir: "memory/dialogue"
   workspace_dir: "workspace"
   logs_dir: "logs"
 
-output:
-  unified_voice: true
-  silent_operation: true
-  write_agent_outputs_to_workspace: true
+# Authentication configuration
+authentication:
+  # Primary method - browser OAuth (device auth)
+  primary: "browser"
+  
+  # Fallback to API keys if browser fails
+  fallback: "api_key"
+  
+  # Cache credentials
+  cache_credentials: true
+  credential_dir: "~/.config/hivemind"
 
+# Coordinator configuration  
+coordinator:
+  # Codex is the HEAD AI
+  head_engine: "codex"
+  
+  # Claude is the expert consultant
+  expert_engine: "claude"
+  
+  # Codex handles simple inputs without Claude
+  autonomous_threshold: 0.7
+  
+  # Enable Codex-Claude dialogue
+  enable_dialogue: true
+  
+  # Maximum dialogue turns before forcing decision
+  max_dialogue_turns: 10
+  
+  # Both must verify before delivering to user
+  require_dual_verification: true
+
+# Output configuration
+output:
+  # User only sees Codex's voice
+  unified_voice: true
+  
+  # Hide internal orchestration from user
+  silent_operation: true
+  
+  # Save agent outputs to workspace
+  write_agent_outputs_to_workspace: true
+  
+  # Hide agent IDs from user
+  hide_agent_ids: true
+  
+  # Hide Codex-Claude dialogue from user (show summary only)
+  hide_dialogue_details: true
+
+# Agent configuration
+agents:
+  # Single source of truth for agent definitions
+  registry_dir: "agents/registry"
+  
+  # Agent execution timeout (seconds)
+  timeout: 120
+  
+  # Maximum concurrent agents
+  max_concurrent: 4
+
+# TUI configuration
+tui:
+  enabled: true
+  
+  # Theme
+  theme: "dark"
+  
+  # Show status bar
+  show_status: true
+  
+  # Show agent list
+  show_agents: true
+  
+  # Show dialogue view (for debugging)
+  show_dialogue: false
+
+# Logging configuration
+logging:
+  level: "INFO"
+  file: "logs/hivemind.log"
+  max_size_mb: 10
+  backup_count: 3
