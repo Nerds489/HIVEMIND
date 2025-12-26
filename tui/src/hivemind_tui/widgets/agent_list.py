@@ -62,6 +62,8 @@ HIVEMIND_AGENTS = [
 class AgentListWidget(Widget):
     """Widget to display HIVEMIND agents grouped by team."""
 
+    can_focus = False  # Prevent focus stealing from input widgets
+
     selected_agent: reactive[Optional[str]] = reactive(None)
 
     class AgentSelected(Message):
@@ -162,6 +164,8 @@ class AgentListWidget(Widget):
 class AgentItem(Static):
     """Individual agent item in the list."""
 
+    can_focus = False  # Display-only widget - don't steal focus from inputs
+
     def __init__(self, agent: Agent, **kwargs) -> None:
         super().__init__(**kwargs)
         self.agent = agent
@@ -215,10 +219,15 @@ class AgentItem(Static):
             self.remove_class("agent-active")
 
     def on_click(self) -> None:
-        """Handle click event."""
+        """Handle click event.
+
+        Note: This handler only updates visual selection state.
+        We don't stop event propagation to avoid breaking other event handling.
+        """
         self.add_class("selected")
         # Remove selected class from siblings
         if self.parent:
             for sibling in self.parent.query(AgentItem):
                 if sibling != self:
                     sibling.remove_class("selected")
+        # Don't call self.focus() or stop propagation - let events bubble up normally

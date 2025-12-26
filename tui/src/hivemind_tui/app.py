@@ -25,7 +25,6 @@ class HivemindApp(App):
         Binding("q", "quit", "Quit", priority=True),
         Binding("question_mark", "help", "Help", key_display="?"),
         Binding("d", "toggle_dark", "Toggle Dark Mode"),
-        Binding("c", "show_chat", "Chat View"),
         Binding("m", "show_main", "Main View"),
         Binding("ctrl+r", "refresh", "Refresh"),
     ]
@@ -67,9 +66,15 @@ class HivemindApp(App):
 
     def action_show_main(self) -> None:
         """Show main screen."""
-        if not isinstance(self.screen, MainScreen):
-            while len(self.screen_stack) > 1:
+        # Pop screens until we get back to MainScreen
+        while len(self.screen_stack) > 0:
+            current = self.screen
+            if isinstance(current, MainScreen):
+                break
+            try:
                 self.pop_screen()
+            except Exception:
+                break
 
     def action_refresh(self) -> None:
         """Refresh current screen."""

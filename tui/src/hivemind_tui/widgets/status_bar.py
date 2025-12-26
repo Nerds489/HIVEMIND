@@ -13,6 +13,8 @@ from textual.widgets import Static
 class StatusBar(Widget):
     """Widget to display system status and information."""
 
+    can_focus = False  # Prevent focus stealing from input widgets
+
     connection_status: reactive[str] = reactive("disconnected")
     active_agent: reactive[Optional[str]] = reactive(None)
     task_progress: reactive[int] = reactive(0)

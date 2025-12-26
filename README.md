@@ -12,7 +12,8 @@
 [Quick Start](#quick-start) |
 [How It Works](#how-it-works) |
 [Agents](#agents) |
-[Installation](#installation)
+[Installation](#installation) |
+[Keyboard Shortcuts](#keyboard-shortcuts)
 
 </div>
 
@@ -27,6 +28,12 @@ HIVEMIND is an AI assistant that seamlessly escalates to multi-agent collaborati
 **Complex technical work?** Codex consults with Claude, they reach consensus, then specialist agents execute.
 
 You always talk to one AI. The orchestration is invisible.
+
+**Features:**
+- Non-blocking UI - stays responsive during processing
+- Cancel any task with `Ctrl+C`
+- Input history navigation with `Ctrl+Up/Down`
+- Real-time status updates during agent work
 
 ```
                     +-------------------+
@@ -261,16 +268,26 @@ Here's your complete authentication system:
 
 ## Keyboard Shortcuts
 
+### Main Screen
 | Key | Action |
 |-----|--------|
-| `Enter` | Send message |
-| `C` | Full chat screen |
-| `M` | Main view |
+| `Enter` | Send message (in input box) |
+| `C` | Open full chat screen |
+| `M` | Return to main view |
 | `Q` | Quit |
 | `D` | Toggle dark mode |
 | `?` | Help |
-| `Ctrl+L` | Clear chat |
-| `Esc` | Go back |
+| `Ctrl+C` | Cancel current task |
+| `Esc` | Focus input |
+
+### Full Chat Screen
+| Key | Action |
+|-----|--------|
+| `Ctrl+Enter` | Send message |
+| `Ctrl+L` | Clear chat history |
+| `Ctrl+C` | Cancel current task |
+| `Ctrl+Up/Down` | Navigate input history |
+| `Esc` | Go back to main |
 
 ---
 

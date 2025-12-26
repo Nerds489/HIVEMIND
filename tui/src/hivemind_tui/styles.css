@@ -20,26 +20,7 @@ Screen {
     dock: top;
 }
 
-#quick-chat-input {
-    width: 1fr;
-    margin-right: 1;
-    border: solid $primary;
-    background: $surface;
-}
-
-#quick-chat-input:focus {
-    border: solid $accent;
-    background: $background;
-}
-
-#send-btn {
-    min-width: 10;
-    margin-right: 1;
-}
-
-#full-chat-btn {
-    min-width: 16;
-}
+/* Quick chat bar input styles defined below in focus states section */
 
 #help-text {
     padding: 1;
@@ -150,17 +131,48 @@ MessageItem {
 /* Chat Screen Styles */
 #chat-container {
     height: 100%;
+    width: 100%;
     padding: 1;
+}
+
+#chat-main {
+    height: 100%;
+    width: 100%;
+    layout: vertical;
 }
 
 #chat-area {
     height: 100%;
+    width: 100%;
 }
 
 #chat-messages {
     height: 1fr;
+    min-height: 10;
     border: solid $primary;
+    background: $surface;
     margin-bottom: 1;
+}
+
+#chat-input-area {
+    height: auto;
+    min-height: 10;
+    max-height: 20;
+    width: 100%;
+    padding: 1;
+    background: $boost;
+    border: solid $primary;
+}
+
+#chat-title {
+    height: auto;
+    width: 100%;
+    padding: 1;
+    margin-bottom: 1;
+    background: $primary;
+    color: $text;
+    text-align: center;
+    text-style: bold;
 }
 
 .input-label {
@@ -170,34 +182,7 @@ MessageItem {
     text-style: bold;
 }
 
-#chat-input {
-    height: 8;
-    border: solid $accent;
-    background: $surface;
-}
-
-#chat-input:focus {
-    border: solid $success;
-}
-
-/* Input Box Styles */
-InputBox {
-    min-height: 5;
-    max-height: 15;
-}
-
-/* Scrollbar Styles */
-ScrollView > .scrollbar {
-    background: $panel;
-}
-
-ScrollView > .scrollbar:hover {
-    background: $boost;
-}
-
-ScrollView > .scrollbar--thumb {
-    background: $primary;
-}
+/* Chat input styles defined below in focus states section */
 
 /* Footer Styles */
 Footer {
@@ -257,6 +242,226 @@ AgentItem.agent-active {
     padding: 0;
 }
 
+/* Auth Screen Styles */
+#auth-container {
+    height: 100%;
+    width: 100%;
+    align: center middle;
+}
+
+#auth-panel {
+    width: 70;
+    height: auto;
+    min-height: 24;
+    padding: 2 4;
+    border: solid $primary;
+    background: $surface;
+}
+
+#auth-title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    padding: 1;
+    margin-bottom: 1;
+    border-bottom: solid $primary;
+}
+
+#auth-status {
+    text-align: center;
+    padding: 1;
+    height: auto;
+}
+
+#codex-status, #claude-status {
+    padding: 1 2;
+    margin: 1 0;
+    height: auto;
+}
+
+#auth-loading {
+    align: center middle;
+    height: auto;
+    min-height: 3;
+}
+
+#auth-buttons {
+    margin-top: 2;
+    align: center middle;
+    height: auto;
+    layout: grid;
+    grid-size: 2 2;
+    grid-gutter: 1 2;
+    padding: 1;
+}
+
+#auth-buttons Button {
+    min-width: 24;
+    min-height: 3;
+    width: 100%;
+    height: 3;
+    content-align: center middle;
+}
+
+/* Individual auth button styles */
+#auth-codex-btn {
+    column-span: 1;
+}
+
+#auth-claude-btn {
+    column-span: 1;
+}
+
+#continue-btn {
+    column-span: 1;
+}
+
+#quit-btn {
+    column-span: 1;
+}
+
+/* Focus States - Ensure all interactive elements have visible focus */
+Button:focus {
+    border: double $accent;
+    background: $boost;
+    text-style: bold;
+}
+
+Button:hover {
+    background: $boost;
+}
+
+Button.-primary:focus {
+    border: double $accent;
+}
+
+Button.-success:focus {
+    border: double $success;
+}
+
+Button.-error:focus {
+    border: double $error;
+}
+
+Input:focus {
+    border: solid $accent;
+    background: $background;
+}
+
+TextArea:focus {
+    border: solid $accent;
+    background: $background;
+}
+
+/* Ensure buttons are always clickable */
+Button {
+    min-height: 3;
+}
+
+/* Chat input widget */
+#chat-input {
+    height: 6;
+    min-height: 5;
+    max-height: 12;
+    border: solid $primary;
+    background: $surface;
+}
+
+#chat-input:focus {
+    border: double $accent;
+    background: $background;
+}
+
+/* Chat status bar */
+#chat-status {
+    height: auto;
+    min-height: 1;
+    padding: 0 1;
+    background: $panel;
+}
+
+/* InputBox (TextArea) styles */
+InputBox {
+    min-height: 5;
+    max-height: 12;
+    border: solid $primary;
+    background: $surface;
+}
+
+InputBox:focus {
+    border: double $accent;
+    background: $background;
+}
+
+/* Quick chat input improvements */
+#quick-chat-input {
+    width: 1fr;
+    min-height: 3;
+    margin-right: 1;
+    border: solid $primary;
+    background: $surface;
+}
+
+#quick-chat-input:focus {
+    border: double $accent;
+    background: $background;
+}
+
+/* Send button */
+#send-btn {
+    min-width: 10;
+    min-height: 3;
+    margin-right: 1;
+}
+
+#send-btn:focus {
+    border: double $accent;
+}
+
+#send-btn:hover {
+    background: $primary;
+}
+
+/* Full chat button */
+#full-chat-btn {
+    min-width: 16;
+    min-height: 3;
+}
+
+#full-chat-btn:focus {
+    border: double $accent;
+}
+
+#full-chat-btn:hover {
+    background: $boost;
+}
+
+/* Disabled button state */
+Button:disabled {
+    opacity: 0.5;
+    background: $panel;
+}
+
+/* Ensure interactive elements in auth panel are always clickable */
+#auth-panel Button {
+    min-height: 3;
+}
+
+#auth-panel Button:focus {
+    border: double $accent;
+    text-style: bold reverse;
+}
+
+#auth-panel Button:hover {
+    background: $boost;
+}
+
+/* Message view scroll */
+#message-scroll {
+    height: 100%;
+    scrollbar-gutter: stable;
+}
+
 /* Color Theme Overrides */
 App.-dark-mode {
     background: #0a0e14;
@@ -264,4 +469,28 @@ App.-dark-mode {
 
 App.-light-mode {
     background: #fafafa;
+}
+
+/* Additional improvements for interactive elements */
+.panel:focus-within {
+    border: solid $accent;
+}
+
+/* Scrollbar visibility */
+ScrollView > .scrollbar {
+    background: $panel;
+    width: 1;
+}
+
+ScrollView > .scrollbar:hover {
+    background: $boost;
+    width: 2;
+}
+
+ScrollView > .scrollbar--thumb {
+    background: $primary;
+}
+
+ScrollView > .scrollbar--thumb:hover {
+    background: $accent;
 }

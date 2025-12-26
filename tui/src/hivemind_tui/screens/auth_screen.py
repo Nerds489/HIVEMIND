@@ -1,7 +1,3 @@
-# DESTINATION: tui/src/hivemind_tui/screens/auth_screen.py
-# CREATE THIS FILE AT THE EXACT PATH ABOVE
-# DO NOT MODIFY THIS CODE
-
 """
 HIVEMIND Authentication Screen.
 
@@ -13,6 +9,7 @@ from textual.containers import Container, Vertical, Center
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, LoadingIndicator
 from textual.binding import Binding
+from textual.worker import Worker, WorkerState
 
 from ..engine.auth import AuthManager, AuthStatus
 
@@ -23,12 +20,15 @@ class AuthScreen(Screen):
     BINDINGS = [
         Binding("escape", "app.quit", "Quit", show=True),
         Binding("r", "retry", "Retry", show=True),
+        Binding("s", "skip", "Skip Auth", show=True),
+        Binding("enter", "continue_if_ready", "Continue", show=False),
     ]
     
     def __init__(self, auth_manager: AuthManager, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.auth_manager = auth_manager
         self._checking = False
+        self._auth_worker: Worker | None = None
     
     def compose(self) -> ComposeResult:
         """Create child widgets."""
@@ -60,67 +60,79 @@ class AuthScreen(Screen):
         """Check authentication status."""
         if self._checking:
             return
-        
+
         self._checking = True
         self.query_one("#auth-loading", LoadingIndicator).display = True
         self.query_one("#auth-status", Static).update("Checking authentication...")
-        self.run_worker(self._do_check_auth())
+        self._auth_worker = self.run_worker(self._do_check_auth(), name="auth_check")
     
-    async def _do_check_auth(self) -> None:
-        """Perform auth check."""
-        try:
-            state = await self.auth_manager.check_all()
-            
-            # Update Codex status
-            codex_widget = self.query_one("#codex-status", Static)
-            if state.codex.status == AuthStatus.AUTHENTICATED:
-                codex_widget.update(f"[green]✓ Codex: Authenticated ({state.codex.method.value})[/green]")
-            elif state.codex.status == AuthStatus.PENDING:
-                codex_widget.update("[yellow]○ Codex: Not authenticated[/yellow]")
-            else:
-                codex_widget.update(f"[red]✗ Codex: {state.codex.error}[/red]")
-            
-            # Update Claude status
-            claude_widget = self.query_one("#claude-status", Static)
-            if state.claude.status == AuthStatus.AUTHENTICATED:
-                claude_widget.update(f"[green]✓ Claude: Authenticated ({state.claude.method.value})[/green]")
-            elif state.claude.status == AuthStatus.PENDING:
-                claude_widget.update("[yellow]○ Claude: Not authenticated[/yellow]")
-            else:
-                claude_widget.update(f"[red]✗ Claude: {state.claude.error}[/red]")
-            
-            # Update buttons
-            codex_btn = self.query_one("#auth-codex-btn", Button)
-            claude_btn = self.query_one("#auth-claude-btn", Button)
-            continue_btn = self.query_one("#continue-btn", Button)
-            
-            codex_btn.disabled = state.codex.status == AuthStatus.AUTHENTICATED
-            claude_btn.disabled = state.claude.status == AuthStatus.AUTHENTICATED
-            continue_btn.disabled = not state.codex_ready  # At minimum need Codex
-            
-            # Update overall status
-            status_widget = self.query_one("#auth-status", Static)
-            if state.both_ready:
-                status_widget.update("[green]All engines authenticated![/green]")
-            elif state.codex_ready:
-                status_widget.update("[yellow]Codex ready. Claude optional but recommended.[/yellow]")
-            else:
-                status_widget.update("[yellow]Please authenticate at least Codex to continue.[/yellow]")
-                
-        except Exception as e:
-            self.query_one("#auth-status", Static).update(f"[red]Error: {str(e)}[/red]")
-        finally:
-            self.query_one("#auth-loading", LoadingIndicator).display = False
-            self._checking = False
+    async def _do_check_auth(self):
+        """Perform auth check and return the state."""
+        return await self.auth_manager.check_all()
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        """Handle worker completion for auth checks."""
+        if event.worker.name == "auth_check":
+            if event.state == WorkerState.SUCCESS:
+                self._update_auth_display(event.worker.result)
+            elif event.state == WorkerState.ERROR:
+                self.query_one("#auth-status", Static).update(f"[red]Error: {event.worker.error}[/red]")
+
+            if event.state in (WorkerState.SUCCESS, WorkerState.ERROR, WorkerState.CANCELLED):
+                self.query_one("#auth-loading", LoadingIndicator).display = False
+                self._checking = False
+
+    def _update_auth_display(self, state) -> None:
+        """Update the auth display with the given state."""
+        # Update Codex status
+        codex_widget = self.query_one("#codex-status", Static)
+        if state.codex.status == AuthStatus.AUTHENTICATED:
+            codex_widget.update(f"[green]* Codex: Authenticated ({state.codex.method.value})[/green]")
+        elif state.codex.status == AuthStatus.PENDING:
+            codex_widget.update("[yellow]o Codex: Not authenticated[/yellow]")
+        else:
+            codex_widget.update(f"[red]x Codex: {state.codex.error}[/red]")
+
+        # Update Claude status
+        claude_widget = self.query_one("#claude-status", Static)
+        if state.claude.status == AuthStatus.AUTHENTICATED:
+            claude_widget.update(f"[green]* Claude: Authenticated ({state.claude.method.value})[/green]")
+        elif state.claude.status == AuthStatus.PENDING:
+            claude_widget.update("[yellow]o Claude: Not authenticated[/yellow]")
+        else:
+            claude_widget.update(f"[red]x Claude: {state.claude.error}[/red]")
+
+        # Update buttons
+        codex_btn = self.query_one("#auth-codex-btn", Button)
+        claude_btn = self.query_one("#auth-claude-btn", Button)
+        continue_btn = self.query_one("#continue-btn", Button)
+
+        codex_btn.disabled = state.codex.status == AuthStatus.AUTHENTICATED
+        claude_btn.disabled = state.claude.status == AuthStatus.AUTHENTICATED
+
+        # Allow continue if at least one auth method is ready, or if both failed (let user proceed anyway)
+        can_continue = state.codex_ready or state.claude_ready
+        continue_btn.disabled = not can_continue
+
+        # Update overall status
+        status_widget = self.query_one("#auth-status", Static)
+        if state.both_ready:
+            status_widget.update("[green]All engines authenticated![/green]")
+        elif state.codex_ready:
+            status_widget.update("[yellow]Codex ready. Claude optional but recommended.[/yellow]")
+        elif state.claude_ready:
+            status_widget.update("[yellow]Claude ready. Codex not available.[/yellow]")
+        else:
+            status_widget.update("[red]No authentication available. Install codex or claude CLI.[/red]")
     
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
         button_id = event.button.id
-        
+
         if button_id == "auth-codex-btn":
-            await self._authenticate_codex()
+            self.run_worker(self._authenticate_codex(), name="codex_auth")
         elif button_id == "auth-claude-btn":
-            await self._authenticate_claude()
+            self.run_worker(self._authenticate_claude(), name="claude_auth")
         elif button_id == "continue-btn":
             self._continue_to_main()
         elif button_id == "quit-btn":
@@ -161,8 +173,24 @@ class AuthScreen(Screen):
     def _continue_to_main(self) -> None:
         """Continue to main screen."""
         from .main import MainScreen
+        # Switch to main screen (replaces current screen)
         self.app.switch_screen(MainScreen(self.auth_manager))
     
     def action_retry(self) -> None:
         """Retry auth check."""
         self._check_auth()
+
+    def action_skip(self) -> None:
+        """Skip authentication and proceed to main screen."""
+        self._continue_to_main()
+
+    def action_continue_if_ready(self) -> None:
+        """Continue if authentication is ready (Enter key handler)."""
+        continue_btn = self.query_one("#continue-btn", Button)
+        if not continue_btn.disabled:
+            self._continue_to_main()
+
+    async def on_unmount(self) -> None:
+        """Clean up when screen is unmounted."""
+        # Cancel any pending auth processes to prevent orphaned processes
+        await self.auth_manager.cancel_pending()

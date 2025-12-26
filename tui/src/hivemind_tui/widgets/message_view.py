@@ -15,6 +15,8 @@ from textual.widgets import Static
 class MessageView(Widget):
     """Widget to display scrollable message history."""
 
+    can_focus = False  # Prevent focus stealing from input widgets
+
     message_count: reactive[int] = reactive(0)
 
     def __init__(
@@ -120,6 +122,35 @@ class MessageView(Widget):
             return True
         return False
 
+    def update_last_message(self, content: str) -> bool:
+        """Update the content of the last message.
+
+        Args:
+            content: New content for the message
+
+        Returns:
+            True if message was updated, False if no messages exist
+        """
+        scroll = self.query_one("#message-scroll", VerticalScroll)
+        children = list(scroll.children)
+        if children:
+            last_msg = children[-1]
+            if isinstance(last_msg, MessageItem):
+                last_msg.content = content
+                last_msg.update(last_msg._render_message())
+            elif isinstance(last_msg, StreamingMessageItem):
+                last_msg.content_buffer = content
+                last_msg.update(last_msg._render_message())
+            elif isinstance(last_msg, Static):
+                from rich.text import Text
+                last_msg.update(Text.from_markup(content))
+            return True
+        return False
+
+    def clear(self) -> None:
+        """Alias for clear_messages for compatibility."""
+        self.clear_messages()
+
     def _scroll_to_bottom(self) -> None:
         """Scroll to the bottom of the message view."""
         scroll = self.query_one("#message-scroll", VerticalScroll)
@@ -128,6 +159,8 @@ class MessageView(Widget):
 
 class MessageItem(Static):
     """Individual message item."""
+
+    can_focus = False  # Display-only widget - don't steal focus from inputs
 
     def __init__(
         self,
@@ -190,6 +223,8 @@ class MessageItem(Static):
 
 class StreamingMessageItem(Static):
     """Message item that can be updated in real-time for streaming responses."""
+
+    can_focus = False  # Display-only widget - don't steal focus from inputs
 
     def __init__(
         self,

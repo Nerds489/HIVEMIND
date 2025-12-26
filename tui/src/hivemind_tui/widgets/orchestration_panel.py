@@ -42,6 +42,8 @@ class GateStatus:
 class OrchestrationPanel(Widget):
     """Panel showing active agent orchestration status."""
 
+    can_focus = False  # Prevent focus stealing
+
     is_active: reactive[bool] = reactive(False)
     current_task: reactive[str] = reactive("")
 
@@ -158,10 +160,14 @@ class OrchestrationPanel(Widget):
 
         if not self.is_active and not self._agents:
             display.update("")
-            self.styles.display = "none"
+            # Use visibility instead of display to avoid layout/event issues
+            self.styles.height = 0
+            self.styles.min_height = 0
             return
 
-        self.styles.display = "block"
+        # Restore height when active
+        self.styles.height = "auto"
+        self.styles.min_height = 3
 
         # Build display content
         content = []

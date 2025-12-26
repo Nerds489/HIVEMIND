@@ -149,7 +149,7 @@ class ClaudeAgent:
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
-        timeout: float = 120.0,
+        timeout: float = 300.0,
     ) -> tuple[bool, str]:
         """Call Claude CLI.
         
