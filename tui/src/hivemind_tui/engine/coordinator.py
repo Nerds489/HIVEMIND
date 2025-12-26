@@ -9,6 +9,7 @@ import asyncio
 import json
 import os
 import shutil
+import signal
 import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
@@ -237,7 +238,7 @@ class Coordinator:
     async def _call_codex(
         self,
         prompt: str,
-        timeout: float = 120.0,
+        timeout: float = 60.0,
     ) -> tuple[bool, str]:
         """Call Codex CLI for coordinator decisions.
 
@@ -254,14 +255,16 @@ class Coordinator:
 
         # Build command - codex exec for non-interactive mode
         output_file = tempfile.mktemp(suffix=".txt")
-        cmd = [codex_path, "exec", "--full-auto", "-o", output_file, prompt]
+        cmd = [codex_path, "exec", "--full-auto", "--skip-git-repo-check", "-o", output_file, prompt]
 
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
+                stdin=asyncio.subprocess.DEVNULL,  # Prevent stdin blocking
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(self.working_dir),
+                start_new_session=True,  # Allow killing entire process group
             )
 
             try:
@@ -270,7 +273,10 @@ class Coordinator:
                     timeout=timeout
                 )
             except asyncio.TimeoutError:
-                process.kill()
+                try:
+                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                except (ProcessLookupError, OSError):
+                    process.kill()
                 await process.wait()
                 return False, f"Request timed out after {timeout}s"
 
@@ -312,7 +318,7 @@ class Coordinator:
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
-        timeout: float = 120.0,
+        timeout: float = 60.0,
     ) -> tuple[bool, str]:
         """Call Claude CLI for agent execution.
 
@@ -340,9 +346,11 @@ class Coordinator:
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
+                stdin=asyncio.subprocess.DEVNULL,  # Prevent stdin blocking
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(self.working_dir),
+                start_new_session=True,  # Allow killing entire process group
             )
 
             try:
@@ -351,7 +359,10 @@ class Coordinator:
                     timeout=timeout
                 )
             except asyncio.TimeoutError:
-                process.kill()
+                try:
+                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                except (ProcessLookupError, OSError):
+                    process.kill()
                 await process.wait()
                 return False, f"Request timed out after {timeout}s"
 
