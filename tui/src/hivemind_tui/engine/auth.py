@@ -1,18 +1,13 @@
-# DESTINATION: tui/src/hivemind_tui/engine/auth.py
-# CREATE THIS FILE AT THE EXACT PATH ABOVE
-# DO NOT MODIFY THIS CODE
-
 """
 HIVEMIND Authentication Module.
 
-Handles browser OAuth (primary) and API key fallback for both Codex and Claude.
+Handles authentication checking for Codex and Claude CLIs.
 """
 
 import asyncio
 import json
 import os
 import shutil
-import subprocess
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -49,7 +44,7 @@ class AuthState:
     """Combined authentication state."""
     codex: EngineAuth
     claude: EngineAuth
-    
+
     @property
     def both_ready(self) -> bool:
         """Check if both engines are authenticated."""
@@ -57,12 +52,12 @@ class AuthState:
             self.codex.status == AuthStatus.AUTHENTICATED and
             self.claude.status == AuthStatus.AUTHENTICATED
         )
-    
+
     @property
     def codex_ready(self) -> bool:
         """Check if Codex is authenticated."""
         return self.codex.status == AuthStatus.AUTHENTICATED
-    
+
     @property
     def claude_ready(self) -> bool:
         """Check if Claude is authenticated."""
@@ -71,25 +66,25 @@ class AuthState:
 
 class AuthManager:
     """Manages authentication for Codex and Claude."""
-    
+
     def __init__(self):
         self._codex_path: Optional[str] = None
         self._claude_path: Optional[str] = None
         self._state: Optional[AuthState] = None
         self._config_dir = Path.home() / ".config" / "hivemind"
         self._config_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def find_codex(self) -> Optional[str]:
         """Find Codex CLI executable."""
         if self._codex_path:
             return self._codex_path
-        
+
         # Check PATH first
         codex_path = shutil.which("codex")
         if codex_path:
             self._codex_path = codex_path
             return codex_path
-        
+
         # Check common locations
         candidates = [
             Path.home() / ".local" / "bin" / "codex",
@@ -98,7 +93,7 @@ class AuthManager:
             Path("/usr/local/bin/codex"),
             Path("/usr/bin/codex"),
         ]
-        
+
         # Check NVM locations
         nvm_dir = Path.home() / ".nvm" / "versions" / "node"
         if nvm_dir.exists():
@@ -107,60 +102,60 @@ class AuthManager:
                 if candidate.exists():
                     candidates.insert(0, candidate)
                     break
-        
+
         for path in candidates:
             if path.exists() and os.access(path, os.X_OK):
                 self._codex_path = str(path)
                 return self._codex_path
-        
+
         return None
-    
+
     def find_claude(self) -> Optional[str]:
         """Find Claude CLI executable."""
         if self._claude_path:
             return self._claude_path
-        
+
         # Check PATH first
         claude_path = shutil.which("claude")
         if claude_path:
             self._claude_path = claude_path
             return claude_path
-        
+
         # Check common locations
         candidates = [
             Path.home() / ".local" / "bin" / "claude",
             Path("/usr/local/bin/claude"),
             Path("/usr/bin/claude"),
         ]
-        
+
         for path in candidates:
             if path.exists() and os.access(path, os.X_OK):
                 self._claude_path = str(path)
                 return self._claude_path
-        
+
         return None
-    
+
     async def check_codex_auth(self) -> EngineAuth:
         """Check Codex authentication status."""
         codex_path = self.find_codex()
-        
+
         if not codex_path:
             return EngineAuth(
                 engine="codex",
                 status=AuthStatus.FAILED,
                 method=AuthMethod.NONE,
-                error="Codex CLI not found. Install with: npm install -g @openai/codex"
+                error="Codex CLI not found"
             )
-        
+
         # Check for API key in environment
         if os.environ.get("OPENAI_API_KEY"):
             return EngineAuth(
                 engine="codex",
                 status=AuthStatus.AUTHENTICATED,
                 method=AuthMethod.API_KEY,
-                username="api_key_user"
+                username="api_key"
             )
-        
+
         # Check browser auth via `codex login status`
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -169,13 +164,14 @@ class AuthManager:
                 stderr=asyncio.subprocess.PIPE,
             )
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)
-            
+
             if proc.returncode == 0:
+                output = stdout.decode("utf-8", errors="replace").strip()
                 return EngineAuth(
                     engine="codex",
                     status=AuthStatus.AUTHENTICATED,
                     method=AuthMethod.BROWSER,
-                    username="browser_user"
+                    username=output if output else "browser"
                 )
             else:
                 return EngineAuth(
@@ -198,67 +194,71 @@ class AuthManager:
                 method=AuthMethod.NONE,
                 error=str(e)
             )
-    
+
     async def check_claude_auth(self) -> EngineAuth:
         """Check Claude authentication status."""
         claude_path = self.find_claude()
-        
+
         if not claude_path:
             return EngineAuth(
                 engine="claude",
                 status=AuthStatus.FAILED,
                 method=AuthMethod.NONE,
-                error="Claude CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
+                error="Claude CLI not found"
             )
-        
+
         # Check for API key in environment
-        if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_API_KEY"):
+        if os.environ.get("ANTHROPIC_API_KEY"):
             return EngineAuth(
                 engine="claude",
                 status=AuthStatus.AUTHENTICATED,
                 method=AuthMethod.API_KEY,
-                username="api_key_user"
+                username="api_key"
             )
-        
-        # Check for credentials file
+
+        # Check for Claude credentials file
         cred_file = Path.home() / ".claude" / ".credentials.json"
         if cred_file.exists():
             try:
                 with open(cred_file) as f:
                     creds = json.load(f)
-                if creds.get("token") or creds.get("access_token"):
+
+                # Claude CLI uses claudeAiOauth.accessToken
+                oauth = creds.get("claudeAiOauth", {})
+                if oauth.get("accessToken"):
+                    sub_type = oauth.get("subscriptionType", "authenticated")
                     return EngineAuth(
                         engine="claude",
                         status=AuthStatus.AUTHENTICATED,
                         method=AuthMethod.BROWSER,
-                        username=creds.get("email", "browser_user")
+                        username=sub_type
                     )
             except Exception:
                 pass
-        
+
         return EngineAuth(
             engine="claude",
             status=AuthStatus.PENDING,
             method=AuthMethod.NONE,
-            error="Not logged in"
+            error="Run 'claude' in terminal to authenticate"
         )
-    
+
     async def check_all(self) -> AuthState:
         """Check authentication for both engines."""
         codex_auth, claude_auth = await asyncio.gather(
             self.check_codex_auth(),
             self.check_claude_auth()
         )
-        
+
         self._state = AuthState(codex=codex_auth, claude=claude_auth)
         return self._state
-    
+
     async def authenticate_codex_browser(self) -> Tuple[bool, str]:
         """Authenticate Codex via browser OAuth."""
         codex_path = self.find_codex()
         if not codex_path:
             return False, "Codex CLI not found"
-        
+
         try:
             proc = await asyncio.create_subprocess_exec(
                 codex_path, "login", "--device-auth",
@@ -267,50 +267,37 @@ class AuthManager:
                 stderr=asyncio.subprocess.PIPE,
             )
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
-            
+
             if proc.returncode == 0:
-                return True, "Codex authenticated successfully"
+                return True, "Codex authenticated"
             else:
-                return False, stderr.decode("utf-8", errors="replace")
+                return False, stderr.decode("utf-8", errors="replace") or "Auth failed"
         except asyncio.TimeoutError:
             return False, "Authentication timed out"
         except Exception as e:
             return False, str(e)
-    
+
     async def authenticate_claude_browser(self) -> Tuple[bool, str]:
-        """Authenticate Claude via browser OAuth."""
-        claude_path = self.find_claude()
-        if not claude_path:
-            return False, "Claude CLI not found"
-        
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                claude_path, "login",
-                stdin=asyncio.subprocess.DEVNULL,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
-            
-            if proc.returncode == 0:
-                return True, "Claude authenticated successfully"
-            else:
-                return False, stderr.decode("utf-8", errors="replace")
-        except asyncio.TimeoutError:
-            return False, "Authentication timed out"
-        except Exception as e:
-            return False, str(e)
-    
+        """Check if Claude is authenticated or guide user."""
+        # First check if already authenticated
+        auth_state = await self.check_claude_auth()
+        if auth_state.status == AuthStatus.AUTHENTICATED:
+            return True, "Claude is already authenticated!"
+
+        # Claude CLI doesn't have a non-interactive login command
+        # User needs to run `claude` in a terminal to authenticate
+        return False, "Run 'claude' in a terminal to authenticate, then press R to retry"
+
     @property
     def state(self) -> Optional[AuthState]:
         """Get current auth state."""
         return self._state
-    
+
     @property
     def codex_path(self) -> Optional[str]:
         """Get Codex executable path."""
         return self._codex_path or self.find_codex()
-    
+
     @property
     def claude_path(self) -> Optional[str]:
         """Get Claude executable path."""
