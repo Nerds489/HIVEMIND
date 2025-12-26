@@ -15,7 +15,7 @@ import os
 import signal
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from typing import Optional, List, Dict, Any, TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from .auth import AuthManager
@@ -130,26 +130,36 @@ class VerificationResult:
 
 class ClaudeAgent:
     """Claude as expert consultant and agent executor."""
-    
+
     def __init__(
         self,
         auth_manager: "AuthManager",
         working_dir: Optional[Path] = None,
+        timeout: Optional[float] = None,
+        progress_interval: float = 5.0,
+        on_status: Optional[Callable[[str], None]] = None,
     ):
         """Initialize Claude Agent.
-        
+
         Args:
             auth_manager: Authentication manager
             working_dir: Working directory for operations
+            timeout: Timeout in seconds
+            progress_interval: Seconds between progress updates
+            on_status: Optional status callback
         """
         self.auth = auth_manager
         self.working_dir = working_dir or Path.cwd()
+        self.timeout = timeout or float(os.environ.get("HIVEMIND_CLAUDE_TIMEOUT", "45"))
+        self.progress_interval = progress_interval
+        self.on_status = on_status
     
     async def _call_claude_cli(
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
-        timeout: float = 300.0,
+        timeout: Optional[float] = None,
+        status_label: Optional[str] = None,
     ) -> tuple[bool, str]:
         """Call Claude CLI.
         
@@ -172,6 +182,17 @@ class ClaudeAgent:
         
         cmd.append(prompt)
         
+        process = None
+        progress_task = None
+        stop_event = asyncio.Event()
+        effective_timeout = timeout or self.timeout
+
+        async def _tick() -> None:
+            while not stop_event.is_set():
+                await asyncio.sleep(self.progress_interval)
+                if not stop_event.is_set() and self.on_status and status_label:
+                    self.on_status(status_label)
+
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -181,20 +202,25 @@ class ClaudeAgent:
                 cwd=str(self.working_dir),
                 start_new_session=True,
             )
-            
+
+            if status_label and self.on_status:
+                progress_task = asyncio.create_task(_tick())
+
             try:
                 stdout, stderr = await asyncio.wait_for(
                     process.communicate(),
-                    timeout=timeout
+                    timeout=effective_timeout
                 )
             except asyncio.TimeoutError:
                 try:
                     os.killpg(os.getpgid(process.pid), signal.SIGKILL)
                 except (ProcessLookupError, OSError):
-                    process.kill()
-                await process.wait()
-                return False, f"Request timed out after {timeout}s"
-            
+                    if process:
+                        process.kill()
+                if process:
+                    await process.wait()
+                return False, f"Request timed out after {effective_timeout}s"
+
             if process.returncode == 0:
                 response = stdout.decode("utf-8", errors="replace").strip()
                 if not response:
@@ -203,9 +229,21 @@ class ClaudeAgent:
             else:
                 error = stderr.decode("utf-8", errors="replace").strip()
                 return False, f"Claude error: {error or 'Unknown error'}"
-                
+
+        except asyncio.CancelledError:
+            if process and process.returncode is None:
+                try:
+                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                except (ProcessLookupError, OSError):
+                    process.kill()
+                await process.wait()
+            raise
         except Exception as e:
             return False, f"Failed to call Claude: {str(e)}"
+        finally:
+            stop_event.set()
+            if progress_task:
+                progress_task.cancel()
     
     async def evaluate_proposal(
         self,
@@ -242,6 +280,7 @@ If agents are needed, list them by ID (e.g., DEV-001, SEC-002).
         success, response = await self._call_claude_cli(
             prompt,
             system_prompt=CLAUDE_EVALUATOR_PROMPT,
+            status_label="Waiting on Claude evaluation...",
         )
         
         if not success:
@@ -300,6 +339,7 @@ If agents are needed, list them by ID (e.g., DEV-001, SEC-002).
         success, response = await self._call_claude_cli(
             full_task,
             system_prompt=system_prompt,
+            status_label=f"Executing {agent_id}...",
         )
         
         if success:
@@ -365,6 +405,7 @@ Is this output complete and correct? Review against the original requirements.
         success, response = await self._call_claude_cli(
             prompt,
             system_prompt=CLAUDE_VERIFIER_PROMPT,
+            status_label="Waiting on Claude verification...",
         )
         
         if not success:
@@ -413,7 +454,7 @@ Synthesize these outputs into a single, cohesive response for the user.
 Remove redundancy, organize logically, and present as one unified answer.
 """
         
-        success, response = await self._call_claude_cli(prompt)
+        success, response = await self._call_claude_cli(prompt, status_label="Synthesizing agent outputs...")
         
         if success:
             return response

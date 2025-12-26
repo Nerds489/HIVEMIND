@@ -1,4 +1,4 @@
-"""HIVEMIND TUI entry point - v3.0."""
+"""HIVEMIND TUI entry point - v2.0."""
 
 import os
 import sys

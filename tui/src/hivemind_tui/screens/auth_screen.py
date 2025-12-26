@@ -110,8 +110,8 @@ class AuthScreen(Screen):
         codex_btn.disabled = state.codex.status == AuthStatus.AUTHENTICATED
         claude_btn.disabled = state.claude.status == AuthStatus.AUTHENTICATED
 
-        # Allow continue if at least one auth method is ready, or if both failed (let user proceed anyway)
-        can_continue = state.codex_ready or state.claude_ready
+        # Require both engines when not in local mode
+        can_continue = state.both_ready
         continue_btn.disabled = not can_continue
 
         # Update overall status
@@ -119,9 +119,9 @@ class AuthScreen(Screen):
         if state.both_ready:
             status_widget.update("[green]All engines authenticated![/green]")
         elif state.codex_ready:
-            status_widget.update("[yellow]Codex ready. Claude optional but recommended.[/yellow]")
+            status_widget.update("[yellow]Codex ready. Claude required to continue.[/yellow]")
         elif state.claude_ready:
-            status_widget.update("[yellow]Claude ready. Codex not available.[/yellow]")
+            status_widget.update("[yellow]Claude ready. Codex required to continue.[/yellow]")
         else:
             status_widget.update("[red]No authentication available. Install codex or claude CLI.[/red]")
     
@@ -182,7 +182,9 @@ class AuthScreen(Screen):
 
     def action_skip(self) -> None:
         """Skip authentication and proceed to main screen."""
-        self._continue_to_main()
+        self.query_one("#auth-status", Static).update(
+            "[red]Skip disabled. Both engines must be authenticated.[/red]"
+        )
 
     def action_continue_if_ready(self) -> None:
         """Continue if authentication is ready (Enter key handler)."""

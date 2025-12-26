@@ -1,4 +1,4 @@
-"""HIVEMIND Engine Module - v3.0."""
+"""HIVEMIND Engine Module - v2.0."""
 
 from .auth import AuthManager, AuthStatus, AuthMethod, AuthState
 from .codex_head import CodexHead, CodexResponse, ResponseSource

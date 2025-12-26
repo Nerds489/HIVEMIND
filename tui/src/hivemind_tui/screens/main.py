@@ -1,8 +1,8 @@
-"""Main Screen - Three-panel layout for HIVEMIND v3.0."""
+"""Main Screen - Three-panel layout for HIVEMIND v2.0."""
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from textual import on, work
 from textual.app import ComposeResult
@@ -40,11 +40,17 @@ class MainScreen(Screen):
         # Get launch directory for context
         self._launch_dir = Path(os.environ.get("HIVEMIND_LAUNCH_DIR", os.getcwd()))
 
+        self._active_agents: List[str] = []
+        self._completed_agents: set[str] = set()
+
         # Create CodexHead
         self._codex = CodexHead(
             auth_manager=self.auth_manager,
             working_dir=self._launch_dir,
             on_status=self._on_codex_status,
+            on_agent_update=self._on_agent_update,
+            on_gate_update=self._on_gate_update,
+            on_orchestration_start=self._on_orchestration_start,
         )
 
     def compose(self) -> ComposeResult:
@@ -83,7 +89,7 @@ class MainScreen(Screen):
         yield Footer()
 
     def _get_help_text(self) -> str:
-        return """[bold cyan]HIVEMIND v3.0[/bold cyan]
+        return """[bold cyan]HIVEMIND v2.0[/bold cyan]
 
 [yellow]Enter[/yellow] - Send message
 [yellow]C[/yellow] - Full chat screen
@@ -92,14 +98,10 @@ class MainScreen(Screen):
 [yellow]Ctrl+C[/yellow] - Cancel task
 [yellow]?[/yellow] - Help
 
-[dim]Type in the input box
-and press Enter to send.
-
-Simple questions get
-direct answers.
-
-Complex work involves
-Claude and agents.[/dim]"""
+[dim]Commands:
+/hivemind, /dev, /sec, /infra, /qa
+/architect, /pentest, /sre, /reviewer
+/status, /recall, /debug[/dim]"""
 
     def on_mount(self) -> None:
         """Handle screen mount event."""
@@ -110,14 +112,13 @@ Claude and agents.[/dim]"""
         message_view = self.query_one("#message-view", MessageView)
         message_view.add_message(
             role="assistant",
-            content="""Welcome to HIVEMIND v3.0!
+            content="""Welcome to HIVEMIND v2.0 (Minimal Output).
 
-I'm Codex, your AI assistant. You can:
-- **Ask me anything** - I'll answer directly
-- **Request complex work** - I'll coordinate with Claude and specialist agents
+I am HEAD_CODEX. Provide a task and I will route it to agents, show
+minimal status updates, enforce quality gates, and generate a final report.
 
-Just type your message above. What can I help you with?""",
-            agent_name="Codex"
+Use /help to see commands.""",
+            agent_name="HEAD_CODEX",
         )
 
         # Check for initial prompt
@@ -137,6 +138,27 @@ Just type your message above. What can I help you with?""",
         except Exception:
             pass
 
+    def _on_orchestration_start(self, task: str, agents: List[str]) -> None:
+        """Handle orchestration start - called from worker thread."""
+        try:
+            self.app.call_from_thread(self._start_orchestration_ui, task, agents)
+        except Exception:
+            pass
+
+    def _on_agent_update(self, agent_id: str, status: str, message: str) -> None:
+        """Handle agent status updates - called from worker thread."""
+        try:
+            self.app.call_from_thread(self._update_agent_ui, agent_id, status, message)
+        except Exception:
+            pass
+
+    def _on_gate_update(self, gate_id: str, status: str) -> None:
+        """Handle gate updates - called from worker thread."""
+        try:
+            self.app.call_from_thread(self._update_gate_ui, gate_id, status)
+        except Exception:
+            pass
+
     def _update_status_display(self, message: str) -> None:
         """Update status display on main thread."""
         try:
@@ -148,6 +170,48 @@ Just type your message above. What can I help you with?""",
         except Exception:
             pass
 
+    def _start_orchestration_ui(self, task: str, agents: List[str]) -> None:
+        """Initialize orchestration UI state."""
+        orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
+        agent_list = self.query_one("#agent-list", AgentListWidget)
+        status_bar = self.query_one("#status-bar", StatusBar)
+
+        orch_panel.start_orchestration(task)
+        agent_list.reset_all_agents()
+        self._active_agents = list(agents)
+        self._completed_agents = set()
+        status_bar.set_task_progress(0, len(agents))
+
+        for agent_id in agents:
+            agent_info = AGENTS.get(agent_id, {})
+            orch_panel.add_agent(agent_id, agent_info.get("name", agent_id))
+
+    def _update_agent_ui(self, agent_id: str, status: str, message: str) -> None:
+        """Update agent status in UI."""
+        agent_list = self.query_one("#agent-list", AgentListWidget)
+        orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
+        status_bar = self.query_one("#status-bar", StatusBar)
+
+        agent_list.update_agent_status(agent_id, status, message)
+        orch_panel.update_agent_status(agent_id, status, message)
+        status_bar.set_active_agent(agent_id if status == "working" else None)
+
+        if status in ("complete", "error") and agent_id not in self._completed_agents:
+            self._completed_agents.add(agent_id)
+            status_bar.set_task_progress(len(self._completed_agents), len(self._active_agents))
+
+    def _update_gate_ui(self, gate_id: str, status: str) -> None:
+        """Update gate status in UI."""
+        gate_names = {
+            "G1-DESIGN": "Design Gate",
+            "G2-SECURITY": "Security Gate",
+            "G3-CODE": "Code Gate",
+            "G4-TEST": "Test Gate",
+            "G5-DEPLOY": "Deploy Gate",
+        }
+        orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
+        orch_panel.set_gate_status(gate_id, gate_names.get(gate_id, gate_id), status)
+
     def action_focus_chat_input(self) -> None:
         """Focus the quick chat input."""
         self.query_one("#quick-chat-input", Input).focus()
@@ -158,14 +222,22 @@ Just type your message above. What can I help you with?""",
             self._current_worker.cancel()
             self._current_worker = None
             message_view = self.query_one("#message-view", MessageView)
+            orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
+            agent_list = self.query_one("#agent-list", AgentListWidget)
+            status_bar = self.query_one("#status-bar", StatusBar)
             message_view.remove_last_message()
             message_view.add_message(
                 role="assistant",
                 content="[yellow]Task cancelled.[/yellow]",
-                agent_name="Codex"
+                agent_name="HEAD_CODEX"
             )
+            orch_panel.clear()
+            agent_list.reset_all_agents()
             self._processing = False
-            self.query_one("#status-bar", StatusBar).set_connection_status("connected")
+            status_bar.set_connection_status("connected")
+            status_bar.set_task_progress(0, 0)
+            self._active_agents = []
+            self._completed_agents = set()
 
     def action_open_full_chat(self) -> None:
         """Open the full chat screen."""
@@ -208,7 +280,7 @@ Just type your message above. What can I help you with?""",
         message_view.add_message(
             role="assistant",
             content="[dim italic]Thinking... (Ctrl+C to cancel)[/dim italic]",
-            agent_name="Codex"
+            agent_name="HEAD_CODEX"
         )
         status_bar.set_connection_status("connecting")
 
@@ -219,6 +291,7 @@ Just type your message above. What can I help you with?""",
     async def _process_message_async(self, message: str) -> None:
         """Process message in background worker (async, non-blocking)."""
         worker = get_current_worker()
+        self._current_worker = worker
 
         try:
             # Check for cancellation before starting
@@ -247,6 +320,7 @@ Just type your message above. What can I help you with?""",
         """Handle successful response from Codex."""
         message_view = self.query_one("#message-view", MessageView)
         orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
+        agent_list = self.query_one("#agent-list", AgentListWidget)
         status_bar = self.query_one("#status-bar", StatusBar)
 
         # Remove thinking message
@@ -255,28 +329,24 @@ Just type your message above. What can I help you with?""",
         # Handle response based on source
         if response.source == ResponseSource.CODEX_DIRECT:
             orch_panel.clear()
+            agent_list.reset_all_agents()
+            status_bar.set_task_progress(0, 0)
             status_bar.set_active_agent(None)
-        else:
-            if response.agents_used:
-                orch_panel.start_orchestration("Task")
-                for agent_id in response.agents_used:
-                    agent_info = AGENTS.get(agent_id, {})
-                    orch_panel.add_agent(agent_id, agent_info.get("name", agent_id))
-                    orch_panel.update_agent_status(agent_id, "complete", "Done")
-                    status_bar.set_active_agent(agent_id)
+            self._active_agents = []
+            self._completed_agents = set()
 
         # Show response
         if response.success:
             message_view.add_message(
                 role="assistant",
                 content=response.content,
-                agent_name="Codex"
+                agent_name="HEAD_CODEX"
             )
         else:
             message_view.add_message(
                 role="assistant",
                 content=f"[red]{response.error or 'An error occurred'}[/red]",
-                agent_name="Codex"
+                agent_name="HEAD_CODEX"
             )
 
         status_bar.set_connection_status("connected")
@@ -286,15 +356,22 @@ Just type your message above. What can I help you with?""",
         """Handle processing error."""
         message_view = self.query_one("#message-view", MessageView)
         status_bar = self.query_one("#status-bar", StatusBar)
+        orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
+        agent_list = self.query_one("#agent-list", AgentListWidget)
 
         message_view.remove_last_message()
         message_view.add_message(
             role="assistant",
             content=f"[red]Error: {error}[/red]",
-            agent_name="Codex"
+            agent_name="HEAD_CODEX"
         )
 
+        orch_panel.clear()
+        agent_list.reset_all_agents()
+        self._active_agents = []
+        self._completed_agents = set()
         status_bar.set_connection_status("connected")
+        status_bar.set_task_progress(0, 0)
         message_view.refresh()
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:

@@ -10,11 +10,8 @@ Manages multi-turn dialogue between Codex and Claude until both agree on:
 - How it should be done
 - Which agents to involve
 - Success criteria
-
-Both must verify completion before delivering to user.
 """
 
-import asyncio
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, TYPE_CHECKING
 
@@ -45,7 +42,7 @@ class ConsensusResult:
 class DialogueResult:
     """Final result of the dialogue."""
     success: bool
-    final_output: str
+    plan: str
     turns: int
     agents_used: List[str] = field(default_factory=list)
     error: Optional[str] = None
@@ -78,19 +75,6 @@ Refine your proposal based on Claude's feedback. If you now agree with Claude's 
 """
 
 
-CODEX_VERIFY_PROMPT = """You are Codex, verifying the final output.
-
-Original Request: {request}
-
-Output to Verify:
-{output}
-
-Claude's Assessment: {claude_assessment}
-
-Do you agree this output is 100% complete and correct?
-If yes, state "VERIFIED" and briefly explain why it's acceptable.
-If no, explain what's missing or incorrect.
-"""
 
 
 class CodexClaudeDialogue:
@@ -229,74 +213,6 @@ class CodexClaudeDialogue:
             needs_agents=bool(claude_eval and claude_eval.suggested_agents),
         )
     
-    async def _execute_with_agents(
-        self,
-        consensus: ConsensusResult,
-        request: str,
-    ) -> str:
-        """Execute task with agreed agents.
-        
-        Args:
-            consensus: Consensus result with agent list
-            request: Original request
-            
-        Returns:
-            Combined agent output
-        """
-        self.codex._emit_status("Executing with agents...")
-        
-        results = await self.claude.execute_agents(
-            consensus.agents_needed,
-            consensus.plan,
-            context=request,
-        )
-        
-        # Synthesize results
-        output = await self.claude.synthesize_results(results, request)
-        
-        return output
-    
-    async def _verify_completion(
-        self,
-        request: str,
-        output: str,
-    ) -> tuple[bool, str]:
-        """Both Codex and Claude verify output is complete.
-        
-        Args:
-            request: Original request
-            output: Output to verify
-            
-        Returns:
-            Tuple of (verified, final_output)
-        """
-        self.codex._emit_status("Verifying completion...")
-        
-        # Claude verifies first
-        claude_check = await self.claude.verify_output(request, output)
-        
-        if not claude_check.verified:
-            # Claude found issues - fix them
-            if claude_check.suggestions:
-                # Re-execute with suggestions
-                return False, claude_check.issues or "Claude found issues"
-        
-        # Codex verifies
-        verify_prompt = CODEX_VERIFY_PROMPT.format(
-            request=request,
-            output=output,
-            claude_assessment="VERIFIED - Output is complete and correct" if claude_check.verified else f"Issues found: {claude_check.issues}",
-        )
-        
-        success, codex_response = await self.codex._call_codex_cli(verify_prompt)
-        
-        codex_verified = success and "VERIFIED" in codex_response.upper()
-        
-        if claude_check.verified and codex_verified:
-            return True, output
-        else:
-            return False, codex_response if not codex_verified else (claude_check.issues or "Verification failed")
-    
     async def discuss(self, request: str) -> DialogueResult:
         """
         Main entry point - discuss until consensus and execute.
@@ -305,77 +221,27 @@ class CodexClaudeDialogue:
         1. Codex proposes approach
         2. Claude evaluates
         3. Iterate until agreement
-        4. Execute with agents if needed
-        5. Both verify completion
-        6. Return final output
+        4. Return agreed plan and agents
         
         Args:
             request: User's request
             
         Returns:
-            DialogueResult with final output
+            DialogueResult with agreed plan
         """
         try:
             # Phase 1: Reach consensus
             consensus = await self._reach_consensus(request)
-            
-            if not consensus.needs_agents:
-                # Direct response - no agents needed
-                # Generate direct response
-                self.codex._emit_status("Generating response...")
-                success, response = await self.codex._call_codex_cli(
-                    f"Based on our discussion, provide a complete response to: {request}\n\nOur agreed approach: {consensus.plan}",
-                )
-                
-                return DialogueResult(
-                    success=success,
-                    final_output=response if success else "Unable to generate response",
-                    turns=self.turn_count,
-                    agents_used=[],
-                )
-            
-            # Phase 2: Execute with agents
-            agent_output = await self._execute_with_agents(consensus, request)
-            
-            # Phase 3: Verify completion
-            max_verification_attempts = 3
-            for attempt in range(max_verification_attempts):
-                verified, result = await self._verify_completion(request, agent_output)
-                
-                if verified:
-                    return DialogueResult(
-                        success=True,
-                        final_output=agent_output,
-                        turns=self.turn_count,
-                        agents_used=consensus.agents_needed,
-                    )
-                
-                # Not verified - try to fix
-                if attempt < max_verification_attempts - 1:
-                    self.codex._emit_status(f"Revision needed (attempt {attempt + 2})...")
-                    # Re-execute with feedback
-                    agent_output = await self._execute_with_agents(
-                        ConsensusResult(
-                            agreed=True,
-                            plan=f"Fix these issues: {result}\n\nOriginal plan: {consensus.plan}",
-                            agents_needed=consensus.agents_needed,
-                            needs_agents=True,
-                        ),
-                        request,
-                    )
-            
-            # Max attempts - return best effort
             return DialogueResult(
-                success=True,  # Partial success
-                final_output=agent_output,
+                success=consensus.agreed,
+                plan=consensus.plan,
                 turns=self.turn_count,
                 agents_used=consensus.agents_needed,
             )
-            
         except Exception as e:
             return DialogueResult(
                 success=False,
-                final_output=f"An error occurred: {str(e)}",
+                plan=request,
                 turns=self.turn_count,
                 error=str(e),
             )

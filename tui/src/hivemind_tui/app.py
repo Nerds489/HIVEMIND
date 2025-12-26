@@ -1,4 +1,4 @@
-"""Main HIVEMIND TUI Application - v3.0 TUI-Only Mode."""
+"""Main HIVEMIND TUI Application - v2.0 Minimal Output Mode."""
 
 import asyncio
 import os
@@ -17,10 +17,10 @@ from .screens.chat import ChatScreen
 
 
 class HivemindApp(App):
-    """HIVEMIND Textual Application - v3.0."""
+    """HIVEMIND Textual Application - v2.0."""
 
     CSS_PATH = "styles.css"
-    TITLE = "HIVEMIND - AI Assistant"
+    TITLE = "HIVEMIND - HEAD_CODEX"
     BINDINGS = [
         Binding("q", "quit", "Quit", priority=True),
         Binding("question_mark", "help", "Help", key_display="?"),
@@ -83,7 +83,7 @@ class HivemindApp(App):
     def action_help(self) -> None:
         """Show help information."""
         help_text = """
-HIVEMIND v3.0 Keyboard Shortcuts:
+HIVEMIND v2.0 Keyboard Shortcuts:
 
   Q     - Quit application
   C     - Open full chat screen
@@ -97,9 +97,8 @@ Chat:
   Ctrl+Enter - Send message
   Ctrl+L     - Clear messages
 
-HIVEMIND is your AI assistant.
-For simple questions, I answer directly.
-For complex work, I coordinate with Claude and specialized agents.
+HIVEMIND runs in minimal-output mode.
+Use /help for orchestration commands.
 """
         self.notify(help_text, title="HIVEMIND Help", timeout=10)
 

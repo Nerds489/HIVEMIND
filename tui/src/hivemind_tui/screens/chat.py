@@ -1,4 +1,4 @@
-"""Chat Screen - Full chat interface for HIVEMIND v3.0."""
+"""Chat Screen - Full chat interface for HIVEMIND v2.0."""
 
 import asyncio
 import os
@@ -17,8 +17,7 @@ from ..widgets.message_view import MessageView
 from ..widgets.status_bar import StatusBar
 from ..widgets.input_box import InputBox
 from ..engine.auth import AuthManager
-from ..engine.codex_head import CodexHead, ResponseSource, CodexResponse
-from ..engine.claude_agent import AGENTS
+from ..engine.codex_head import CodexHead, CodexResponse
 
 
 class ChatScreen(Screen):
@@ -52,7 +51,7 @@ class ChatScreen(Screen):
 
         with Container(id="chat-container"):
             with Vertical(id="chat-main"):
-                yield Static("HIVEMIND Chat", id="chat-title", classes="panel-title")
+                yield Static("HIVEMIND Chat (v2.0)", id="chat-title", classes="panel-title")
                 yield MessageView(id="chat-messages")
 
                 with Container(id="chat-input-area"):
@@ -71,8 +70,8 @@ class ChatScreen(Screen):
         message_view = self.query_one("#chat-messages", MessageView)
         message_view.add_message(
             role="assistant",
-            content="Full chat mode. Type your message and press Ctrl+Enter to send.",
-            agent_name="Codex"
+            content="Full chat mode. Type your message and press Ctrl+Enter to send. Use /help for commands.",
+            agent_name="HEAD_CODEX"
         )
 
         # Update status
@@ -115,7 +114,7 @@ class ChatScreen(Screen):
                 message_view.add_message(
                     role="assistant",
                     content="[yellow]Task cancelled.[/yellow]",
-                    agent_name="Codex"
+                    agent_name="HEAD_CODEX"
                 )
                 self.query_one("#chat-status", StatusBar).set_connection_status("connected")
             except Exception:
@@ -164,7 +163,7 @@ class ChatScreen(Screen):
             message_view.add_message(
                 role="assistant",
                 content="[dim italic]Thinking... (Ctrl+C to cancel)[/dim italic]",
-                agent_name="Codex"
+                agent_name="HEAD_CODEX"
             )
             status_bar.set_connection_status("connecting")
 
@@ -203,21 +202,16 @@ class ChatScreen(Screen):
             # Show response
             if response.success:
                 # Add agent info if agents were used
-                agent_info = ""
-                if response.agents_used:
-                    agent_names = [AGENTS.get(a, {}).get("name", a) for a in response.agents_used]
-                    agent_info = f"\n\n[dim](Assisted by: {', '.join(agent_names)})[/dim]"
-
                 message_view.add_message(
                     role="assistant",
-                    content=response.content + agent_info,
-                    agent_name="Codex"
+                    content=response.content,
+                    agent_name="HEAD_CODEX"
                 )
             else:
                 message_view.add_message(
                     role="assistant",
                     content=f"[red]{response.error or 'An error occurred'}[/red]",
-                    agent_name="Codex"
+                    agent_name="HEAD_CODEX"
                 )
 
             status_bar.set_connection_status("connected")
@@ -235,7 +229,7 @@ class ChatScreen(Screen):
             message_view.add_message(
                 role="assistant",
                 content=f"[red]Error: {error}[/red]",
-                agent_name="Codex"
+                agent_name="HEAD_CODEX"
             )
 
             status_bar.set_connection_status("connected")

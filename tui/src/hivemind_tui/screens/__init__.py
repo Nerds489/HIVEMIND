@@ -1,4 +1,4 @@
-"""HIVEMIND Screens Module - v3.0."""
+"""HIVEMIND Screens Module - v2.0."""
 
 from .main import MainScreen
 from .chat import ChatScreen
