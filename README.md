@@ -75,7 +75,7 @@ git clone https://github.com/Nerds489/HIVEMIND.git
 cd HIVEMIND
 
 # Install
-./install.sh
+sudo ./install.sh
 
 # Run (from any directory)
 hivemind
@@ -186,7 +186,7 @@ git clone https://github.com/Nerds489/HIVEMIND.git
 cd HIVEMIND
 
 # Run installer
-./install.sh
+sudo ./install.sh
 ```
 
 The installer:
