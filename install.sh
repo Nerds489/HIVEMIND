@@ -1,14 +1,17 @@
-# DESTINATION: install.sh
-# REPLACE THE EXISTING FILE AT THIS PATH
-# DO NOT MODIFY THIS CODE
-
 #!/usr/bin/env bash
 #===============================================================================
 # HIVEMIND v3.0 Installation Script
-# TUI-Only Mode - Portable Installation
+# TUI-Only Mode - DO NOT RUN WITH SUDO
 #===============================================================================
 
 set -euo pipefail
+
+# Prevent running as root
+if [[ $EUID -eq 0 ]]; then
+    echo "ERROR: Do not run this script with sudo!"
+    echo "Run as your normal user: ./install.sh"
+    exit 1
+fi
 
 # Colors
 RED='\033[0;31m'
@@ -43,7 +46,7 @@ check_python() {
             return 0
         fi
     fi
-    log_error "Python 3.11+ required. Install with: sudo apt install python3.11"
+    log_error "Python 3.11+ required. Install with: sudo dnf install python3.11"
     return 1
 }
 
@@ -67,7 +70,7 @@ check_claude() {
 
 install_to_home() {
     log_info "Installing HIVEMIND to $HIVEMIND_HOME..."
-    
+
     # Create directories
     mkdir -p "$HIVEMIND_HOME"
     mkdir -p "$USER_BIN"
@@ -76,12 +79,12 @@ install_to_home() {
     mkdir -p "$HIVEMIND_HOME/memory/global"
     mkdir -p "$HIVEMIND_HOME/workspace"
     mkdir -p "$HIVEMIND_HOME/logs"
-    
+
     # Copy files (excluding .git and __pycache__)
     rsync -av --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' \
           --exclude='bin/' --exclude='backend/' --exclude='.claude/commands/' \
           "$SCRIPT_DIR/" "$HIVEMIND_HOME/"
-    
+
     # Create launcher script
     cat > "$USER_BIN/hivemind" << 'LAUNCHER'
 #!/usr/bin/env bash
@@ -123,13 +126,13 @@ LAUNCHER
 
 setup_path() {
     local shell_rc=""
-    
+
     if [[ -n "${BASH_VERSION:-}" ]]; then
         shell_rc="$HOME/.bashrc"
     elif [[ -n "${ZSH_VERSION:-}" ]]; then
         shell_rc="$HOME/.zshrc"
     fi
-    
+
     if [[ -n "$shell_rc" ]] && [[ -f "$shell_rc" ]]; then
         if ! grep -q 'HIVEMIND PATH' "$shell_rc"; then
             cat >> "$shell_rc" << 'PATHBLOCK'
@@ -147,16 +150,16 @@ PATHBLOCK
 
 install_tui_deps() {
     log_info "Installing TUI dependencies..."
-    
+
     cd "$HIVEMIND_HOME/tui"
-    
+
     if [[ ! -d ".venv" ]]; then
         python3 -m venv .venv
     fi
-    
+
     source .venv/bin/activate
     pip install -q -e .
-    
+
     log_info "TUI dependencies installed"
 }
 

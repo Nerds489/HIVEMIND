@@ -74,8 +74,8 @@ You always talk to one AI. The orchestration is invisible.
 git clone https://github.com/Nerds489/HIVEMIND.git
 cd HIVEMIND
 
-# Install
-sudo ./install.sh
+# Install (DO NOT use sudo)
+./install.sh
 
 # Run (from any directory)
 hivemind
@@ -185,8 +185,8 @@ When you ask for something substantial (build, design, implement, test, deploy, 
 git clone https://github.com/Nerds489/HIVEMIND.git
 cd HIVEMIND
 
-# Run installer
-sudo ./install.sh
+# Run installer (DO NOT use sudo)
+./install.sh
 ```
 
 The installer:

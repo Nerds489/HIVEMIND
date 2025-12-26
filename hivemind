@@ -1,13 +1,31 @@
 #!/usr/bin/env bash
 #===============================================================================
-# HIVEMIND v2.0 - TUI Launcher (NO CLI)
+# HIVEMIND Launcher - Runs from any directory
 #===============================================================================
 
-set -euo pipefail
+HIVEMIND_HOME="${HIVEMIND_HOME:-$HOME/.local/share/hivemind}"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TUI_DIR="${SCRIPT_DIR}/tui"
+if [[ ! -d "$HIVEMIND_HOME" ]]; then
+    echo "Error: HIVEMIND not installed at $HIVEMIND_HOME"
+    echo "Run the installer first."
+    exit 1
+fi
 
-# Launch TUI
-cd "${TUI_DIR}"
+# Store launch directory for context
+export HIVEMIND_LAUNCH_DIR="$(pwd)"
+
+# Change to TUI directory and run
+cd "$HIVEMIND_HOME/tui"
+
+# Install dependencies if needed
+if [[ ! -d ".venv" ]]; then
+    echo "Setting up Python environment..."
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -q -e .
+else
+    source .venv/bin/activate
+fi
+
+# Run TUI
 exec python -m hivemind_tui "$@"
