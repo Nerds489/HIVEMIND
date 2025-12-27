@@ -111,6 +111,7 @@ class CodexHead:
         on_agent_update: Optional[Callable[[str, str, str], None]] = None,
         on_gate_update: Optional[Callable[[str, str], None]] = None,
         on_orchestration_start: Optional[Callable[[str, List[str]], None]] = None,
+        on_dialogue_turn: Optional[Callable[[str, str, int], None]] = None,
     ) -> None:
         self.auth = auth_manager
         self.working_dir = working_dir or Path.cwd()
@@ -118,6 +119,7 @@ class CodexHead:
         self.on_agent_update = on_agent_update
         self.on_gate_update = on_gate_update
         self.on_orchestration_start = on_orchestration_start
+        self.on_dialogue_turn = on_dialogue_turn
         self._conversation_history: List[dict] = []
         self._pending_processes: List[asyncio.subprocess.Process] = []
         self._live_inputs: List[str] = []
@@ -136,11 +138,11 @@ class CodexHead:
         self._codex_timeout = float(os.environ.get("HIVEMIND_CODEX_TIMEOUT", "300"))
         self._codex_quick_timeout = float(os.environ.get("HIVEMIND_CODEX_QUICK_TIMEOUT", "10"))
         self._claude_timeout = float(os.environ.get("HIVEMIND_CLAUDE_TIMEOUT", "300"))
-        self._dialogue_turns = int(os.environ.get("HIVEMIND_DIALOGUE_TURNS", "0"))
+        self._dialogue_turns = int(os.environ.get("HIVEMIND_DIALOGUE_TURNS", "3"))
         self._progress_interval = float(os.environ.get("HIVEMIND_PROGRESS_INTERVAL", "4"))
         self._total_timeout = float(os.environ.get("HIVEMIND_TOTAL_TIMEOUT", "300"))
         self._simple_word_max = int(os.environ.get("HIVEMIND_SIMPLE_WORDS_MAX", "14"))
-        self._codex_mode = os.environ.get("HIVEMIND_CODEX_MODE", "exec").lower()
+        self._codex_mode = os.environ.get("HIVEMIND_CODEX_MODE", "print").lower()
         self._codex_fallback_enabled = (
             os.environ.get("HIVEMIND_CODEX_FALLBACK", "1").lower()
             not in {"0", "false", "no"}
@@ -170,6 +172,11 @@ class CodexHead:
         if self.on_orchestration_start:
             self.on_orchestration_start(task, agents)
         self._phase = "agents"
+
+    def _emit_dialogue_turn(self, speaker: str, content: str, turn_number: int) -> None:
+        """Emit a dialogue turn to the UI."""
+        if self.on_dialogue_turn:
+            self.on_dialogue_turn(speaker, content, turn_number)
 
     def add_live_input(self, message: str) -> None:
         """Queue user input tied to the current operation."""
@@ -508,6 +515,38 @@ class CodexHead:
             if not stop.is_set():
                 self._emit_status(label)
 
+    async def _graceful_kill(self, process: asyncio.subprocess.Process, grace_period: float = 3.0) -> None:
+        """Kill process gracefully: SIGTERM first, then SIGKILL after grace period."""
+        if process.returncode is not None:
+            return  # Already dead
+
+        # Try SIGTERM first for graceful shutdown
+        try:
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        except (ProcessLookupError, OSError):
+            try:
+                process.terminate()
+            except ProcessLookupError:
+                return  # Already dead
+
+        # Wait for graceful shutdown
+        try:
+            await asyncio.wait_for(process.wait(), timeout=grace_period)
+            return  # Exited gracefully
+        except asyncio.TimeoutError:
+            pass  # Still alive, force kill
+
+        # Force kill with SIGKILL
+        try:
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+        except (ProcessLookupError, OSError):
+            try:
+                process.kill()
+            except ProcessLookupError:
+                return  # Already dead
+
+        await process.wait()
+
     async def _run_subprocess(
         self,
         cmd: List[str],
@@ -540,18 +579,10 @@ class CodexHead:
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             return process.returncode or 0, stdout.decode("utf-8", errors="replace"), stderr.decode("utf-8", errors="replace")
         except asyncio.TimeoutError:
-            try:
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-            except (ProcessLookupError, OSError):
-                process.kill()
-            await process.wait()
+            await self._graceful_kill(process)
             return 124, "", f"Request timed out after {timeout}s"
         except asyncio.CancelledError:
-            try:
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-            except (ProcessLookupError, OSError):
-                process.kill()
-            await process.wait()
+            await self._graceful_kill(process)
             raise
         finally:
             stop_event.set()
@@ -589,39 +620,8 @@ class CodexHead:
 
         fd, output_file = tempfile.mkstemp(suffix=".txt")
         os.close(fd)
-        cmd = self._build_codex_command(
-            codex_path=codex_path,
-            prompt=full_prompt,
-            output_file=output_file,
-            skip_git_check=skip_git_check,
-            global_skip=True,
-        )
 
-        code, stdout, stderr = await self._run_subprocess(
-            cmd,
-            timeout=effective_timeout,
-            status_label="Waiting on Codex...",
-            env=env,
-        )
-
-        response = ""
         try:
-            if os.path.exists(output_file):
-                with open(output_file, "r", encoding="utf-8") as handle:
-                    response = handle.read().strip()
-        finally:
-            try:
-                os.remove(output_file)
-            except OSError:
-                pass
-
-        error_text = stderr.strip() or response or "Codex error"
-        if code == 0 and response:
-            return True, response
-        if code == 0 and not response:
-            response = stdout.strip() or "No response from Codex"
-            return True, response
-        if skip_git_check and self._looks_like_trust_error(error_text):
             cmd = self._build_codex_command(
                 codex_path=codex_path,
                 prompt=full_prompt,
@@ -629,38 +629,66 @@ class CodexHead:
                 skip_git_check=skip_git_check,
                 global_skip=True,
             )
+
             code, stdout, stderr = await self._run_subprocess(
                 cmd,
-                timeout=timeout or self._codex_timeout,
-                status_label="Retrying Codex (trust override)...",
+                timeout=effective_timeout,
+                status_label="Waiting on Codex...",
                 env=env,
             )
+
             response = ""
-            try:
-                if os.path.exists(output_file):
-                    with open(output_file, "r", encoding="utf-8") as handle:
-                        response = handle.read().strip()
-            finally:
-                try:
-                    os.remove(output_file)
-                except OSError:
-                    pass
+            if os.path.exists(output_file):
+                with open(output_file, "r", encoding="utf-8") as handle:
+                    response = handle.read().strip()
+
+            error_text = stderr.strip() or response or "Codex error"
             if code == 0 and response:
                 return True, response
             if code == 0 and not response:
                 response = stdout.strip() or "No response from Codex"
                 return True, response
-            error_text = stderr.strip() or response or "Codex error"
+            if skip_git_check and self._looks_like_trust_error(error_text):
+                cmd = self._build_codex_command(
+                    codex_path=codex_path,
+                    prompt=full_prompt,
+                    output_file=output_file,
+                    skip_git_check=skip_git_check,
+                    global_skip=True,
+                )
+                code, stdout, stderr = await self._run_subprocess(
+                    cmd,
+                    timeout=timeout or self._codex_timeout,
+                    status_label="Retrying Codex (trust override)...",
+                    env=env,
+                )
+                response = ""
+                if os.path.exists(output_file):
+                    with open(output_file, "r", encoding="utf-8") as handle:
+                        response = handle.read().strip()
+                if code == 0 and response:
+                    return True, response
+                if code == 0 and not response:
+                    response = stdout.strip() or "No response from Codex"
+                    return True, response
+                error_text = stderr.strip() or response or "Codex error"
 
-        if self._codex_fallback_enabled and self._looks_like_codex_command_error(error_text):
-            return await self._call_codex_cli_print(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                timeout=effective_timeout,
-                skip_git_check=skip_git_check,
-            )
+            if self._codex_fallback_enabled and self._looks_like_codex_command_error(error_text):
+                return await self._call_codex_cli_print(
+                    prompt=prompt,
+                    system_prompt=system_prompt,
+                    timeout=effective_timeout,
+                    skip_git_check=skip_git_check,
+                )
 
-        return False, error_text
+            return False, error_text
+        finally:
+            # Always cleanup temp file
+            try:
+                if os.path.exists(output_file):
+                    os.remove(output_file)
+            except OSError:
+                pass
 
     def _build_codex_command(
         self,
@@ -1176,19 +1204,7 @@ class CodexHead:
         return command in ("help", "status", "recall")
 
     async def cancel_pending(self) -> None:
-        """Cancel any pending subprocesses."""
+        """Cancel any pending subprocesses gracefully."""
         for process in list(self._pending_processes):
-            if process.returncode is not None:
-                continue
-            try:
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-            except (ProcessLookupError, OSError):
-                try:
-                    process.kill()
-                except ProcessLookupError:
-                    pass
-            try:
-                await process.wait()
-            except Exception:
-                pass
+            await self._graceful_kill(process)
         self._pending_processes.clear()

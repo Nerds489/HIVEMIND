@@ -154,6 +154,38 @@ class ClaudeAgent:
         self.progress_interval = progress_interval
         self.on_status = on_status
     
+    async def _graceful_kill(self, process: asyncio.subprocess.Process, grace_period: float = 3.0) -> None:
+        """Kill process gracefully: SIGTERM first, then SIGKILL after grace period."""
+        if process.returncode is not None:
+            return  # Already dead
+
+        # Try SIGTERM first for graceful shutdown
+        try:
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        except (ProcessLookupError, OSError):
+            try:
+                process.terminate()
+            except ProcessLookupError:
+                return  # Already dead
+
+        # Wait for graceful shutdown
+        try:
+            await asyncio.wait_for(process.wait(), timeout=grace_period)
+            return  # Exited gracefully
+        except asyncio.TimeoutError:
+            pass  # Still alive, force kill
+
+        # Force kill with SIGKILL
+        try:
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+        except (ProcessLookupError, OSError):
+            try:
+                process.kill()
+            except ProcessLookupError:
+                return  # Already dead
+
+        await process.wait()
+
     async def _call_claude_cli(
         self,
         prompt: str,
@@ -162,26 +194,26 @@ class ClaudeAgent:
         status_label: Optional[str] = None,
     ) -> tuple[bool, str]:
         """Call Claude CLI.
-        
+
         Args:
             prompt: User prompt
             system_prompt: Optional system prompt
             timeout: Timeout in seconds
-            
+
         Returns:
             Tuple of (success, response_or_error)
         """
         claude_path = self.auth.claude_path
         if not claude_path:
             return False, "Claude CLI not available"
-        
+
         cmd = [claude_path, "--dangerously-skip-permissions", "--print"]
-        
+
         if system_prompt:
             cmd.extend(["--system-prompt", system_prompt])
-        
+
         cmd.append(prompt)
-        
+
         process = None
         progress_task = None
         stop_event = asyncio.Event()
@@ -212,13 +244,7 @@ class ClaudeAgent:
                     timeout=effective_timeout
                 )
             except asyncio.TimeoutError:
-                try:
-                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-                except (ProcessLookupError, OSError):
-                    if process:
-                        process.kill()
-                if process:
-                    await process.wait()
+                await self._graceful_kill(process)
                 return False, f"Request timed out after {effective_timeout}s"
 
             if process.returncode == 0:
@@ -232,11 +258,7 @@ class ClaudeAgent:
 
         except asyncio.CancelledError:
             if process and process.returncode is None:
-                try:
-                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-                except (ProcessLookupError, OSError):
-                    process.kill()
-                await process.wait()
+                await self._graceful_kill(process)
             raise
         except Exception as e:
             return False, f"Failed to call Claude: {str(e)}"

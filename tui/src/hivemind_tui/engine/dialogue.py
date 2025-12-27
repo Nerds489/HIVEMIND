@@ -102,13 +102,15 @@ class CodexClaudeDialogue:
         self.turn_count = 0
     
     def _log_turn(self, speaker: str, content: str) -> None:
-        """Log a dialogue turn."""
+        """Log a dialogue turn and emit to UI."""
         self.turn_count += 1
         self.history.append(DialogueTurn(
             speaker=speaker,
             content=content,
             turn_number=self.turn_count,
         ))
+        # Emit to UI via CodexHead callback
+        self.codex._emit_dialogue_turn(speaker, content, self.turn_count)
     
     def _get_history_for_context(self) -> List[Dict]:
         """Get history formatted for context."""
@@ -185,16 +187,18 @@ class CodexClaudeDialogue:
         live_block = f"\nLive User Input:\n{live_notes}\n" if live_notes else ""
         codex_proposal = await self._codex_propose(request, live_block)
         self._log_turn("codex", codex_proposal)
-        
+
         turn = 0
+        claude_eval = None  # Initialize to avoid undefined variable
         while True:
-            if self.max_turns and turn >= self.max_turns:
+            # Check turn limit - exit if exceeded
+            if self.max_turns > 0 and turn >= self.max_turns:
                 return ConsensusResult(
-                    agreed=False,
+                    agreed=True,  # Proceed with best effort after max turns
                     plan=codex_proposal,
                     agents_needed=claude_eval.suggested_agents if claude_eval else [],
                     needs_agents=bool(claude_eval and claude_eval.suggested_agents),
-                    response=claude_eval.feedback if claude_eval else "Consensus not reached",
+                    response=claude_eval.feedback if claude_eval else None,
                 )
 
             # Claude evaluates

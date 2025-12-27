@@ -1,32 +1,44 @@
-# Agent registry (engine-agnostic)
+# HIVEMIND Agent Registry
+#
+# 24 specialized agents across 4 teams
+# Full definitions in agents/registry/*.md
 
 agents:
-  dev:
-    - architect
-    - backend
-    - frontend
-    - reviewer
-    - writer
-    - devops
-  security:
-    - architect
-    - pentester
-    - malware
-    - wireless
-    - compliance
-    - incident
-  infrastructure:
-    - architect
-    - sysadmin
-    - network
-    - dba
-    - sre
-    - automation
-  qa:
-    - architect
-    - automation
-    - performance
-    - security
-    - manual
-    - data
+  development:
+    DEV-001: { name: Architect, role: "System Architecture" }
+    DEV-002: { name: Backend Developer, role: "Backend Implementation" }
+    DEV-003: { name: Frontend Developer, role: "Frontend Implementation" }
+    DEV-004: { name: Code Reviewer, role: "Code Review" }
+    DEV-005: { name: Technical Writer, role: "Documentation" }
+    DEV-006: { name: DevOps Liaison, role: "CI/CD & Deployment" }
 
+  security:
+    SEC-001: { name: Security Architect, role: "Security Design" }
+    SEC-002: { name: Penetration Tester, role: "Security Testing" }
+    SEC-003: { name: Malware Analyst, role: "Threat Analysis" }
+    SEC-004: { name: Wireless Security, role: "Wireless/IoT Security" }
+    SEC-005: { name: Compliance Auditor, role: "Compliance" }
+    SEC-006: { name: Incident Responder, role: "Incident Response" }
+
+  infrastructure:
+    INF-001: { name: Infrastructure Architect, role: "Cloud Architecture" }
+    INF-002: { name: Systems Administrator, role: "System Admin" }
+    INF-003: { name: Network Engineer, role: "Networking" }
+    INF-004: { name: Database Administrator, role: "Database Management" }
+    INF-005: { name: Site Reliability Engineer, role: "SRE & Monitoring" }
+    INF-006: { name: Automation Engineer, role: "IaC & Automation" }
+
+  qa:
+    QA-001: { name: QA Architect, role: "Test Strategy" }
+    QA-002: { name: Test Automation Engineer, role: "Test Automation" }
+    QA-003: { name: Performance Tester, role: "Performance Testing" }
+    QA-004: { name: Security Tester, role: "DAST/SAST" }
+    QA-005: { name: Manual QA Tester, role: "Manual Testing" }
+    QA-006: { name: Test Data Manager, role: "Test Data" }
+
+# Team summary
+teams:
+  development: [DEV-001, DEV-002, DEV-003, DEV-004, DEV-005, DEV-006]
+  security: [SEC-001, SEC-002, SEC-003, SEC-004, SEC-005, SEC-006]
+  infrastructure: [INF-001, INF-002, INF-003, INF-004, INF-005, INF-006]
+  qa: [QA-001, QA-002, QA-003, QA-004, QA-005, QA-006]

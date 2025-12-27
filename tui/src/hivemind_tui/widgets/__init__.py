@@ -6,6 +6,7 @@ from .input_box import InputBox
 from .status_bar import StatusBar
 from .orchestration_panel import OrchestrationPanel
 from .status_log import StatusLog
+from .dialogue_view import DialogueView
 
 __all__ = [
     "AgentListWidget",
@@ -14,4 +15,5 @@ __all__ = [
     "StatusBar",
     "OrchestrationPanel",
     "StatusLog",
+    "DialogueView",
 ]

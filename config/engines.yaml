@@ -1,15 +1,17 @@
 # HIVEMIND Engine Configuration
-# 
+#
 # Supported engines: codex, claude
-# Set which engine runs HIVEMIND and which runs sub-agents
+# Architecture: Codex orchestrates, Claude executes agents
 
-# Required compatibility keys (used by validation tooling)
-default: claude
+# Default engine for orchestration
+default: codex
 
-# Preferred engine order (used by higher-level tooling)
+# Engine roles
+#   - Codex (HEAD_CODEX): Main orchestrator, parses tasks, routes to agents
+#   - Claude: Expert agent executor, handles individual agent tasks
 hivemind:
-  prefer: claude
-  fallback: codex
+  orchestrator: codex       # Codex runs the HIVEMIND orchestration
+  agents: claude            # Claude executes agent tasks
 
 # Active configuration
 active:

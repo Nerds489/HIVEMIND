@@ -2,13 +2,13 @@
 
 import os
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from textual import on, work
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical
-from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, Input
+from textual.containers import Container, Horizontal, Vertical, Grid
+from textual.screen import Screen, ModalScreen
+from textual.widgets import Header, Footer, Static, Button, Input, Label
 from textual.binding import Binding
 from textual.worker import Worker, WorkerState, get_current_worker
 
@@ -16,9 +16,99 @@ from ..widgets.agent_list import AgentListWidget
 from ..widgets.message_view import MessageView
 from ..widgets.status_bar import StatusBar
 from ..widgets.orchestration_panel import OrchestrationPanel
+from ..widgets.dialogue_view import DialogueView
 from ..engine.auth import AuthManager
 from ..engine.codex_head import CodexHead, ResponseSource, CodexResponse
 from ..engine.claude_agent import AGENTS
+
+
+class QuickCommandMenu(ModalScreen):
+    """Modal popup for quick command selection."""
+
+    BINDINGS = [
+        Binding("escape", "dismiss", "Close", show=True),
+    ]
+
+    CSS = """
+    QuickCommandMenu {
+        align: center middle;
+    }
+
+    #quick-menu-container {
+        width: 50;
+        height: auto;
+        max-height: 80%;
+        background: $surface;
+        border: thick $primary;
+        padding: 1 2;
+    }
+
+    #quick-menu-title {
+        text-align: center;
+        text-style: bold;
+        color: $primary;
+        margin-bottom: 1;
+    }
+
+    .menu-section {
+        margin-bottom: 1;
+    }
+
+    .menu-section-title {
+        text-style: bold;
+        color: $secondary;
+    }
+
+    .menu-button {
+        width: 100%;
+        margin: 0;
+    }
+    """
+
+    def __init__(self, on_select: Callable[[str], None], *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._on_select = on_select
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="quick-menu-container"):
+            yield Label("Quick Commands", id="quick-menu-title")
+
+            with Vertical(classes="menu-section"):
+                yield Label("Teams:", classes="menu-section-title")
+                yield Button("/dev - Development", id="cmd-dev", classes="menu-button")
+                yield Button("/sec - Security", id="cmd-sec", classes="menu-button")
+                yield Button("/infra - Infrastructure", id="cmd-infra", classes="menu-button")
+                yield Button("/qa - Quality Assurance", id="cmd-qa", classes="menu-button")
+
+            with Vertical(classes="menu-section"):
+                yield Label("Agents:", classes="menu-section-title")
+                yield Button("/architect - DEV-001", id="cmd-architect", classes="menu-button")
+                yield Button("/pentest - SEC-002", id="cmd-pentest", classes="menu-button")
+                yield Button("/sre - INF-005", id="cmd-sre", classes="menu-button")
+                yield Button("/reviewer - DEV-004", id="cmd-reviewer", classes="menu-button")
+
+            with Vertical(classes="menu-section"):
+                yield Label("Full:", classes="menu-section-title")
+                yield Button("/hivemind - All agents", id="cmd-hivemind", classes="menu-button", variant="primary")
+
+    @on(Button.Pressed)
+    def handle_button(self, event: Button.Pressed) -> None:
+        """Handle menu button press."""
+        cmd_map = {
+            "cmd-dev": "/dev ",
+            "cmd-sec": "/sec ",
+            "cmd-infra": "/infra ",
+            "cmd-qa": "/qa ",
+            "cmd-architect": "/architect ",
+            "cmd-pentest": "/pentest ",
+            "cmd-sre": "/sre ",
+            "cmd-reviewer": "/reviewer ",
+            "cmd-hivemind": "/hivemind ",
+        }
+        cmd = cmd_map.get(event.button.id, "")
+        if cmd:
+            self._on_select(cmd)
+            self.dismiss()
 
 
 class MainScreen(Screen):
@@ -29,6 +119,8 @@ class MainScreen(Screen):
         Binding("escape", "focus_chat_input", "Focus Input", show=False),
         Binding("c", "open_full_chat", "Full Chat", show=True),
         Binding("ctrl+c", "cancel_task", "Cancel", show=True),
+        Binding("ctrl+k", "show_quick_menu", "Commands", show=True),
+        Binding("slash", "focus_with_slash", "Command", show=False),
     ]
 
     def __init__(self, auth_manager: AuthManager, *args, **kwargs):
@@ -51,6 +143,7 @@ class MainScreen(Screen):
             on_agent_update=self._on_agent_update,
             on_gate_update=self._on_gate_update,
             on_orchestration_start=self._on_orchestration_start,
+            on_dialogue_turn=self._on_dialogue_turn,
         )
 
     def compose(self) -> ComposeResult:
@@ -76,6 +169,7 @@ class MainScreen(Screen):
                 # Center panel: Chat and orchestration
                 with Vertical(id="chat-panel", classes="panel"):
                     yield Static("RESPONSE", classes="panel-title")
+                    yield DialogueView(id="dialogue-view")
                     yield MessageView(id="message-view")
                     yield OrchestrationPanel(id="orchestration-panel")
 
@@ -92,18 +186,17 @@ class MainScreen(Screen):
         return """[bold cyan]HIVEMIND v2.0[/bold cyan]
 
 [yellow]Enter[/yellow] - Send message
+[yellow]Ctrl+K[/yellow] - Quick commands
+[yellow]/[/yellow] - Start command
 [yellow]C[/yellow] - Full chat screen
 [yellow]Q[/yellow] - Quit
-[yellow]D[/yellow] - Toggle dark mode
-[yellow]Ctrl+O[/yellow] - Status log
 [yellow]Ctrl+C[/yellow] - Cancel task
-[yellow]?[/yellow] - Help
 
 [dim]Commands:
 /hivemind, /dev, /sec, /infra, /qa
 /architect, /pentest, /sre, /reviewer
 /status, /recall, /debug
-/note <message> (live input during planning/review)[/dim]"""
+/note <msg> (live input)[/dim]"""
 
     def on_mount(self) -> None:
         """Handle screen mount event."""
@@ -161,6 +254,31 @@ Use /help to see commands.""",
         except Exception:
             pass
 
+    def _on_dialogue_turn(self, speaker: str, content: str, turn_number: int) -> None:
+        """Handle dialogue turn updates - called from worker thread."""
+        try:
+            self.app.call_from_thread(self._update_dialogue_ui, speaker, content, turn_number)
+        except Exception:
+            pass
+
+    def _update_dialogue_ui(self, speaker: str, content: str, turn_number: int) -> None:
+        """Update dialogue view on main thread."""
+        try:
+            dialogue_view = self.query_one("#dialogue-view", DialogueView)
+            dialogue_view.visible = True
+            dialogue_view.add_turn(speaker, content)
+            # Also show in message view as a visual indicator
+            message_view = self.query_one("#message-view", MessageView)
+            speaker_name = "CODEX" if speaker == "codex" else "CLAUDE"
+            color = "cyan" if speaker == "codex" else "magenta"
+            # Truncate for inline display
+            short_content = content[:100] + "..." if len(content) > 100 else content
+            message_view.update_last_message(
+                f"[{color}][Turn {turn_number}] {speaker_name}:[/{color}] {short_content}"
+            )
+        except Exception:
+            pass
+
     def _update_status_display(self, message: str) -> None:
         """Update status display on main thread."""
         try:
@@ -180,6 +298,11 @@ Use /help to see commands.""",
         orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
         agent_list = self.query_one("#agent-list", AgentListWidget)
         status_bar = self.query_one("#status-bar", StatusBar)
+        dialogue_view = self.query_one("#dialogue-view", DialogueView)
+
+        # Clear dialogue for new task
+        dialogue_view.clear()
+        dialogue_view.visible = True
 
         orch_panel.start_orchestration(task)
         agent_list.reset_all_agents()
@@ -231,6 +354,7 @@ Use /help to see commands.""",
             orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
             agent_list = self.query_one("#agent-list", AgentListWidget)
             status_bar = self.query_one("#status-bar", StatusBar)
+            dialogue_view = self.query_one("#dialogue-view", DialogueView)
             message_view.remove_last_message()
             message_view.add_message(
                 role="assistant",
@@ -239,6 +363,8 @@ Use /help to see commands.""",
             )
             orch_panel.clear()
             agent_list.reset_all_agents()
+            dialogue_view.clear()
+            dialogue_view.visible = False
             self._processing = False
             status_bar.set_connection_status("connected")
             status_bar.set_status_message("Cancelled")
@@ -251,6 +377,25 @@ Use /help to see commands.""",
     def action_open_full_chat(self) -> None:
         """Open the full chat screen."""
         self.app.action_show_chat()
+
+    def action_show_quick_menu(self) -> None:
+        """Show the quick command menu."""
+        def on_command_selected(cmd: str) -> None:
+            chat_input = self.query_one("#quick-chat-input", Input)
+            chat_input.value = cmd
+            chat_input.focus()
+            # Move cursor to end
+            chat_input.action_end()
+
+        self.app.push_screen(QuickCommandMenu(on_command_selected))
+
+    def action_focus_with_slash(self) -> None:
+        """Focus input with / prefix for commands."""
+        chat_input = self.query_one("#quick-chat-input", Input)
+        if not chat_input.has_focus:
+            chat_input.value = "/"
+            chat_input.focus()
+            chat_input.action_end()
 
     # Handle button presses with @on decorator
     @on(Button.Pressed, "#send-btn")
