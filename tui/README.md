@@ -1,94 +1,155 @@
 # HIVEMIND TUI
 
-A Textual-based Terminal User Interface for the HIVEMIND multi-agent system.
+```text
+H   H III V   V EEEEE M   M III N   N DDDD
+H   H  I  V   V E     MM MM  I  NN  N D   D
+HHHHH  I  V   V EEEE  M M M  I  N N N D   D
+H   H  I   V V  E     M   M  I  N  NN D   D
+H   H III   V   EEEEE M   M III N   N DDDD
+```
 
-## Features
 
-- **Quick Chat Bar** - Chat input at the top of the main screen, just type and press Enter
-- **Full Chat Mode** - Dedicated chat screen with message history
-- **Live Claude Integration** - Connects directly to Claude Code CLI (no backend required)
-- **Three-Panel Layout** - Agents, Response, and Help panels
-- **24 AI Agents** - Organized across 4 specialized teams
-- **Keyboard-Driven** - Efficient navigation with comprehensive shortcuts
-- **Rich Formatting** - Markdown rendering and syntax highlighting
+```text
++--------------------------------------+
+|               HIVEMIND               |
+|  Unified Multi-Agent Orchestration   |
++--------------------------------------+
+```
 
-## Installation
+A Textual-based terminal UI for the HIVEMIND multi-agent system.
+
+## Highlights
+
+- Quick chat bar on the main screen
+- Full chat mode with history
+- Codex + Claude consensus planning
+- 24 specialist agents across 4 teams
+- Status log popup (Ctrl+O)
+- Live input injection during planning/review (/note)
+- Cyberpunk/matrix theme
+
+---
+
+## Install
 
 ```bash
 cd /var/home/mintys/HIVEMIND/tui
 pip install -e .
 ```
 
-## Usage
+---
 
-### Quick Start
+## Run
 
 ```bash
-# Using the launcher script (recommended)
+# Launcher (recommended)
 ./run-tui.sh
 
-# Or directly via Python
+# Python module
 python -m hivemind_tui
 
-# Or via the installed command
+# Installed command
 hivemind-tui
 ```
 
+---
+
+## Commands
+
+```
+/hivemind [task]   Full multi-agent orchestration
+/dev [task]        Development team
+/sec [task]        Security team
+/infra [task]      Infrastructure team
+/qa [task]         QA team
+/architect [task]  DEV-001 Architect
+/pentest [task]    SEC-002 Pentester
+/sre [task]        INF-005 SRE
+/reviewer [task]   DEV-004 Code Reviewer
+/status            System status
+/recall [query]    Session memory recall
+/debug [task]      Routing details
+/note [message]    Live input during planning/review
+```
+
+Aliases for /note: /live, /feedback
+
+---
+
+## Live Input While Running
+
+If you need to steer the plan or review while a task is running:
+
+```
+/note focus on auth flow correctness
+```
+
+Notes sent while idle are queued for the next task.
+
+---
+
+## Keyboard Shortcuts
+
 ### Main Screen
 
-The main screen has three sections:
+| Key | Action |
+|-----|--------|
+| Enter | Send message (quick input) |
+| C | Open full chat screen |
+| M | Return to main view |
+| Q | Quit |
+| D | Toggle dark mode |
+| ? | Help |
+| Ctrl+O | Status log popup |
+| Ctrl+C | Cancel current task |
+| Esc | Focus input |
 
-```
-+------------------------------------------------------------------+
-|  [Type here and press Enter to chat...]  [Send] [Full Chat]     |
-+------------------------------------------------------------------+
-|  AGENTS      |  RESPONSE              |  QUICK HELP             |
-|              |                        |                         |
-|  DEV Team    |  HIVEMIND ready...     |  Enter - Focus chat    |
-|  - Architect |                        |  C - Full chat screen  |
-|  - Backend   |  Your message here     |  Q - Quit              |
-|  - Frontend  |                        |  D - Toggle dark mode  |
-|  ...         |  Response appears...   |  ? - Help              |
-|              |                        |                         |
-|  SEC Team    |                        |  STATUS                 |
-|  - Security  |                        |  Claude: Ready          |
-|  ...         |                        |  Agents: 24             |
-+------------------------------------------------------------------+
-|  Q Quit | C Chat | ? Help | D Dark Mode                          |
-+------------------------------------------------------------------+
-```
-
-### Keyboard Shortcuts
+### Full Chat Screen
 
 | Key | Action |
 |-----|--------|
-| `Enter` | Focus chat input / Send message |
-| `C` | Open full chat screen |
-| `Q` | Quit application |
-| `?` | Show help |
-| `D` | Toggle dark/light mode |
-| `M` | Return to main view |
-| `Esc` | Go back |
-| `Ctrl+R` | Refresh screen |
+| Ctrl+Enter | Send message |
+| Ctrl+L | Clear chat history |
+| Ctrl+C | Cancel current task |
+| Esc | Back to main |
 
-### Chat Screen Shortcuts
+---
 
-| Key | Action |
-|-----|--------|
-| `Ctrl+Enter` | Send message |
-| `Ctrl+L` | Clear messages |
-| `Ctrl+Up` | Previous message in history |
-| `Ctrl+Down` | Next message in history |
-| `Esc` | Return to main screen |
+## Requirements
 
-## How It Works
+- Python 3.11+
+- Codex CLI installed (`codex` in PATH)
+- Claude CLI installed (`claude` in PATH)
+- textual >= 0.40.0
+- rich >= 13.0.0
+- python-dotenv >= 1.0.0
 
-The TUI connects directly to Claude Code CLI:
+---
 
-1. You type a message in the chat input
-2. TUI calls `claude --print "your message"`
-3. Response streams back and displays in the message view
-4. No backend server required - works out of the box
+## Theme
+
+Set the theme from the environment:
+
+```bash
+export HIVEMIND_THEME="cyberpunk-matrix"
+```
+
+---
+
+## Troubleshooting
+
+### Codex trusted directory error
+
+HIVEMIND skips the Codex trusted-directory check globally. If you still see it, update the `codex` CLI.
+
+### CLI not found
+
+```bash
+which codex
+which claude
+```
+
+---
 
 ## Architecture
 
@@ -97,108 +158,26 @@ src/hivemind_tui/
 ├── app.py                # Main Textual application
 ├── styles.css            # Global CSS styles
 ├── screens/
-│   ├── main.py          # Main screen with quick chat
-│   └── chat.py          # Full chat screen
+│   ├── auth_screen.py    # Auth screen
+│   ├── main.py           # Main screen
+│   ├── chat.py           # Full chat
+│   └── status_log.py     # Status log popup
 ├── widgets/
-│   ├── agent_list.py    # Agent list by team
-│   ├── message_view.py  # Message history display
-│   ├── input_box.py     # Multi-line input with history
-│   └── status_bar.py    # System status display
+│   ├── agent_list.py     # Agent list by team
+│   ├── message_view.py   # Message history
+│   ├── input_box.py      # Multi-line input with history
+│   ├── status_bar.py     # System status
+│   └── status_log.py     # Status log widget
 └── engine/
-    ├── auth.py          # CLI authentication checks
-    ├── codex_head.py    # Codex orchestration
-    ├── claude_agent.py  # Claude agent execution
-    ├── dialogue.py      # Codex+Claude consensus
-    └── memory.py        # Session memory
+    ├── auth.py           # CLI authentication checks
+    ├── codex_head.py     # Codex orchestration
+    ├── claude_agent.py   # Claude agent execution
+    ├── dialogue.py       # Codex + Claude consensus
+    └── memory.py         # Session memory
 ```
 
-## The 24 Agents
-
-### Development Team (6 agents)
-- DEV-001: Architect
-- DEV-002: Backend Developer
-- DEV-003: Frontend Developer
-- DEV-004: Code Reviewer
-- DEV-005: Technical Writer
-- DEV-006: DevOps Engineer
-
-### Security Team (6 agents)
-- SEC-001: Security Architect
-- SEC-002: Penetration Tester
-- SEC-003: Malware Analyst
-- SEC-004: Wireless Security
-- SEC-005: Compliance Auditor
-- SEC-006: Incident Responder
-
-### Infrastructure Team (6 agents)
-- INF-001: Cloud Architect
-- INF-002: Systems Admin
-- INF-003: Network Engineer
-- INF-004: Database Admin
-- INF-005: SRE
-- INF-006: Automation Engineer
-
-### QA Team (6 agents)
-- QA-001: QA Architect
-- QA-002: Test Automation
-- QA-003: Performance Tester
-- QA-004: Security Tester
-- QA-005: Manual QA
-- QA-006: Test Data Manager
-
-## Requirements
-
-- Python 3.11+
-- Claude Code CLI installed (`claude` command available)
-- textual >= 0.40.0
-- rich >= 13.0.0
-- python-dotenv >= 1.0.0
-
-## Development
-
-### CSS Hot Reload
-
-```bash
-./run-tui.sh --watch-css
-# or
-hivemind-tui --watch-css
-```
-
-### Code Style
-
-```bash
-black src/
-ruff check src/
-mypy src/
-```
-
-## Troubleshooting
-
-### "Claude Code CLI not found"
-
-Make sure Claude Code is installed and in your PATH:
-
-```bash
-# Check if claude is available
-which claude
-
-# If not found, install it
-npm install -g @anthropic-ai/claude-code
-
-# Or add to PATH
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-### TUI won't start
-
-```bash
-# Reinstall dependencies
-pip install -e . --force-reinstall
-
-# Check Python version (needs 3.11+)
-python --version
-```
+---
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT License - See LICENSE.

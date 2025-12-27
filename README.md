@@ -7,13 +7,24 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
-**Talk to Codex. Complex work gets Claude and 24 specialist agents.**
+<pre>
+H   H III V   V EEEEE M   M III N   N DDDD
+H   H  I  V   V E     MM MM  I  NN  N D   D
+HHHHH  I  V   V EEEE  M M M  I  N N N D   D
+H   H  I   V V  E     M   M  I  N  NN D   D
+H   H III   V   EEEEE M   M III N   N DDDD
+</pre>
 
-[Quick Start](#quick-start) |
-[How It Works](#how-it-works) |
-[Agents](#agents) |
-[Installation](#installation) |
-[Keyboard Shortcuts](#keyboard-shortcuts)
+<pre>
++--------------------------------------+
+|               HIVEMIND               |
+|  Unified Multi-Agent Orchestration   |
++--------------------------------------+
+</pre>
+
+Talk to Codex. Complex work brings Claude and 24 specialist agents.
+
+[Quick Start](#quick-start) | [How It Works](#how-it-works) | [Usage](#usage) | [Install](#install) | [Shortcuts](#keyboard-shortcuts)
 
 </div>
 
@@ -21,56 +32,27 @@
 
 ## What is HIVEMIND?
 
-HIVEMIND is an AI assistant that seamlessly escalates to multi-agent collaboration when needed.
+HIVEMIND is a unified AI assistant that escalates to coordinated multi-agent work when tasks get complex.
 
-**Simple questions?** Codex answers directly.
+- Simple requests are answered directly by Codex.
+- Complex requests trigger a Codex + Claude planning loop.
+- Claude executes specialist agents and reports back.
+- Codex and Claude both agree before you get the final response.
 
-**Complex technical work?** Codex consults with Claude, they reach consensus, then specialist agents execute.
+The orchestration is internal. You only talk to one AI.
 
-You always talk to one AI. The orchestration is invisible.
+---
 
-**Features:**
-- Non-blocking UI - stays responsive during processing
-- Cancel any task with `Ctrl+C`
-- Input history navigation with `Ctrl+Up/Down`
-- Real-time status updates during agent work
+## Features
 
-```
-                    +-------------------+
-                    |    YOU            |
-                    +---------+---------+
-                              |
-                              v
-              +-------------------------------+
-              |           CODEX               |
-              |    (Your AI Assistant)        |
-              +---------------+---------------+
-                              |
-            Simple?           |           Complex?
-           Answer ←───────────┴───────────→ Consult
-           directly                         Claude
-                                              |
-                                              v
-                              +-------------------------------+
-                              |          CLAUDE               |
-                              |    (Expert Consultant)        |
-                              +---------------+---------------+
-                                              |
-                        +─────────────────────┼─────────────────────+
-                        |                     |                     |
-                        v                     v                     v
-                 +-------------+       +-------------+       +-------------+
-                 | DEVELOPMENT |       |  SECURITY   |       |     QA      |
-                 |  6 agents   |       |  6 agents   |       |  6 agents   |
-                 +-------------+       +-------------+       +-------------+
-                        |                     |                     |
-                        +─────────────────────┼─────────────────────+
-                                              |
-                                    +-------------------+
-                                    | INFRASTRUCTURE    |
-                                    |    6 agents       |
-                                    +-------------------+
-```
+- Codex + Claude consensus planning
+- 24 agents across DEV, SEC, INF, QA
+- Quality gates and verification before delivery
+- Live status updates and a status log popup
+- Live input injection during planning/review via /note
+- Cancel any task with Ctrl+C
+- Cyberpunk/matrix theme
+- Global Codex trusted-directory skip enabled
 
 ---
 
@@ -81,47 +63,86 @@ You always talk to one AI. The orchestration is invisible.
 git clone https://github.com/Nerds489/HIVEMIND.git
 cd HIVEMIND
 
-# Install (DO NOT use sudo)
+# Install (do not use sudo)
 ./install.sh
 
-# Run (from any directory)
+# Run from any directory
 hivemind
 ```
 
-That's it. First run will prompt for Codex/Claude authentication.
+First run opens the auth screen for Codex and Claude.
 
 ---
 
 ## How It Works
 
-### 1. You Talk to Codex
+1) You send a message to Codex.
+2) If it is complex, Codex consults Claude.
+3) They iterate until they agree on the plan and agents.
+4) Claude runs the agents.
+5) Codex and Claude both verify the output.
+6) Only then does Codex respond to you.
 
-Codex is your primary AI assistant. It handles:
-- Greetings and conversation
-- Simple questions
-- General explanations
-- Quick lookups
+---
 
-### 2. Complex Work → Claude Consultation
+## Usage
 
-When you ask for something substantial (build, design, implement, test, deploy, audit), Codex consults Claude:
+### Commands
 
-1. **Codex proposes** an approach
-2. **Claude evaluates** and suggests improvements
-3. **Both iterate** until consensus
-4. **Agents execute** the agreed plan
-5. **Both verify** the output before delivery
+```
+/hivemind [task]   Full multi-agent orchestration
+/dev [task]        Development team
+/sec [task]        Security team
+/infra [task]      Infrastructure team
+/qa [task]         QA team
+/architect [task]  DEV-001 Architect
+/pentest [task]    SEC-002 Pentester
+/sre [task]        INF-005 SRE
+/reviewer [task]   DEV-004 Code Reviewer
+/status            System status
+/recall [query]    Session memory recall
+/debug [task]      Routing details
+/note [message]    Live input during planning/review
+```
 
-### 3. Specialist Agents Execute
+Aliases for /note: /live, /feedback
 
-24 agents across 4 teams handle the actual work:
+### Live Input During Planning/Review
 
-| Team | Agents |
-|------|--------|
-| Development | Architect, Backend, Frontend, Reviewer, Writer, DevOps |
-| Security | SecArch, Pentester, Malware, Wireless, Compliance, Incident |
-| Infrastructure | CloudArch, SysAdmin, Network, DBA, SRE, Automation |
-| QA | QAArch, Automation, Performance, SecTest, Manual, TestData |
+If you want to steer the plan or the review while work is running:
+
+```
+/note prioritize security review before performance tuning
+```
+
+Notes sent while no task is running are queued for the next task.
+
+---
+
+## Keyboard Shortcuts
+
+### Main Screen
+
+| Key | Action |
+|-----|--------|
+| Enter | Send message (quick input) |
+| C | Open full chat screen |
+| M | Return to main view |
+| Q | Quit |
+| D | Toggle dark mode |
+| ? | Help |
+| Ctrl+O | Status log popup |
+| Ctrl+C | Cancel current task |
+| Esc | Focus input |
+
+### Full Chat Screen
+
+| Key | Action |
+|-----|--------|
+| Ctrl+Enter | Send message |
+| Ctrl+L | Clear chat history |
+| Ctrl+C | Cancel current task |
+| Esc | Back to main |
 
 ---
 
@@ -131,202 +152,70 @@ When you ask for something substantial (build, design, implement, test, deploy, 
 
 | ID | Agent | Expertise |
 |----|-------|-----------|
-| DEV-001 | Architect | System design, patterns, APIs, microservices |
-| DEV-002 | Backend Developer | APIs, servers, databases, Python, Node, Java |
-| DEV-003 | Frontend Developer | React, Vue, Angular, CSS, TypeScript |
-| DEV-004 | Code Reviewer | Code quality, best practices, PR reviews |
-| DEV-005 | Technical Writer | Documentation, guides, API docs |
-| DEV-006 | DevOps Liaison | CI/CD, pipelines, deployment automation |
+| DEV-001 | Architect | System design, patterns, APIs |
+| DEV-002 | Backend Developer | APIs, servers, databases |
+| DEV-003 | Frontend Developer | UI, UX, web apps |
+| DEV-004 | Code Reviewer | Code quality, best practices |
+| DEV-005 | Technical Writer | Docs, guides, API docs |
+| DEV-006 | DevOps Liaison | CI/CD, deployment |
 
 ### Security Team (SEC-001 to SEC-006)
 
 | ID | Agent | Expertise |
 |----|-------|-----------|
 | SEC-001 | Security Architect | Threat modeling, security design |
-| SEC-002 | Penetration Tester | Vulnerability assessment, exploits, OWASP |
-| SEC-003 | Malware Analyst | Reverse engineering, threat analysis |
-| SEC-004 | Wireless Security | WiFi, Bluetooth, RF, IoT security |
-| SEC-005 | Compliance Auditor | NIST, SOC2, GDPR, PCI compliance |
-| SEC-006 | Incident Responder | Breach response, forensics, recovery |
+| SEC-002 | Penetration Tester | Vulnerability assessment |
+| SEC-003 | Malware Analyst | Threat analysis |
+| SEC-004 | Wireless Security | WiFi, Bluetooth, IoT |
+| SEC-005 | Compliance Auditor | SOC2, GDPR, PCI |
+| SEC-006 | Incident Responder | Breach response |
 
 ### Infrastructure Team (INF-001 to INF-006)
 
 | ID | Agent | Expertise |
 |----|-------|-----------|
-| INF-001 | Infrastructure Architect | AWS, GCP, Azure, cloud design |
-| INF-002 | Systems Administrator | Linux, Windows, server management |
-| INF-003 | Network Engineer | Firewalls, routing, DNS, VPCs |
-| INF-004 | Database Administrator | PostgreSQL, MySQL, MongoDB, optimization |
-| INF-005 | Site Reliability Engineer | Kubernetes, monitoring, reliability |
-| INF-006 | Automation Engineer | Terraform, Ansible, IaC |
+| INF-001 | Infrastructure Architect | Cloud design |
+| INF-002 | Systems Administrator | Linux/Windows |
+| INF-003 | Network Engineer | DNS, routing, firewalls |
+| INF-004 | Database Administrator | Postgres, MySQL, MongoDB |
+| INF-005 | Site Reliability Engineer | Reliability, monitoring |
+| INF-006 | Automation Engineer | Terraform, Ansible |
 
 ### QA Team (QA-001 to QA-006)
 
 | ID | Agent | Expertise |
 |----|-------|-----------|
-| QA-001 | QA Architect | Test strategy, coverage planning |
-| QA-002 | Test Automation | Selenium, Cypress, pytest, frameworks |
-| QA-003 | Performance Tester | Load testing, JMeter, k6, benchmarks |
-| QA-004 | Security Tester | DAST, SAST, vulnerability scanning |
-| QA-005 | Manual QA | Exploratory testing, UAT, regression |
-| QA-006 | Test Data Manager | Fixtures, environments, test data |
+| QA-001 | QA Architect | Test strategy |
+| QA-002 | Test Automation | Automation frameworks |
+| QA-003 | Performance Tester | Load testing |
+| QA-004 | Security Tester | DAST, SAST |
+| QA-005 | Manual QA | Exploratory testing |
+| QA-006 | Test Data Manager | Fixtures, data |
 
 ---
 
-## Installation
+## Install
 
 ### Prerequisites
 
 | Component | Requirement |
 |-----------|-------------|
-| **OS** | Linux or macOS |
-| **Python** | 3.11+ |
-| **Node.js** | 18+ (for Codex/Claude CLIs) |
-| **Codex CLI** | `npm install -g @openai/codex` |
-| **Claude CLI** | `npm install -g @anthropic-ai/claude-code` |
+| OS | Linux or macOS |
+| Python | 3.11+ |
+| Node.js | 18+ |
+| Codex CLI | npm install -g @openai/codex |
+| Claude CLI | npm install -g @anthropic-ai/claude-code |
 
-### Install HIVEMIND
+### Install
 
 ```bash
-# Clone the repo
-git clone https://github.com/Nerds489/HIVEMIND.git
-cd HIVEMIND
-
-# Run installer (DO NOT use sudo)
 ./install.sh
 ```
-
-The installer:
-- Creates `~/.local/share/hivemind/` installation
-- Installs Python TUI dependencies
-- Creates `hivemind` launcher in `~/.local/bin/`
-- Sets up PATH if needed
 
 ### Uninstall
 
 ```bash
 ./uninstall.sh
-```
-
-### Run
-
-```bash
-# From any directory
-hivemind
-
-# Or with initial prompt
-hivemind "Design a REST API for user management"
-```
-
-### Authentication
-
-First run shows the auth screen:
-- **Codex** - Browser OAuth or `OPENAI_API_KEY` env var
-- **Claude** - Browser OAuth or `ANTHROPIC_API_KEY` env var
-
-At minimum, Codex is required. Claude is optional but recommended.
-
----
-
-## Usage Examples
-
-### Simple Questions (Codex Direct)
-
-```
-> Hi
-Hello! I'm Codex, your AI assistant. How can I help?
-
-> What's a REST API?
-A REST API is an architectural style for web services...
-
-> Thanks!
-You're welcome!
-```
-
-### Complex Work (Claude + Agents)
-
-```
-> Build a user authentication system with JWT
-
-[Codex consults Claude...]
-[Consensus reached]
-[DEV-001 Architect] Designing auth architecture
-[DEV-002 Backend] Implementing JWT endpoints
-[SEC-001 Security] Reviewing auth security
-[QA-002 Automation] Writing auth tests
-
-Here's your complete authentication system:
-[Full implementation with code, tests, and documentation]
-```
-
-### Work Requests That Trigger Agents
-
-| You Say | Agents Involved |
-|---------|-----------------|
-| "Design a microservices architecture" | DEV-001 |
-| "Build a REST API with auth" | DEV-001, DEV-002, SEC-001 |
-| "Run a security audit" | SEC-001, SEC-002 |
-| "Set up Kubernetes with monitoring" | INF-001, INF-005 |
-| "Write tests for the payment module" | QA-001, QA-002 |
-| "Deploy to production" | DEV-006, INF-005 |
-
----
-
-## Keyboard Shortcuts
-
-### Main Screen
-| Key | Action |
-|-----|--------|
-| `Enter` | Send message (in input box) |
-| `C` | Open full chat screen |
-| `M` | Return to main view |
-| `Q` | Quit |
-| `D` | Toggle dark mode |
-| `?` | Help |
-| `Ctrl+C` | Cancel current task |
-| `Esc` | Focus input |
-
-### Full Chat Screen
-| Key | Action |
-|-----|--------|
-| `Ctrl+Enter` | Send message |
-| `Ctrl+L` | Clear chat history |
-| `Ctrl+C` | Cancel current task |
-| `Ctrl+Up/Down` | Navigate input history |
-| `Esc` | Go back to main |
-
----
-
-## Project Structure
-
-```
-HIVEMIND/
-├── install.sh            # Installer
-├── hivemind              # Dev launcher
-├── config/
-│   └── hivemind.yaml     # Configuration
-├── tui/                  # TUI application
-│   ├── src/hivemind_tui/
-│   │   ├── app.py        # Main app
-│   │   ├── engine/
-│   │   │   ├── auth.py         # Authentication
-│   │   │   ├── codex_head.py   # Codex (primary AI)
-│   │   │   ├── claude_agent.py # Claude (consultant)
-│   │   │   ├── dialogue.py     # Consensus system
-│   │   │   └── coordinator.py  # Backward compat
-│   │   ├── screens/
-│   │   │   ├── auth_screen.py  # Auth screen
-│   │   │   ├── main.py         # Main screen
-│   │   │   └── chat.py         # Chat screen
-│   │   └── widgets/
-│   └── pyproject.toml
-├── agents/
-│   └── registry/         # Agent definitions
-├── memory/               # Persistent storage
-│   ├── short-term/
-│   ├── long-term/
-│   └── episodic/
-└── workspace/            # Agent outputs
 ```
 
 ---
@@ -339,78 +228,47 @@ HIVEMIND/
 # Optional - browser auth works without these
 export OPENAI_API_KEY="sk-..."
 export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Theme override
+export HIVEMIND_THEME="cyberpunk-matrix"
 ```
 
 ### Config File
 
 `config/hivemind.yaml` controls:
-- Dialogue settings (max turns, verification)
+- Dialogue and verification settings
 - Agent timeouts
 - Output preferences
-- TUI theme
+- TUI settings
 
 ---
 
-## Requirements
+## Troubleshooting
 
-| Component | Version |
-|-----------|---------|
-| Python | 3.11+ |
-| Node.js | 18+ |
-| Codex CLI | Latest |
-| Claude CLI | Latest |
+### Codex trusted directory error
 
----
+HIVEMIND skips the Codex trusted-directory check globally. If you still see a trust error, confirm the `codex` CLI is updated.
 
-## FAQ
+### CLI not found
 
-<details>
-<summary><b>What's the difference between Codex and Claude?</b></summary>
+```bash
+which codex
+which claude
+```
 
-**Codex** is your primary AI assistant. You always talk to Codex.
-
-**Claude** is the expert consultant. When you need complex work done, Codex consults with Claude to plan the approach, then Claude supervises the specialist agents.
-
-You never talk directly to Claude - Codex presents everything to you.
-</details>
-
-<details>
-<summary><b>Do I need both Codex and Claude?</b></summary>
-
-**Codex is required** - it's your primary interface.
-
-**Claude is optional** - but without it, complex multi-agent work won't be available. Simple questions will still work.
-</details>
-
-<details>
-<summary><b>Do I need API keys?</b></summary>
-
-No. Both Codex and Claude support browser-based authentication. API keys are optional but provide more persistent auth.
-</details>
-
-<details>
-<summary><b>Is my data sent externally?</b></summary>
-
-Yes. Prompts are sent to OpenAI (Codex) and Anthropic (Claude) for processing. Local memory stores conversation history and preferences only.
-</details>
-
-<details>
-<summary><b>Can I add custom agents?</b></summary>
-
-The 24 agents are defined in `engine/claude_agent.py`. You can modify the AGENTS dictionary to add or customize agents.
-</details>
+If missing, reinstall the CLIs.
 
 ---
 
 ## License
 
-MIT License - see [LICENSE](LICENSE).
+MIT License - see LICENSE.
 
 ---
 
 <div align="center">
 
-**HIVEMIND v3.0** - Talk naturally. Work gets done.
+HIVEMIND v3.0 - Talk naturally. Work gets done.
 
 [Back to Top](#hivemind-v30)
 
