@@ -1,0 +1,15 @@
+{
+  "agents": [
+    "DEV-001"
+  ],
+  "gates": {
+    "G1-DESIGN": "PASSED",
+    "G2-SECURITY": "SKIPPED",
+    "G3-CODE": "SKIPPED",
+    "G4-TEST": "SKIPPED",
+    "G5-DEPLOY": "SKIPPED"
+  },
+  "session_id": "SESSION-20251227-192932",
+  "task": "design a hello world function",
+  "updated_at": "2025-12-27T19:29:32Z"
+}

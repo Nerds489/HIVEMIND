@@ -142,11 +142,6 @@ class CodexHead:
         self._progress_interval = float(os.environ.get("HIVEMIND_PROGRESS_INTERVAL", "4"))
         self._total_timeout = float(os.environ.get("HIVEMIND_TOTAL_TIMEOUT", "300"))
         self._simple_word_max = int(os.environ.get("HIVEMIND_SIMPLE_WORDS_MAX", "14"))
-        self._codex_mode = os.environ.get("HIVEMIND_CODEX_MODE", "print").lower()
-        self._codex_fallback_enabled = (
-            os.environ.get("HIVEMIND_CODEX_FALLBACK", "1").lower()
-            not in {"0", "false", "no"}
-        )
         defaults = self._settings.get("defaults", {})
         self._parallel_agents = bool(defaults.get("parallel_execution", True))
         parallel_override = os.environ.get("HIVEMIND_PARALLEL_AGENTS")
@@ -610,14 +605,6 @@ class CodexHead:
         env = {"CODEX_SKIP_GIT_REPO_CHECK": "1"} if skip_git_check else {}
         effective_timeout = timeout or self._codex_timeout
 
-        if self._codex_mode == "print":
-            return await self._call_codex_cli_print(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                timeout=effective_timeout,
-                skip_git_check=skip_git_check,
-            )
-
         fd, output_file = tempfile.mkstemp(suffix=".txt")
         os.close(fd)
 
@@ -627,7 +614,6 @@ class CodexHead:
                 prompt=full_prompt,
                 output_file=output_file,
                 skip_git_check=skip_git_check,
-                global_skip=True,
             )
 
             code, stdout, stderr = await self._run_subprocess(
@@ -648,38 +634,6 @@ class CodexHead:
             if code == 0 and not response:
                 response = stdout.strip() or "No response from Codex"
                 return True, response
-            if skip_git_check and self._looks_like_trust_error(error_text):
-                cmd = self._build_codex_command(
-                    codex_path=codex_path,
-                    prompt=full_prompt,
-                    output_file=output_file,
-                    skip_git_check=skip_git_check,
-                    global_skip=True,
-                )
-                code, stdout, stderr = await self._run_subprocess(
-                    cmd,
-                    timeout=timeout or self._codex_timeout,
-                    status_label="Retrying Codex (trust override)...",
-                    env=env,
-                )
-                response = ""
-                if os.path.exists(output_file):
-                    with open(output_file, "r", encoding="utf-8") as handle:
-                        response = handle.read().strip()
-                if code == 0 and response:
-                    return True, response
-                if code == 0 and not response:
-                    response = stdout.strip() or "No response from Codex"
-                    return True, response
-                error_text = stderr.strip() or response or "Codex error"
-
-            if self._codex_fallback_enabled and self._looks_like_codex_command_error(error_text):
-                return await self._call_codex_cli_print(
-                    prompt=prompt,
-                    system_prompt=system_prompt,
-                    timeout=effective_timeout,
-                    skip_git_check=skip_git_check,
-                )
 
             return False, error_text
         finally:
@@ -696,70 +650,14 @@ class CodexHead:
         prompt: str,
         output_file: str,
         skip_git_check: bool,
-        global_skip: bool,
     ) -> List[str]:
-        cmd: List[str] = [codex_path]
-        if skip_git_check and global_skip:
-            cmd.append("--skip-git-repo-check")
-        cmd.extend(["exec", "--full-auto"])
-        if skip_git_check and not global_skip:
+        # Build: codex exec --full-auto --skip-git-repo-check -o <file> <prompt>
+        # Note: --skip-git-repo-check is a subcommand flag, not global
+        cmd: List[str] = [codex_path, "exec", "--full-auto"]
+        if skip_git_check:
             cmd.append("--skip-git-repo-check")
         cmd.extend(["-o", output_file, prompt])
         return cmd
-
-    def _build_codex_print_command(
-        self,
-        codex_path: str,
-        prompt: str,
-        system_prompt: Optional[str],
-        skip_git_check: bool,
-        full_auto: bool,
-    ) -> List[str]:
-        cmd: List[str] = [codex_path]
-        if skip_git_check:
-            cmd.append("--skip-git-repo-check")
-        if full_auto:
-            cmd.append("--full-auto")
-        if system_prompt:
-            cmd.extend(["--system-prompt", system_prompt])
-        cmd.extend(["--print", prompt])
-        return cmd
-
-    async def _call_codex_cli_print(
-        self,
-        prompt: str,
-        system_prompt: Optional[str],
-        timeout: float,
-        skip_git_check: bool,
-    ) -> Tuple[bool, str]:
-        codex_path = self.auth.codex_path if self.auth else None
-        if not codex_path:
-            return False, "Codex CLI not available"
-
-        env = {"CODEX_SKIP_GIT_REPO_CHECK": "1"} if skip_git_check else {}
-
-        for full_auto in (True, False):
-            cmd = self._build_codex_print_command(
-                codex_path=codex_path,
-                prompt=prompt,
-                system_prompt=system_prompt,
-                skip_git_check=skip_git_check,
-                full_auto=full_auto,
-            )
-            code, stdout, stderr = await self._run_subprocess(
-                cmd,
-                timeout=timeout,
-                status_label="Waiting on Codex...",
-                env=env,
-            )
-            response = stdout.strip()
-            if code == 0 and response:
-                return True, response
-            error_text = stderr.strip() or response or "Codex error"
-            if not self._looks_like_codex_command_error(error_text):
-                return False, error_text
-
-        return False, "Codex CLI command not supported"
 
     def _looks_like_trust_error(self, message: str) -> bool:
         lowered = message.lower()
