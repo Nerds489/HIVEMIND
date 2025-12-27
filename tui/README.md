@@ -1,19 +1,11 @@
 # HIVEMIND TUI
 
 ```text
-H   H III V   V EEEEE M   M III N   N DDDD
-H   H  I  V   V E     MM MM  I  NN  N D   D
-HHHHH  I  V   V EEEE  M M M  I  N N N D   D
-H   H  I   V V  E     M   M  I  N  NN D   D
-H   H III   V   EEEEE M   M III N   N DDDD
-```
-
-
-```text
-+--------------------------------------+
-|               HIVEMIND               |
-|  Unified Multi-Agent Orchestration   |
-+--------------------------------------+
+ _   _ ___ ____  ________  __ ___ _   _ ____
+| | | |_ _|  _ \| ____\ \/ /|_ _| \ | |  _ \
+| |_| || || | | |  _|  \  /  | ||  \| | | | |
+|  _  || || |_| | |___ /  \  | || |\  | |_| |
+|_| |_|___|____/|_____/_/\_\|___|_| \_|____/
 ```
 
 A Textual-based terminal UI for the HIVEMIND multi-agent system.
