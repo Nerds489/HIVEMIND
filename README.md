@@ -1,23 +1,23 @@
 <div align="center">
 
-# HIVEMIND v3.0
+```
+██╗  ██╗██╗██╗   ██╗███████╗███╗   ███╗██╗███╗   ██╗██████╗
+██║  ██║██║██║   ██║██╔════╝████╗ ████║██║████╗  ██║██╔══██╗
+███████║██║██║   ██║█████╗  ██╔████╔██║██║██╔██╗ ██║██║  ██║
+██╔══██║██║╚██╗ ██╔╝██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║  ██║
+██║  ██║██║ ╚████╔╝ ███████╗██║ ╚═╝ ██║██║██║ ╚████║██████╔╝
+╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝
+```
 
-### AI Assistant with Multi-Agent Orchestration
+### Multi-Agent AI Orchestration System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Agents](https://img.shields.io/badge/agents-24-green.svg)](#agent-teams)
 
-<pre>
- _   _ ___ ____  ________  __ ___ _   _ ____
-| | | |_ _|  _ \| ____\ \/ /|_ _| \ | |  _ \
-| |_| || || | | |  _|  \  /  | ||  \| | | | |
-|  _  || || |_| | |___ /  \  | || |\  | |_| |
-|_| |_|___|____/|_____/_/\_\|___|_| \_|____/
-</pre>
+**24 specialized AI agents. 4 teams. 1 unified interface.**
 
-Talk to Codex. Complex work brings Claude and 24 specialist agents.
-
-[Quick Start](#quick-start) | [How It Works](#how-it-works) | [Usage](#usage) | [Install](#install) | [Shortcuts](#keyboard-shortcuts)
+[Quick Start](#quick-start) • [How It Works](#how-it-works) • [Commands](#commands) • [Agents](#agent-teams) • [Install](#installation)
 
 </div>
 
@@ -25,27 +25,38 @@ Talk to Codex. Complex work brings Claude and 24 specialist agents.
 
 ## What is HIVEMIND?
 
-HIVEMIND is a unified AI assistant that escalates to coordinated multi-agent work when tasks get complex.
+HIVEMIND orchestrates 24 specialized AI agents across Development, Security, Infrastructure, and QA teams to accomplish complex technical tasks. You give it a task—it routes to the right agents, executes in parallel where possible, validates through quality gates, and delivers a consolidated report.
 
-- Simple requests are answered directly by Codex.
-- Complex requests trigger a Codex + Claude planning loop.
-- Claude executes specialist agents and reports back.
-- Codex and Claude both agree before you get the final response.
-
-The orchestration is internal. You only talk to one AI.
-
----
-
-## Features
-
-- Codex + Claude consensus planning
-- 24 agents across DEV, SEC, INF, QA
-- Quality gates and verification before delivery
-- Live status updates and a status log popup
-- Live input injection during planning/review via /note
-- Cancel any task with Ctrl+C
-- Cyberpunk/matrix theme
-- Global Codex trusted-directory skip enabled
+```
+USER REQUEST
+     │
+     ▼
+┌─────────────────────────────────────────┐
+│         HEAD_CODEX (Orchestrator)       │
+│  • Parse intent  • Route to agents      │
+│  • Coordinate    • Generate report      │
+└─────────────────────────────────────────┘
+     │
+     ├──────────────┬──────────────┬──────────────┐
+     ▼              ▼              ▼              ▼
+┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐
+│   DEV   │  │   SEC   │  │   INF   │  │   QA    │
+│ 6 agents│  │ 6 agents│  │ 6 agents│  │ 6 agents│
+└─────────┘  └─────────┘  └─────────┘  └─────────┘
+     │              │              │              │
+     └──────────────┴──────────────┴──────────────┘
+                         │
+                         ▼
+               ┌─────────────────┐
+               │  QUALITY GATES  │
+               │  G1→G2→G3→G4→G5 │
+               └─────────────────┘
+                         │
+                         ▼
+               ┌─────────────────┐
+               │ EXECUTION REPORT│
+               └─────────────────┘
+```
 
 ---
 
@@ -56,148 +67,199 @@ The orchestration is internal. You only talk to one AI.
 git clone https://github.com/Nerds489/HIVEMIND.git
 cd HIVEMIND
 
-# Install (do not use sudo)
+# Install
 ./install.sh
 
-# Run from any directory
+# Run
 hivemind
 ```
-
-First run opens the auth screen for Codex and Claude.
 
 ---
 
 ## How It Works
 
-1) You send a message to Codex.
-2) If it is complex, Codex consults Claude.
-3) They iterate until they agree on the plan and agents.
-4) Claude runs the agents.
-5) Codex and Claude both verify the output.
-6) Only then does Codex respond to you.
+### Agent Output Format
+
+Every agent reports status in **2-4 words maximum**:
+
+```
+[DEV-001] Designing architecture
+[SEC-002] Scanning endpoints
+[QA-003] Running load tests
+[INF-005] Deploying containers
+```
+
+### Parallel Execution
+
+Independent tasks run simultaneously:
+
+```
+┌─────────┬─────────┬─────────┐
+│ DEV-001 │ SEC-001 │ QA-001  │
+│Designing│Modeling │Planning │
+└─────────┴─────────┴─────────┘
+```
+
+### Sequential Handoffs
+
+Dependent tasks chain together:
+
+```
+DEV-002 ──→ DEV-004 ──→ QA-002 ──→ INF-005
+Building    Reviewing   Testing    Deploying
+```
+
+### Quality Gates
+
+Work passes through validation gates:
+
+| Gate | Name | Purpose |
+|------|------|---------|
+| G1 | Design | Architecture approved |
+| G2 | Security | No critical vulnerabilities |
+| G3 | Code | Code review passed |
+| G4 | Test | All tests passing |
+| G5 | Deploy | Deployment ready |
 
 ---
 
-## Usage
+## Commands
 
-### Commands
-
-```
-/hivemind [task]   Full multi-agent orchestration
-/dev [task]        Development team
-/sec [task]        Security team
-/infra [task]      Infrastructure team
-/qa [task]         QA team
-/architect [task]  DEV-001 Architect
-/pentest [task]    SEC-002 Pentester
-/sre [task]        INF-005 SRE
-/reviewer [task]   DEV-004 Code Reviewer
-/status            System status
-/recall [query]    Session memory recall
-/debug [task]      Routing details
-/note [message]    Live input during planning/review
-```
-
-Aliases for /note: /live, /feedback
-
-### Live Input During Planning/Review
-
-If you want to steer the plan or the review while work is running:
-
-```
-/note prioritize security review before performance tuning
-```
-
-Notes sent while no task is running are queued for the next task.
+| Command | Description |
+|---------|-------------|
+| `/hivemind [task]` | Full multi-agent orchestration |
+| `/dev [task]` | Development team only |
+| `/sec [task]` | Security team only |
+| `/infra [task]` | Infrastructure team only |
+| `/qa [task]` | QA team only |
+| `/architect [task]` | Route to DEV-001 |
+| `/pentest [task]` | Route to SEC-002 |
+| `/sre [task]` | Route to INF-005 |
+| `/reviewer [task]` | Route to DEV-004 |
+| `/status` | System status |
+| `/recall [query]` | Memory recall |
+| `/debug [task]` | Verbose routing |
+| `/note [msg]` | Live input during execution |
 
 ---
 
-## Keyboard Shortcuts
+## Agent Teams
 
-### Main Screen
+### DEV — Development Team
 
-| Key | Action |
-|-----|--------|
-| Enter | Send message (quick input) |
-| C | Open full chat screen |
-| M | Return to main view |
-| Q | Quit |
-| D | Toggle dark mode |
-| ? | Help |
-| Ctrl+O | Status log popup |
-| Ctrl+C | Cancel current task |
-| Esc | Focus input |
+| ID | Role | Focus |
+|----|------|-------|
+| DEV-001 | Architect | System design, patterns, APIs, microservices |
+| DEV-002 | Backend Developer | APIs, servers, databases, Python, Node |
+| DEV-003 | Frontend Developer | UI/UX, React, Vue, Angular, CSS |
+| DEV-004 | Code Reviewer | Code quality, PRs, best practices |
+| DEV-005 | Technical Writer | Documentation, guides, API docs |
+| DEV-006 | DevOps Liaison | CI/CD, pipelines, deployment automation |
 
-### Full Chat Screen
+### SEC — Security Team
 
-| Key | Action |
-|-----|--------|
-| Ctrl+Enter | Send message |
-| Ctrl+L | Clear chat history |
-| Ctrl+C | Cancel current task |
-| Esc | Back to main |
+| ID | Role | Focus |
+|----|------|-------|
+| SEC-001 | Security Architect | Threat modeling, security design, risk |
+| SEC-002 | Penetration Tester | Vulnerability assessment, OWASP, exploits |
+| SEC-003 | Malware Analyst | Reverse engineering, threat analysis, IOCs |
+| SEC-004 | Wireless Security | WiFi, Bluetooth, RF, IoT security |
+| SEC-005 | Compliance Auditor | SOC2, GDPR, PCI, NIST, regulatory |
+| SEC-006 | Incident Responder | Breach response, forensics, containment |
 
----
+### INF — Infrastructure Team
 
-## Agents
+| ID | Role | Focus |
+|----|------|-------|
+| INF-001 | Infrastructure Architect | Cloud design, AWS, GCP, Azure |
+| INF-002 | Systems Administrator | Linux, Windows, server configuration |
+| INF-003 | Network Engineer | Firewalls, DNS, routing, VPCs |
+| INF-004 | Database Administrator | PostgreSQL, MySQL, MongoDB, optimization |
+| INF-005 | Site Reliability Engineer | Kubernetes, monitoring, reliability |
+| INF-006 | Automation Engineer | Terraform, Ansible, IaC, scripting |
 
-### Development Team (DEV-001 to DEV-006)
+### QA — Quality Assurance Team
 
-| ID | Agent | Expertise |
-|----|-------|-----------|
-| DEV-001 | Architect | System design, patterns, APIs |
-| DEV-002 | Backend Developer | APIs, servers, databases |
-| DEV-003 | Frontend Developer | UI, UX, web apps |
-| DEV-004 | Code Reviewer | Code quality, best practices |
-| DEV-005 | Technical Writer | Docs, guides, API docs |
-| DEV-006 | DevOps Liaison | CI/CD, deployment |
-
-### Security Team (SEC-001 to SEC-006)
-
-| ID | Agent | Expertise |
-|----|-------|-----------|
-| SEC-001 | Security Architect | Threat modeling, security design |
-| SEC-002 | Penetration Tester | Vulnerability assessment |
-| SEC-003 | Malware Analyst | Threat analysis |
-| SEC-004 | Wireless Security | WiFi, Bluetooth, IoT |
-| SEC-005 | Compliance Auditor | SOC2, GDPR, PCI |
-| SEC-006 | Incident Responder | Breach response |
-
-### Infrastructure Team (INF-001 to INF-006)
-
-| ID | Agent | Expertise |
-|----|-------|-----------|
-| INF-001 | Infrastructure Architect | Cloud design |
-| INF-002 | Systems Administrator | Linux/Windows |
-| INF-003 | Network Engineer | DNS, routing, firewalls |
-| INF-004 | Database Administrator | Postgres, MySQL, MongoDB |
-| INF-005 | Site Reliability Engineer | Reliability, monitoring |
-| INF-006 | Automation Engineer | Terraform, Ansible |
-
-### QA Team (QA-001 to QA-006)
-
-| ID | Agent | Expertise |
-|----|-------|-----------|
-| QA-001 | QA Architect | Test strategy |
-| QA-002 | Test Automation | Automation frameworks |
-| QA-003 | Performance Tester | Load testing |
-| QA-004 | Security Tester | DAST, SAST |
-| QA-005 | Manual QA | Exploratory testing |
-| QA-006 | Test Data Manager | Fixtures, data |
+| ID | Role | Focus |
+|----|------|-------|
+| QA-001 | QA Architect | Test strategy, coverage, quality planning |
+| QA-002 | Test Automation | Selenium, Cypress, pytest, frameworks |
+| QA-003 | Performance Tester | Load testing, JMeter, k6, benchmarks |
+| QA-004 | Security Tester | DAST, SAST, vulnerability scanning |
+| QA-005 | Manual QA | Exploratory testing, UAT, regression |
+| QA-006 | Test Data Manager | Fixtures, test environments, data seeding |
 
 ---
 
-## Install
+## Example Execution
+
+**Task**: `Build a REST API with authentication and deploy to Kubernetes`
+
+```
+[DEV-001] Designing API architecture
+[SEC-001] Threat modeling auth
+[DEV-002] Building REST endpoints
+[DEV-002] Implementing JWT auth
+[DEV-004] Reviewing implementation
+[SEC-002] Testing auth security
+[QA-001] Creating test strategy
+[QA-002] Writing API tests
+[QA-003] Load testing endpoints
+[INF-001] Designing K8s architecture
+[INF-005] Configuring deployment
+[INF-006] Writing Helm charts
+
+[GATE] G1-DESIGN: PASSED
+[GATE] G2-SECURITY: PASSED
+[GATE] G3-CODE: PASSED
+[GATE] G4-TEST: PASSED
+[GATE] G5-DEPLOY: READY
+
+╔══════════════════════════════════════════════════════════════╗
+║                    HIVEMIND EXECUTION REPORT                  ║
+╠══════════════════════════════════════════════════════════════╣
+║ Task: REST API with JWT Auth + Kubernetes Deployment          ║
+║ Status: COMPLETE                                              ║
+╠══════════════════════════════════════════════════════════════╣
+║ AGENTS ENGAGED: 11                                            ║
+║ • DEV-001 Architect ............ Complete                     ║
+║ • SEC-001 Security Architect ... Complete                     ║
+║ • DEV-002 Backend Developer .... Complete                     ║
+║ • DEV-004 Code Reviewer ........ Complete                     ║
+║ • SEC-002 Penetration Tester ... Complete                     ║
+║ • QA-001 QA Architect .......... Complete                     ║
+║ • QA-002 Test Automation ....... Complete                     ║
+║ • QA-003 Performance Tester .... Complete                     ║
+║ • INF-001 Infrastructure Arch .. Complete                     ║
+║ • INF-005 SRE .................. Complete                     ║
+║ • INF-006 Automation Engineer .. Complete                     ║
+╠══════════════════════════════════════════════════════════════╣
+║ DELIVERABLES:                                                 ║
+║ • REST API with CRUD endpoints                                ║
+║ • JWT authentication with refresh tokens                      ║
+║ • API test suite (94 tests, 100% pass)                        ║
+║ • Security assessment (0 critical findings)                   ║
+║ • Kubernetes manifests + Helm chart                           ║
+║ • CI/CD pipeline configuration                                ║
+╠══════════════════════════════════════════════════════════════╣
+║ SUMMARY:                                                      ║
+║ Production-ready REST API with JWT auth deployed to K8s.      ║
+║ Security validated. Load tested at 8,000 req/sec.             ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Installation
 
 ### Prerequisites
 
-| Component | Requirement |
-|-----------|-------------|
-| OS | Linux or macOS |
+| Component | Version |
+|-----------|---------|
 | Python | 3.11+ |
 | Node.js | 18+ |
-| Codex CLI | npm install -g @openai/codex |
-| Claude CLI | npm install -g @anthropic-ai/claude-code |
+| Codex CLI | `npm install -g @openai/codex` |
+| Claude CLI | `npm install -g @anthropic-ai/claude-code` |
 
 ### Install
 
@@ -218,51 +280,71 @@ Notes sent while no task is running are queued for the next task.
 ### Environment Variables
 
 ```bash
-# Optional - browser auth works without these
-export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="sk-ant-..."
-
-# Theme override
-export HIVEMIND_THEME="cyberpunk-matrix"
+export OPENAI_API_KEY="sk-..."           # Optional (browser auth works)
+export ANTHROPIC_API_KEY="sk-ant-..."    # Optional (browser auth works)
+export HIVEMIND_THEME="cyberpunk-matrix" # Theme override
 ```
 
 ### Config File
 
-`config/hivemind.yaml` controls:
-- Dialogue and verification settings
-- Agent timeouts
-- Output preferences
-- TUI settings
+`config/hivemind.yaml` controls agent timeouts, output preferences, and TUI settings.
 
 ---
 
-## Troubleshooting
+## Keyboard Shortcuts
 
-### Codex trusted directory error
+### Main Screen
 
-HIVEMIND skips the Codex trusted-directory check globally. If you still see a trust error, confirm the `codex` CLI is updated.
+| Key | Action |
+|-----|--------|
+| `Enter` | Send message |
+| `C` | Full chat screen |
+| `M` | Main view |
+| `Q` | Quit |
+| `Ctrl+O` | Status log |
+| `Ctrl+C` | Cancel task |
 
-### CLI not found
+### Chat Screen
 
-```bash
-which codex
-which claude
+| Key | Action |
+|-----|--------|
+| `Ctrl+Enter` | Send message |
+| `Ctrl+L` | Clear history |
+| `Ctrl+C` | Cancel task |
+| `Esc` | Back |
+
+---
+
+## Memory System
+
+HIVEMIND maintains contextual memory:
+
+```
+memory/
+├── short-term/     # Session-scoped
+├── long-term/      # Persistent learnings, preferences, decisions
+└── episodic/       # Events and milestones
 ```
 
-If missing, reinstall the CLIs.
+| Trigger | Storage |
+|---------|---------|
+| "Remember that..." | `long-term/learnings.json` |
+| "We decided..." | `long-term/decisions.json` |
+| "I prefer..." | `long-term/preferences.json` |
+| "Our stack is..." | `long-term/project.json` |
 
 ---
 
 ## License
 
-MIT License - see LICENSE.
+MIT License — see [LICENSE](LICENSE)
 
 ---
 
 <div align="center">
 
-HIVEMIND v3.0 - Talk naturally. Work gets done.
+**HIVEMIND** — Orchestrate Silently. Report Completely.
 
-[Back to Top](#hivemind-v30)
+[Back to Top](#)
 
 </div>
