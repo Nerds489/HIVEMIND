@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -9,11 +10,39 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.css.query import NoMatches
 from textual.driver import Driver
+from textual.theme import Theme
 
 from .engine.auth import AuthManager
 from .screens.auth_screen import AuthScreen
 from .screens.main import MainScreen
 from .screens.chat import ChatScreen
+from .screens.status_log import StatusLogScreen
+
+
+CYBERPUNK_MATRIX_THEME = Theme(
+    name="cyberpunk-matrix",
+    primary="#ff0090",
+    secondary="#00d4ff",
+    accent="#00ffff",
+    warning="#ffd200",
+    error="#ff3b6b",
+    success="#39ff14",
+    foreground="#e6ffff",
+    background="#05070b",
+    surface="#0b1118",
+    panel="#101a24",
+    boost="#152231",
+    variables={
+        "footer-key-foreground": "#00ffff",
+        "border": "#ff0090",
+        "border-blurred": "#263040",
+        "scrollbar": "#00ffff",
+        "input-selection-background": "#00ffff 25%",
+        "block-cursor-background": "#00ffff",
+        "block-cursor-foreground": "#05070b",
+        "button-color-foreground": "#05070b",
+    },
+)
 
 
 class HivemindApp(App):
@@ -24,6 +53,7 @@ class HivemindApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit", priority=True),
         Binding("question_mark", "help", "Help", key_display="?"),
+        Binding("ctrl+o", "status_log", "Status Log"),
         Binding("d", "toggle_dark", "Toggle Dark Mode"),
         Binding("m", "show_main", "Main View"),
         Binding("ctrl+r", "refresh", "Refresh"),
@@ -46,6 +76,10 @@ class HivemindApp(App):
         self.dark = True
         self.auth_manager = AuthManager()
         self._launch_dir = Path(os.environ.get("HIVEMIND_LAUNCH_DIR", os.getcwd()))
+        self._status_log_entries: list[tuple[str, str]] = []
+        self._status_log_limit = 300
+        self.register_theme(CYBERPUNK_MATRIX_THEME)
+        self.theme = os.environ.get("HIVEMIND_THEME", CYBERPUNK_MATRIX_THEME.name)
 
     def on_mount(self) -> None:
         """Handle app mount event."""
@@ -76,6 +110,10 @@ class HivemindApp(App):
             except Exception:
                 break
 
+    def action_status_log(self) -> None:
+        """Show the status log popup."""
+        self.push_screen(StatusLogScreen())
+
     def action_refresh(self) -> None:
         """Refresh current screen."""
         self.refresh()
@@ -87,6 +125,7 @@ HIVEMIND v2.0 Keyboard Shortcuts:
 
   Q     - Quit application
   C     - Open full chat screen
+  Ctrl+O - Status log
   M     - Return to main view
   D     - Toggle dark/light mode
   Enter - Focus chat input
@@ -106,6 +145,25 @@ Use /help for orchestration commands.
     def launch_dir(self) -> Path:
         """Get the directory from which HIVEMIND was launched."""
         return self._launch_dir
+
+    def log_status(self, message: str) -> None:
+        """Store a status message for the popup log."""
+        cleaned = message.strip()
+        if not cleaned:
+            return
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self._status_log_entries.append((timestamp, cleaned))
+        if len(self._status_log_entries) > self._status_log_limit:
+            self._status_log_entries = self._status_log_entries[-self._status_log_limit :]
+        if isinstance(self.screen, StatusLogScreen):
+            try:
+                self.screen.append_entry(timestamp, cleaned)
+            except Exception:
+                pass
+
+    def get_status_log_entries(self) -> list[tuple[str, str]]:
+        """Return stored status log entries."""
+        return list(self._status_log_entries)
 
 
 def main() -> None:

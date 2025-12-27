@@ -150,7 +150,7 @@ class ClaudeAgent:
         """
         self.auth = auth_manager
         self.working_dir = working_dir or Path.cwd()
-        self.timeout = timeout or float(os.environ.get("HIVEMIND_CLAUDE_TIMEOUT", "45"))
+        self.timeout = timeout or float(os.environ.get("HIVEMIND_CLAUDE_TIMEOUT", "30"))
         self.progress_interval = progress_interval
         self.on_status = on_status
     

@@ -19,6 +19,7 @@ class StatusBar(Widget):
     active_agent: reactive[Optional[str]] = reactive(None)
     task_progress: reactive[int] = reactive(0)
     total_tasks: reactive[int] = reactive(0)
+    status_message: reactive[str] = reactive("")
 
     def compose(self):
         """Create child widgets."""
@@ -38,6 +39,10 @@ class StatusBar(Widget):
 
     def watch_total_tasks(self, total: int) -> None:
         """React to total tasks changes."""
+        self._update_display()
+
+    def watch_status_message(self, message: str) -> None:
+        """React to status message changes."""
         self._update_display()
 
     def _update_display(self) -> None:
@@ -68,6 +73,9 @@ class StatusBar(Widget):
             "Connection:",
             f"[{status_color}]{status_icon} {self.connection_status.title()}[/{status_color}]"
         )
+
+        status_text = self.status_message.strip() or "[dim]Idle[/dim]"
+        table.add_row("Status:", status_text)
 
         # Active agent
         agent_display = self.active_agent or "[dim]None[/dim]"
@@ -142,6 +150,14 @@ class StatusBar(Widget):
         """
         self.task_progress = completed
         self.total_tasks = total
+
+    def set_status_message(self, message: str) -> None:
+        """Set the current status message.
+
+        Args:
+            message: Status message text
+        """
+        self.status_message = message
 
     def on_mount(self) -> None:
         """Handle widget mount."""

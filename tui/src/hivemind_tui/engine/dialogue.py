@@ -51,6 +51,7 @@ class DialogueResult:
 CODEX_PROPOSAL_PROMPT = """You are Codex, coordinating with Claude on a user request.
 
 User Request: {request}
+{live_notes}
 
 Propose an approach to handle this request. Consider:
 1. Is this something that needs specialized agents, or can it be answered directly?
@@ -64,6 +65,7 @@ Keep your proposal concise and actionable.
 CODEX_REFINE_PROMPT = """You are Codex, refining your proposal based on Claude's feedback.
 
 User Request: {request}
+{live_notes}
 
 Your Previous Proposal:
 {proposal}
@@ -115,7 +117,7 @@ class CodexClaudeDialogue:
             for t in self.history
         ]
     
-    async def _codex_propose(self, request: str) -> str:
+    async def _codex_propose(self, request: str, live_notes: str) -> str:
         """Have Codex propose an approach.
         
         Args:
@@ -124,7 +126,10 @@ class CodexClaudeDialogue:
         Returns:
             Codex's proposal
         """
-        prompt = CODEX_PROPOSAL_PROMPT.format(request=request)
+        prompt = CODEX_PROPOSAL_PROMPT.format(
+            request=request,
+            live_notes=live_notes,
+        )
         
         success, response = await self.codex._call_codex_cli(prompt)
         
@@ -138,6 +143,7 @@ class CodexClaudeDialogue:
         request: str,
         proposal: str,
         feedback: str,
+        live_notes: str,
     ) -> str:
         """Have Codex refine proposal based on feedback.
         
@@ -153,6 +159,7 @@ class CodexClaudeDialogue:
             request=request,
             proposal=proposal,
             feedback=feedback,
+            live_notes=live_notes,
         )
         
         success, response = await self.codex._call_codex_cli(prompt)
@@ -173,16 +180,37 @@ class CodexClaudeDialogue:
         """
         # Codex proposes initial approach
         self.codex._emit_status("Planning approach...")
-        codex_proposal = await self._codex_propose(request)
+        live_inputs = self.codex._consume_live_inputs()
+        live_notes = self.codex._format_live_inputs(live_inputs)
+        live_block = f"\nLive User Input:\n{live_notes}\n" if live_notes else ""
+        codex_proposal = await self._codex_propose(request, live_block)
         self._log_turn("codex", codex_proposal)
         
-        for turn in range(self.max_turns):
+        turn = 0
+        while True:
+            if self.max_turns and turn >= self.max_turns:
+                return ConsensusResult(
+                    agreed=False,
+                    plan=codex_proposal,
+                    agents_needed=claude_eval.suggested_agents if claude_eval else [],
+                    needs_agents=bool(claude_eval and claude_eval.suggested_agents),
+                    response=claude_eval.feedback if claude_eval else "Consensus not reached",
+                )
+
             # Claude evaluates
             self.codex._emit_status(f"Consulting Claude (turn {turn + 1})...")
             
+            new_inputs = self.codex._consume_live_inputs()
+            new_notes = self.codex._format_live_inputs(new_inputs)
+            live_block = f"\nLive User Input:\n{new_notes}\n" if new_notes else ""
+            proposal_for_claude = codex_proposal
+            if new_notes:
+                proposal_for_claude = (
+                    f"{codex_proposal}\n\nLive User Input:\n{new_notes}"
+                )
             claude_eval = await self.claude.evaluate_proposal(
                 request,
-                codex_proposal,
+                proposal_for_claude,
                 self._get_history_for_context(),
             )
             self._log_turn("claude", claude_eval.feedback)
@@ -202,16 +230,10 @@ class CodexClaudeDialogue:
                 request,
                 codex_proposal,
                 claude_eval.feedback,
+                live_block,
             )
             self._log_turn("codex", codex_proposal)
-        
-        # Max turns reached - take Claude's last suggestion
-        return ConsensusResult(
-            agreed=True,  # Force agreement
-            plan=codex_proposal,
-            agents_needed=claude_eval.suggested_agents if claude_eval else [],
-            needs_agents=bool(claude_eval and claude_eval.suggested_agents),
-        )
+            turn += 1
     
     async def discuss(self, request: str) -> DialogueResult:
         """

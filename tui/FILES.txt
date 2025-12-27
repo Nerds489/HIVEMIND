@@ -45,7 +45,7 @@ KEY FILES FOR PHASE 9 REQUIREMENTS:
 
 REQUIREMENT 1: pyproject.toml
   Location: /var/home/mintys/HIVEMIND/tui/pyproject.toml
-  Contains: dependencies (textual, rich, httpx, websockets)
+  Contains: dependencies (textual, rich, python-dotenv)
 
 REQUIREMENT 2: Package __init__.py
   Location: /var/home/mintys/HIVEMIND/tui/src/hivemind_tui/__init__.py

@@ -202,6 +202,12 @@ The installer:
 - Creates `hivemind` launcher in `~/.local/bin/`
 - Sets up PATH if needed
 
+### Uninstall
+
+```bash
+./uninstall.sh
+```
+
 ### Run
 
 ```bash

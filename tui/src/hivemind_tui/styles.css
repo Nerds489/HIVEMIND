@@ -15,8 +15,8 @@ Screen {
     height: auto;
     min-height: 3;
     padding: 1;
-    background: $boost;
-    border-bottom: solid $primary;
+    background: $panel;
+    border-bottom: heavy $accent;
     dock: top;
 }
 
@@ -34,19 +34,20 @@ Screen {
 
 /* Panel Styles */
 .panel {
-    border: solid $primary;
+    border: double $primary;
     background: $surface;
     margin: 1;
     padding: 1;
 }
 
 .panel-title {
-    background: $primary;
-    color: $text;
+    background: $panel;
+    color: $accent;
     padding: 0 1;
     margin-bottom: 1;
     text-align: center;
     text-style: bold;
+    border-bottom: solid $primary;
 }
 
 /* Agent Panel */
@@ -128,6 +129,38 @@ MessageItem {
     padding: 1;
 }
 
+/* Status log popup */
+#status-log-modal {
+    width: 80%;
+    max-width: 120;
+    min-width: 50;
+    height: 80%;
+    padding: 1;
+    background: $surface;
+    border: thick $primary;
+}
+
+#status-log-title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+#status-log-list {
+    height: 1fr;
+    padding: 1;
+    background: $panel;
+    border: solid $primary;
+}
+
+#status-log-hint {
+    text-align: center;
+    color: $text;
+    text-style: dim;
+    margin-top: 1;
+}
+
 /* Chat Screen Styles */
 #chat-container {
     height: 100%;
@@ -169,10 +202,11 @@ MessageItem {
     width: 100%;
     padding: 1;
     margin-bottom: 1;
-    background: $primary;
-    color: $text;
+    background: $panel;
+    color: $accent;
     text-align: center;
     text-style: bold;
+    border-bottom: solid $primary;
 }
 
 .input-label {

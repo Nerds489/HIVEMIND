@@ -13,6 +13,7 @@ import os
 import re
 import signal
 import tempfile
+from threading import Lock
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -73,9 +74,29 @@ HELP_TEXT = """HIVEMIND Commands:
   /pentest [task]    SEC-002 Penetration Tester
   /sre [task]        INF-005 SRE
   /reviewer [task]   DEV-004 Code Reviewer
+  /note [message]    Live input for current plan/review
   /status            Show system status
   /recall [query]    Recall recent session memory
   /debug [task]      Debug routing details
+""".strip()
+
+CODEX_REVIEW_PROMPT = """You are Codex reviewing final output for HIVEMIND.
+
+User Request:
+{task}
+{live_notes}
+
+Agreed Plan:
+{plan}
+
+Quality Gates:
+{gates}
+
+Final Report:
+{report}
+
+Respond with "AGREED" if everything matches the plan and requirements.
+If anything is wrong or incomplete, respond with "REVISE:" followed by the issues.
 """.strip()
 
 
@@ -99,6 +120,10 @@ class CodexHead:
         self.on_orchestration_start = on_orchestration_start
         self._conversation_history: List[dict] = []
         self._pending_processes: List[asyncio.subprocess.Process] = []
+        self._live_inputs: List[str] = []
+        self._live_input_cursor = 0
+        self._live_lock = Lock()
+        self._phase = "idle"
 
         self._repo_root = self._find_repo_root(Path(__file__).resolve())
         self._settings = self._load_json(self._repo_root / "config" / "settings.json")
@@ -108,10 +133,26 @@ class CodexHead:
         self._gates = self._build_gates()
         self._memory = MemoryStore(self._repo_root / "memory")
 
-        self._codex_timeout = float(os.environ.get("HIVEMIND_CODEX_TIMEOUT", "20"))
-        self._claude_timeout = float(os.environ.get("HIVEMIND_CLAUDE_TIMEOUT", "45"))
-        self._dialogue_turns = int(os.environ.get("HIVEMIND_DIALOGUE_TURNS", "3"))
-        self._progress_interval = float(os.environ.get("HIVEMIND_PROGRESS_INTERVAL", "5"))
+        self._codex_timeout = float(os.environ.get("HIVEMIND_CODEX_TIMEOUT", "300"))
+        self._codex_quick_timeout = float(os.environ.get("HIVEMIND_CODEX_QUICK_TIMEOUT", "10"))
+        self._claude_timeout = float(os.environ.get("HIVEMIND_CLAUDE_TIMEOUT", "300"))
+        self._dialogue_turns = int(os.environ.get("HIVEMIND_DIALOGUE_TURNS", "0"))
+        self._progress_interval = float(os.environ.get("HIVEMIND_PROGRESS_INTERVAL", "4"))
+        self._total_timeout = float(os.environ.get("HIVEMIND_TOTAL_TIMEOUT", "300"))
+        self._simple_word_max = int(os.environ.get("HIVEMIND_SIMPLE_WORDS_MAX", "14"))
+        self._codex_mode = os.environ.get("HIVEMIND_CODEX_MODE", "exec").lower()
+        self._codex_fallback_enabled = (
+            os.environ.get("HIVEMIND_CODEX_FALLBACK", "1").lower()
+            not in {"0", "false", "no"}
+        )
+        defaults = self._settings.get("defaults", {})
+        self._parallel_agents = bool(defaults.get("parallel_execution", True))
+        parallel_override = os.environ.get("HIVEMIND_PARALLEL_AGENTS")
+        if parallel_override is not None:
+            self._parallel_agents = parallel_override.lower() not in {"0", "false", "no"}
+        self._max_parallel_agents = int(
+            os.environ.get("HIVEMIND_MAX_PARALLEL_AGENTS", defaults.get("max_parallel_agents", 3))
+        )
 
     def _emit_status(self, message: str) -> None:
         if self.on_status:
@@ -128,6 +169,31 @@ class CodexHead:
     def _emit_orchestration_start(self, task: str, agents: List[str]) -> None:
         if self.on_orchestration_start:
             self.on_orchestration_start(task, agents)
+        self._phase = "agents"
+
+    def add_live_input(self, message: str) -> None:
+        """Queue user input tied to the current operation."""
+        cleaned = message.strip()
+        if not cleaned:
+            return
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        entry = f"[{self._phase}] {timestamp} {cleaned}"
+        with self._live_lock:
+            self._live_inputs.append(entry)
+
+    def _consume_live_inputs(self) -> List[str]:
+        """Return any new live inputs since the last read."""
+        with self._live_lock:
+            if self._live_input_cursor >= len(self._live_inputs):
+                return []
+            new_inputs = self._live_inputs[self._live_input_cursor :]
+            self._live_input_cursor = len(self._live_inputs)
+        return new_inputs
+
+    def _format_live_inputs(self, inputs: List[str]) -> str:
+        if not inputs:
+            return ""
+        return "\n".join(f"- {item}" for item in inputs)
 
     def _find_repo_root(self, start: Path) -> Path:
         for parent in [start] + list(start.parents):
@@ -414,6 +480,28 @@ class CodexHead:
         task = parts[1].strip() if len(parts) > 1 else ""
         return command, task
 
+    def _is_simple_request(self, task: str) -> bool:
+        normalized = self._normalize(task)
+        tokens = normalized.split()
+        if not tokens:
+            return True
+        if len(tokens) > self._simple_word_max:
+            return False
+        for keyword in self._routing_keywords:
+            if self._keyword_in_text(keyword, normalized, tokens):
+                return False
+        return True
+
+    def _looks_like_codex_command_error(self, message: str) -> bool:
+        lowered = message.lower()
+        return (
+            "unknown command" in lowered
+            or "unrecognized option" in lowered
+            or "unknown option" in lowered
+            or "invalid option" in lowered
+            or "usage:" in lowered
+        )
+
     async def _progress_ticker(self, label: str, stop: asyncio.Event) -> None:
         while not stop.is_set():
             await asyncio.sleep(self._progress_interval)
@@ -425,7 +513,13 @@ class CodexHead:
         cmd: List[str],
         timeout: float,
         status_label: Optional[str] = None,
+        env: Optional[Dict[str, str]] = None,
     ) -> Tuple[int, str, str]:
+        merged_env = os.environ.copy()
+        if env:
+            merged_env.update(env)
+        if status_label:
+            self._emit_status(status_label)
         process = await asyncio.create_subprocess_exec(
             *cmd,
             stdin=asyncio.subprocess.DEVNULL,
@@ -433,6 +527,7 @@ class CodexHead:
             stderr=asyncio.subprocess.PIPE,
             cwd=str(self.working_dir),
             start_new_session=True,
+            env=merged_env,
         )
         self._pending_processes.append(process)
 
@@ -480,22 +575,33 @@ class CodexHead:
         else:
             full_prompt = prompt
 
+        skip_git_check = True
+        env = {"CODEX_SKIP_GIT_REPO_CHECK": "1"} if skip_git_check else {}
+        effective_timeout = timeout or self._codex_timeout
+
+        if self._codex_mode == "print":
+            return await self._call_codex_cli_print(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                timeout=effective_timeout,
+                skip_git_check=skip_git_check,
+            )
+
         fd, output_file = tempfile.mkstemp(suffix=".txt")
         os.close(fd)
-        cmd = [
-            codex_path,
-            "exec",
-            "--full-auto",
-            "--skip-git-repo-check",
-            "-o",
-            output_file,
-            full_prompt,
-        ]
+        cmd = self._build_codex_command(
+            codex_path=codex_path,
+            prompt=full_prompt,
+            output_file=output_file,
+            skip_git_check=skip_git_check,
+            global_skip=True,
+        )
 
         code, stdout, stderr = await self._run_subprocess(
             cmd,
-            timeout=timeout or self._codex_timeout,
+            timeout=effective_timeout,
             status_label="Waiting on Codex...",
+            env=env,
         )
 
         response = ""
@@ -509,12 +615,197 @@ class CodexHead:
             except OSError:
                 pass
 
+        error_text = stderr.strip() or response or "Codex error"
         if code == 0 and response:
             return True, response
         if code == 0 and not response:
             response = stdout.strip() or "No response from Codex"
-        error = stderr.strip() or response or "Codex error"
-        return False, error
+            return True, response
+        if skip_git_check and self._looks_like_trust_error(error_text):
+            cmd = self._build_codex_command(
+                codex_path=codex_path,
+                prompt=full_prompt,
+                output_file=output_file,
+                skip_git_check=skip_git_check,
+                global_skip=True,
+            )
+            code, stdout, stderr = await self._run_subprocess(
+                cmd,
+                timeout=timeout or self._codex_timeout,
+                status_label="Retrying Codex (trust override)...",
+                env=env,
+            )
+            response = ""
+            try:
+                if os.path.exists(output_file):
+                    with open(output_file, "r", encoding="utf-8") as handle:
+                        response = handle.read().strip()
+            finally:
+                try:
+                    os.remove(output_file)
+                except OSError:
+                    pass
+            if code == 0 and response:
+                return True, response
+            if code == 0 and not response:
+                response = stdout.strip() or "No response from Codex"
+                return True, response
+            error_text = stderr.strip() or response or "Codex error"
+
+        if self._codex_fallback_enabled and self._looks_like_codex_command_error(error_text):
+            return await self._call_codex_cli_print(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                timeout=effective_timeout,
+                skip_git_check=skip_git_check,
+            )
+
+        return False, error_text
+
+    def _build_codex_command(
+        self,
+        codex_path: str,
+        prompt: str,
+        output_file: str,
+        skip_git_check: bool,
+        global_skip: bool,
+    ) -> List[str]:
+        cmd: List[str] = [codex_path]
+        if skip_git_check and global_skip:
+            cmd.append("--skip-git-repo-check")
+        cmd.extend(["exec", "--full-auto"])
+        if skip_git_check and not global_skip:
+            cmd.append("--skip-git-repo-check")
+        cmd.extend(["-o", output_file, prompt])
+        return cmd
+
+    def _build_codex_print_command(
+        self,
+        codex_path: str,
+        prompt: str,
+        system_prompt: Optional[str],
+        skip_git_check: bool,
+        full_auto: bool,
+    ) -> List[str]:
+        cmd: List[str] = [codex_path]
+        if skip_git_check:
+            cmd.append("--skip-git-repo-check")
+        if full_auto:
+            cmd.append("--full-auto")
+        if system_prompt:
+            cmd.extend(["--system-prompt", system_prompt])
+        cmd.extend(["--print", prompt])
+        return cmd
+
+    async def _call_codex_cli_print(
+        self,
+        prompt: str,
+        system_prompt: Optional[str],
+        timeout: float,
+        skip_git_check: bool,
+    ) -> Tuple[bool, str]:
+        codex_path = self.auth.codex_path if self.auth else None
+        if not codex_path:
+            return False, "Codex CLI not available"
+
+        env = {"CODEX_SKIP_GIT_REPO_CHECK": "1"} if skip_git_check else {}
+
+        for full_auto in (True, False):
+            cmd = self._build_codex_print_command(
+                codex_path=codex_path,
+                prompt=prompt,
+                system_prompt=system_prompt,
+                skip_git_check=skip_git_check,
+                full_auto=full_auto,
+            )
+            code, stdout, stderr = await self._run_subprocess(
+                cmd,
+                timeout=timeout,
+                status_label="Waiting on Codex...",
+                env=env,
+            )
+            response = stdout.strip()
+            if code == 0 and response:
+                return True, response
+            error_text = stderr.strip() or response or "Codex error"
+            if not self._looks_like_codex_command_error(error_text):
+                return False, error_text
+
+        return False, "Codex CLI command not supported"
+
+    def _looks_like_trust_error(self, message: str) -> bool:
+        lowered = message.lower()
+        return "trusted directory" in lowered or "skip-git-repo-check" in lowered
+
+    async def _codex_review_output(
+        self,
+        task: str,
+        plan: str,
+        report: str,
+        gate_status: Dict[str, str],
+        live_notes: Optional[str] = None,
+    ) -> Tuple[bool, str]:
+        gates = "\n".join(f"{gate_id}: {status}" for gate_id, status in gate_status.items())
+        live_block = f"\nLive User Input:\n{live_notes}\n" if live_notes else ""
+        prompt = CODEX_REVIEW_PROMPT.format(
+            task=task,
+            plan=plan,
+            gates=gates or "None",
+            report=report,
+            live_notes=live_block,
+        )
+        success, response = await self._call_codex_cli(
+            prompt,
+            timeout=self._codex_quick_timeout,
+        )
+        if not success:
+            return False, response
+        if "AGREED" in response.upper():
+            return True, response
+        return False, response
+
+    def _build_revision_notes(
+        self,
+        failures: List[str],
+        claude_review: Optional["VerificationResult"],
+        codex_feedback: Optional[str],
+    ) -> str:
+        notes: List[str] = []
+        if failures:
+            notes.append(f"Agent failures: {', '.join(failures)}")
+        if claude_review and not claude_review.verified:
+            issues = claude_review.issues or claude_review.suggestions or "Claude did not verify output."
+            notes.append(f"Claude review: {issues}")
+        if codex_feedback:
+            notes.append(f"Codex review: {codex_feedback}")
+        return "\n".join(notes)
+
+    def _select_fix_agents(self, current_agents: List[str], feedback: str) -> List[str]:
+        routed = self._route_agents(feedback)
+        if not routed:
+            return list(current_agents)
+        ordered = []
+        for agent_id in current_agents + routed:
+            if agent_id not in ordered:
+                ordered.append(agent_id)
+        return ordered
+
+    def _build_status_lines(
+        self,
+        agent_ids: List[str],
+        agent_results: Dict[str, AgentResult],
+    ) -> List[str]:
+        status_lines: List[str] = []
+        for agent_id in agent_ids:
+            result = agent_results.get(agent_id)
+            _, complete = self._select_status_templates(agent_id)
+            complete_status = self._enforce_status_words(complete)
+            if result and result.status == "complete":
+                status = complete_status
+            else:
+                status = "ERROR agent failed"
+            status_lines.append(self._format_status_line(agent_id, status))
+        return status_lines
 
     async def _run_agents(
         self,
@@ -525,20 +816,56 @@ class CodexHead:
     ) -> Tuple[List[str], Dict[str, AgentResult]]:
         status_lines: List[str] = []
         results: Dict[str, AgentResult] = {}
+        if not self._parallel_agents or len(agent_ids) <= 1 or self._max_parallel_agents <= 1:
+            for agent_id in agent_ids:
+                working, complete = self._select_status_templates(agent_id)
+                working_status = self._enforce_status_words(working)
+                complete_status = self._enforce_status_words(complete)
 
-        for agent_id in agent_ids:
+                self._emit_agent_update(agent_id, "working", working_status)
+
+                result = await claude_agent.execute_agent_task(
+                    agent_id,
+                    plan,
+                    context=request,
+                )
+                results[agent_id] = result
+
+                if result.status == "complete":
+                    final_status = complete_status
+                    self._emit_agent_update(agent_id, "complete", final_status)
+                else:
+                    final_status = "ERROR agent failed"
+                    self._emit_agent_update(agent_id, "error", final_status)
+
+                status_lines.append(self._format_status_line(agent_id, final_status))
+
+            return status_lines, results
+
+        semaphore = asyncio.Semaphore(self._max_parallel_agents)
+        final_statuses: Dict[str, str] = {}
+
+        async def run_agent(agent_id: str) -> Tuple[str, AgentResult, str]:
             working, complete = self._select_status_templates(agent_id)
             working_status = self._enforce_status_words(working)
             complete_status = self._enforce_status_words(complete)
 
             self._emit_agent_update(agent_id, "working", working_status)
 
-            result = await claude_agent.execute_agent_task(
-                agent_id,
-                plan,
-                context=request,
-            )
-            results[agent_id] = result
+            try:
+                async with semaphore:
+                    result = await claude_agent.execute_agent_task(
+                        agent_id,
+                        plan,
+                        context=request,
+                    )
+            except Exception as exc:
+                result = AgentResult(
+                    agent_id=agent_id,
+                    agent_name=agent_id,
+                    status="error",
+                    error=str(exc),
+                )
 
             if result.status == "complete":
                 final_status = complete_status
@@ -547,11 +874,45 @@ class CodexHead:
                 final_status = "ERROR agent failed"
                 self._emit_agent_update(agent_id, "error", final_status)
 
+            return agent_id, result, final_status
+
+        tasks = [asyncio.create_task(run_agent(agent_id)) for agent_id in agent_ids]
+        for task in asyncio.as_completed(tasks):
+            agent_id, result, final_status = await task
+            results[agent_id] = result
+            final_statuses[agent_id] = final_status
+
+        for agent_id in agent_ids:
+            final_status = final_statuses.get(agent_id, "ERROR agent failed")
             status_lines.append(self._format_status_line(agent_id, final_status))
 
         return status_lines, results
 
     async def process(self, user_input: str) -> CodexResponse:
+        self._phase = "planning"
+        try:
+            if self._total_timeout <= 0:
+                return await self._process_internal(user_input)
+            return await asyncio.wait_for(
+                self._process_internal(user_input),
+                timeout=self._total_timeout,
+            )
+        except asyncio.TimeoutError:
+            await self.cancel_pending()
+            message = f"Request timed out after {int(self._total_timeout)}s."
+            return CodexResponse(
+                content=message,
+                source=ResponseSource.CODEX_DIRECT,
+                success=False,
+                error=message,
+            )
+        except asyncio.CancelledError:
+            await self.cancel_pending()
+            raise
+        finally:
+            self._phase = "idle"
+
+    async def _process_internal(self, user_input: str) -> CodexResponse:
         self._conversation_history.append({"role": "user", "content": user_input})
 
         try:
@@ -596,14 +957,57 @@ class CodexHead:
             elif command in ("hivemind", "debug"):
                 debug_lines.append("Debug: scope=all")
 
-            if not self.auth or not self.auth.codex_path or not self.auth.claude_path:
+            if not self.auth:
                 return CodexResponse(
-                    content="Codex and Claude CLIs must be installed and authenticated.",
+                    content="Authentication manager unavailable.",
+                    source=ResponseSource.CODEX_DIRECT,
+                    success=False,
+                )
+
+            if not self.auth.codex_path:
+                await self.auth.find_codex()
+            if not self.auth.claude_path:
+                await self.auth.find_claude()
+
+            if not self.auth.codex_path:
+                return CodexResponse(
+                    content="Codex CLI must be installed and authenticated.",
+                    source=ResponseSource.CODEX_DIRECT,
+                    success=False,
+                )
+
+            if not command and self._is_simple_request(task_text):
+                self._phase = "codex_direct"
+                self._emit_status("Answering directly...")
+                ok, response_text = await self._call_codex_cli(
+                    task_text,
+                    timeout=self._codex_quick_timeout,
+                )
+                if ok:
+                    response = CodexResponse(
+                        content=response_text,
+                        source=ResponseSource.CODEX_DIRECT,
+                        success=True,
+                    )
+                else:
+                    response = CodexResponse(
+                        content=response_text,
+                        source=ResponseSource.CODEX_DIRECT,
+                        success=False,
+                        error=response_text,
+                    )
+                self._conversation_history.append({"role": "assistant", "content": response.content})
+                return response
+
+            if not self.auth.claude_path:
+                return CodexResponse(
+                    content="Claude CLI must be installed and authenticated.",
                     source=ResponseSource.CODEX_DIRECT,
                     success=False,
                 )
 
             self._emit_status("Parsing request...")
+            self._phase = "planning"
             claude_agent = ClaudeAgent(
                 self.auth,
                 working_dir=self.working_dir,
@@ -636,24 +1040,93 @@ class CodexHead:
             self._emit_status("Executing agents...")
 
             started_at = datetime.utcnow()
-            status_lines, agent_results = await self._run_agents(
+            self._phase = "agents"
+            _, agent_results = await self._run_agents(
                 agents,
                 claude_agent,
                 consensus.plan or task_text,
                 task_text,
             )
 
-            failures = [agent_id for agent_id, result in agent_results.items() if result.status == "error"]
+            plan_text = consensus.plan or task_text
 
-            self._emit_status("Evaluating quality gates...")
-            gate_status = self._build_gate_status(agents, agent_results)
-            for gate_id, status in gate_status.items():
-                self._emit_gate_update(gate_id, status)
+            while True:
+                failures = [
+                    agent_id for agent_id, result in agent_results.items() if result.status == "error"
+                ]
 
+                self._emit_status("Evaluating quality gates...")
+                gate_status = self._build_gate_status(agents, agent_results)
+                for gate_id, status in gate_status.items():
+                    self._emit_gate_update(gate_id, status)
+
+                self._emit_status("Compiling report...")
+                report = self._build_report(task_text, agents, gate_status, started_at, failures)
+
+                self._emit_status("Verifying with Claude...")
+                self._phase = "review"
+                live_inputs = self._consume_live_inputs()
+                live_notes = self._format_live_inputs(live_inputs)
+                review_request = task_text
+                if live_notes:
+                    review_request = f"{task_text}\n\nLive User Input:\n{live_notes}"
+                claude_review = await claude_agent.verify_output(review_request, report)
+
+                self._emit_status("Codex review...")
+                codex_ok, codex_feedback = await self._codex_review_output(
+                    task_text,
+                    plan_text,
+                    report,
+                    gate_status,
+                    live_notes=live_notes or None,
+                )
+                late_inputs = self._consume_live_inputs()
+                if late_inputs:
+                    late_notes = self._format_live_inputs(late_inputs)
+                    codex_ok = False
+                    codex_feedback = (
+                        f"Live user input received during review:\n{late_notes}"
+                    )
+                    if live_notes:
+                        live_notes = f"{live_notes}\n{late_notes}"
+                    else:
+                        live_notes = late_notes
+
+                if claude_review.verified and codex_ok and not failures:
+                    break
+
+                revision_notes = self._build_revision_notes(
+                    failures,
+                    claude_review,
+                    None if codex_ok else codex_feedback,
+                )
+                if not revision_notes:
+                    revision_notes = "Output did not meet requirements."
+
+                self._emit_status("Resolving review feedback...")
+                self._phase = "agents"
+                fix_agents = self._select_fix_agents(agents, revision_notes)
+                for agent_id in fix_agents:
+                    if agent_id not in agents:
+                        agents.append(agent_id)
+
+                fix_context = (
+                    f"Original task:\n{task_text}\n\nPlan:\n{plan_text}\n\n"
+                    f"Latest report:\n{report}\n\nReview feedback:\n{revision_notes}\n\n"
+                    f"{'Live User Input:\\n' + live_notes + '\\n\\n' if live_notes else ''}"
+                    "Address the feedback and update your output."
+                )
+
+                _, rerun_results = await self._run_agents(
+                    fix_agents,
+                    claude_agent,
+                    "Fix review feedback",
+                    fix_context,
+                )
+                agent_results.update(rerun_results)
+
+            status_lines = self._build_status_lines(agents, agent_results)
             gate_lines = [f"[GATE] {gate_id}: {status}" for gate_id, status in gate_status.items()]
-
-            self._emit_status("Compiling report...")
-            report = self._build_report(task_text, agents, gate_status, started_at, failures)
 
             output_sections: List[str] = []
             output_sections.extend(status_lines)
@@ -676,8 +1149,8 @@ class CodexHead:
             response = CodexResponse(
                 content=content,
                 source=ResponseSource.AGENTS,
-                success=not failures,
-                error="Agent errors detected" if failures else None,
+                success=True,
+                error=None,
                 agents_used=agents,
                 dialogue_turns=consensus.turns,
             )
@@ -701,3 +1174,21 @@ class CodexHead:
     def _can_handle_alone(self, user_input: str) -> bool:
         command, _ = self._parse_command(user_input)
         return command in ("help", "status", "recall")
+
+    async def cancel_pending(self) -> None:
+        """Cancel any pending subprocesses."""
+        for process in list(self._pending_processes):
+            if process.returncode is not None:
+                continue
+            try:
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except (ProcessLookupError, OSError):
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass
+            try:
+                await process.wait()
+            except Exception:
+                pass
+        self._pending_processes.clear()

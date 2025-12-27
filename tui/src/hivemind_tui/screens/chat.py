@@ -70,13 +70,17 @@ class ChatScreen(Screen):
         message_view = self.query_one("#chat-messages", MessageView)
         message_view.add_message(
             role="assistant",
-            content="Full chat mode. Type your message and press Ctrl+Enter to send. Use /help for commands.",
+            content=(
+                "Full chat mode. Type your message and press Ctrl+Enter to send. "
+                "Use /help for commands. Use /note for live input."
+            ),
             agent_name="HEAD_CODEX"
         )
 
         # Update status
         status_bar = self.query_one("#chat-status", StatusBar)
         status_bar.set_connection_status("connected")
+        status_bar.set_status_message("")
 
     def _on_codex_status(self, message: str) -> None:
         """Handle status updates from Codex - called from worker thread."""
@@ -84,13 +88,16 @@ class ChatScreen(Screen):
         try:
             self.app.call_from_thread(self._update_status_display, message)
         except Exception:
-            pass
+            self._update_status_display(message)
 
     def _update_status_display(self, message: str) -> None:
         """Update status display on main thread."""
         try:
             status_bar = self.query_one("#chat-status", StatusBar)
             status_bar.set_connection_status("connecting")
+            status_bar.set_status_message(message)
+            if hasattr(self.app, "log_status"):
+                self.app.log_status(message)
             # Also update the thinking message if it exists
             message_view = self.query_one("#chat-messages", MessageView)
             if self._processing and message:
@@ -116,7 +123,11 @@ class ChatScreen(Screen):
                     content="[yellow]Task cancelled.[/yellow]",
                     agent_name="HEAD_CODEX"
                 )
-                self.query_one("#chat-status", StatusBar).set_connection_status("connected")
+                status_bar = self.query_one("#chat-status", StatusBar)
+                status_bar.set_connection_status("connected")
+                status_bar.set_status_message("Cancelled")
+                if hasattr(self.app, "log_status"):
+                    self.app.log_status("Cancelled")
             except Exception:
                 pass
             self._processing = False
@@ -125,6 +136,7 @@ class ChatScreen(Screen):
         """Cancel the current worker if running."""
         if self._current_worker:
             self._current_worker.cancel()
+            self.run_worker(self._codex.cancel_pending(), name="codex_cancel", exclusive=False)
             self._current_worker = None
 
     def action_clear_chat(self) -> None:
@@ -140,7 +152,45 @@ class ChatScreen(Screen):
     def on_input_box_submitted(self, event: InputBox.Submitted) -> None:
         """Handle InputBox submission (Ctrl+Enter)."""
         # Don't await - call the worker method directly
+        if self._handle_live_note_command(event.message):
+            return
         self._send_message(event.message)
+
+    def _handle_live_note_command(self, message: str) -> bool:
+        """Handle live input commands during processing."""
+        trimmed = message.strip()
+        if not trimmed:
+            return False
+        if not (
+            trimmed.startswith("/note")
+            or trimmed.startswith("/live")
+            or trimmed.startswith("/feedback")
+        ):
+            return False
+
+        note = trimmed.split(maxsplit=1)[1].strip() if len(trimmed.split()) > 1 else ""
+        if not note:
+            message_view = self.query_one("#chat-messages", MessageView)
+            message_view.add_message(
+                role="assistant",
+                content="[yellow]Live note requires a message.[/yellow]",
+                agent_name="HEAD_CODEX",
+            )
+            return True
+
+        self._codex.add_live_input(note)
+        status_bar = self.query_one("#chat-status", StatusBar)
+        status_text = "Live note queued" if self._processing else "Live note queued (next task)"
+        status_bar.set_status_message(status_text)
+        if hasattr(self.app, "log_status"):
+            self.app.log_status(f"Live input: {note}")
+        message_view = self.query_one("#chat-messages", MessageView)
+        message_view.add_message(
+            role="assistant",
+            content=f"[dim]{status_text}: {note}[/dim]",
+            agent_name="HEAD_CODEX",
+        )
+        return True
 
     @work(exclusive=True)
     async def _send_message(self, message: str) -> None:
@@ -215,6 +265,9 @@ class ChatScreen(Screen):
                 )
 
             status_bar.set_connection_status("connected")
+            status_bar.set_status_message("")
+            if hasattr(self.app, "log_status"):
+                self.app.log_status("Complete")
             message_view.refresh()
         except Exception:
             pass
@@ -233,6 +286,9 @@ class ChatScreen(Screen):
             )
 
             status_bar.set_connection_status("connected")
+            status_bar.set_status_message("")
+            if hasattr(self.app, "log_status"):
+                self.app.log_status("Error")
             message_view.refresh()
         except Exception:
             pass

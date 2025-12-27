@@ -27,17 +27,8 @@ dependencies = [
     "textual>=0.40.0",
     "rich>=13.0.0",
 
-    # HTTP Client (for potential future use)
-    "httpx>=0.24.0",
-
-    # Data Validation
-    "pydantic>=2.0.0",
-
     # Environment Variables
     "python-dotenv>=1.0.0",
-
-    # Async improvements
-    "aiofiles>=23.0.0",
 ]
 
 [project.optional-dependencies]

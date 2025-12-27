@@ -95,13 +95,15 @@ class MainScreen(Screen):
 [yellow]C[/yellow] - Full chat screen
 [yellow]Q[/yellow] - Quit
 [yellow]D[/yellow] - Toggle dark mode
+[yellow]Ctrl+O[/yellow] - Status log
 [yellow]Ctrl+C[/yellow] - Cancel task
 [yellow]?[/yellow] - Help
 
 [dim]Commands:
 /hivemind, /dev, /sec, /infra, /qa
 /architect, /pentest, /sre, /reviewer
-/status, /recall, /debug[/dim]"""
+/status, /recall, /debug
+/note <message> (live input during planning/review)[/dim]"""
 
     def on_mount(self) -> None:
         """Handle screen mount event."""
@@ -136,7 +138,7 @@ Use /help to see commands.""",
         try:
             self.app.call_from_thread(self._update_status_display, message)
         except Exception:
-            pass
+            self._update_status_display(message)
 
     def _on_orchestration_start(self, task: str, agents: List[str]) -> None:
         """Handle orchestration start - called from worker thread."""
@@ -164,6 +166,9 @@ Use /help to see commands.""",
         try:
             status_bar = self.query_one("#status-bar", StatusBar)
             status_bar.set_connection_status("connecting")
+            status_bar.set_status_message(message)
+            if hasattr(self.app, "log_status"):
+                self.app.log_status(message)
             message_view = self.query_one("#message-view", MessageView)
             if self._processing and message:
                 message_view.update_last_message(f"[dim italic]{message}[/dim italic]")
@@ -220,6 +225,7 @@ Use /help to see commands.""",
         """Cancel the current processing task."""
         if self._current_worker and self._processing:
             self._current_worker.cancel()
+            self.run_worker(self._codex.cancel_pending(), name="codex_cancel", exclusive=False)
             self._current_worker = None
             message_view = self.query_one("#message-view", MessageView)
             orch_panel = self.query_one("#orchestration-panel", OrchestrationPanel)
@@ -235,6 +241,9 @@ Use /help to see commands.""",
             agent_list.reset_all_agents()
             self._processing = False
             status_bar.set_connection_status("connected")
+            status_bar.set_status_message("Cancelled")
+            if hasattr(self.app, "log_status"):
+                self.app.log_status("Cancelled")
             status_bar.set_task_progress(0, 0)
             self._active_agents = []
             self._completed_agents = set()
@@ -265,7 +274,14 @@ Use /help to see commands.""",
         chat_input = self.query_one("#quick-chat-input", Input)
         message = chat_input.value.strip()
 
-        if not message or self._processing:
+        if not message:
+            return
+        if message.startswith("/note") or message.startswith("/live") or message.startswith("/feedback"):
+            note = message.split(maxsplit=1)[1].strip() if len(message.split()) > 1 else ""
+            chat_input.clear()
+            self._queue_live_note(note)
+            return
+        if self._processing:
             return
 
         self._processing = True
@@ -286,6 +302,30 @@ Use /help to see commands.""",
 
         # Run processing in background worker
         self._process_message_async(message)
+
+    def _queue_live_note(self, note: str) -> None:
+        """Queue live input for the current operation."""
+        message_view = self.query_one("#message-view", MessageView)
+        status_bar = self.query_one("#status-bar", StatusBar)
+
+        if not note:
+            message_view.add_message(
+                role="assistant",
+                content="[yellow]Live note requires a message.[/yellow]",
+                agent_name="HEAD_CODEX",
+            )
+            return
+
+        self._codex.add_live_input(note)
+        status_text = "Live note queued" if self._processing else "Live note queued (next task)"
+        status_bar.set_status_message(status_text)
+        if hasattr(self.app, "log_status"):
+            self.app.log_status(f"Live input: {note}")
+        message_view.add_message(
+            role="assistant",
+            content=f"[dim]{status_text}: {note}[/dim]",
+            agent_name="HEAD_CODEX",
+        )
 
     @work(exclusive=True, thread=False)
     async def _process_message_async(self, message: str) -> None:
@@ -350,6 +390,9 @@ Use /help to see commands.""",
             )
 
         status_bar.set_connection_status("connected")
+        status_bar.set_status_message("")
+        if hasattr(self.app, "log_status"):
+            self.app.log_status("Complete")
         message_view.refresh()
 
     def _handle_error(self, error: str) -> None:
@@ -371,6 +414,9 @@ Use /help to see commands.""",
         self._active_agents = []
         self._completed_agents = set()
         status_bar.set_connection_status("connected")
+        status_bar.set_status_message("")
+        if hasattr(self.app, "log_status"):
+            self.app.log_status("Error")
         status_bar.set_task_progress(0, 0)
         message_view.refresh()
 

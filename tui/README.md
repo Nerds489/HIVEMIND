@@ -104,11 +104,12 @@ src/hivemind_tui/
 │   ├── message_view.py  # Message history display
 │   ├── input_box.py     # Multi-line input with history
 │   └── status_bar.py    # System status display
-├── engine/
-│   ├── client.py        # HTTP API client
-│   └── websocket.py     # WebSocket client
-└── models/
-    └── agents.py        # Agent data models
+└── engine/
+    ├── auth.py          # CLI authentication checks
+    ├── codex_head.py    # Codex orchestration
+    ├── claude_agent.py  # Claude agent execution
+    ├── dialogue.py      # Codex+Claude consensus
+    └── memory.py        # Session memory
 ```
 
 ## The 24 Agents
@@ -145,25 +146,12 @@ src/hivemind_tui/
 - QA-005: Manual QA
 - QA-006: Test Data Manager
 
-## Configuration
-
-Environment variables (optional):
-
-```bash
-# For backend API mode (not required for CLI mode)
-HIVEMIND_API_URL=http://localhost:8000
-HIVEMIND_WS_URL=ws://localhost:8000
-```
-
 ## Requirements
 
 - Python 3.11+
 - Claude Code CLI installed (`claude` command available)
 - textual >= 0.40.0
 - rich >= 13.0.0
-- httpx >= 0.24.0
-- websockets >= 12.0
-- pydantic >= 2.0.0
 - python-dotenv >= 1.0.0
 
 ## Development
